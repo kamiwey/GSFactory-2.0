@@ -1,0 +1,52 @@
+@import "./tokens.css";
+
+.home {
+  min-height: 100dvh;
+}
+.hero {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 8vh var(--gap);
+}
+.hero__title {
+  font-size: var(--t-h1);
+  margin: 0 0 0.3em;
+}
+.hero__subtitle {
+  font-size: var(--t-h2);
+  opacity: 0.8;
+  margin: 0 0 1.2em;
+}
+
+.reel {
+  padding: 8vh var(--gap);
+}
+.reel__track {
+  display: grid;
+  gap: var(--gap);
+  grid-template-columns: repeat(3, 1fr);
+  min-height: 200px;
+  border-radius: var(--radius);
+}
+
+.cta {
+  padding: 12vh var(--gap);
+  text-align: center;
+}
+.cta__title {
+  font-size: var(--t-h2);
+  margin-bottom: 0.5em;
+}
+.cta__text {
+  opacity: 0.85;
+  margin-bottom: 1em;
+}
+
+.footer {
+  padding: 32px var(--gap);
+  text-align: center;
+  opacity: 0.7;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}

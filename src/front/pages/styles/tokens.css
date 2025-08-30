@@ -1,0 +1,9 @@
+:root {
+  --maxw: 1200px;
+  --gap: 16px;
+  --radius: 20px;
+  --lh: 1.15;
+  --t-h1: clamp(36px, 6vw, 88px);
+  --t-h2: clamp(24px, 3.5vw, 40px);
+  --t-body: clamp(14px, 1.6vw, 18px);
+}
