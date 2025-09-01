@@ -1,35 +1,34 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
 
-/* IMPORTA TUS LOGOS AQUÍ cuando los tengas
+/* IMPORTA TUS LOGOS CUANDO LOS TENGAS
 import g1 from "../assets/logos/g-1.svg";
 import g2 from "../assets/logos/g-2.svg";
 import g3 from "../assets/logos/g-3.svg";
 import g4 from "../assets/logos/g-4.svg";
 import g5 from "../assets/logos/g-5.svg";
 import g6 from "../assets/logos/g-6.svg";
+// opcionalmente más: g7, g8...
 const logos = [g1, g2, g3, g4, g5, g6];
 */
-const logos = []; // de momento vacío; fallback "G"
+const logos = []; // fallback tipográfico "G"
 
-const totalMs = 420 + 260 + 520; // debe casar con --pt-in + --pt-hold + --pt-out
+// Duraciones en ms: deben casar con stylesGlobal/transitions.css
+const FADE_IN = 180, IN = 420, HOLD = 260, OUT = 520;
+const TOTAL_MS = FADE_IN + IN + HOLD + OUT;
 
 export default function PageTransition() {
-    const location = useLocation();
     const [active, setActive] = useState(false);
     const [logoIndex, setLogoIndex] = useState(0);
-    const firstMount = useRef(true);
     const lastIndex = useRef(-1);
     const timer = useRef(null);
 
-    useEffect(() => () => clearTimeout(timer.current), []);
-
+    // Pre-carga simple de logos para evitar parpadeos (si hubiera imágenes)
     useEffect(() => {
-        if (firstMount.current) { // sin animación en la primera carga
-            firstMount.current = false;
-            return;
-        }
+        logos.forEach(src => { const img = new Image(); img.src = src; });
+    }, []);
 
+    // Handler común: activa la transición y rota logo
+    const trigger = () => {
         // elige un logo distinto al anterior si hay varios
         if (logos.length > 1) {
             let next = Math.floor(Math.random() * logos.length);
@@ -40,17 +39,37 @@ export default function PageTransition() {
             setLogoIndex(0);
         }
 
-        // dispara animación
         setActive(true);
         clearTimeout(timer.current);
-        timer.current = setTimeout(() => setActive(false), totalMs);
-    }, [location.key]);
+        timer.current = setTimeout(() => setActive(false), TOTAL_MS);
+    };
 
-    const hasImages = logos.length > 0;
-    const src = hasImages ? logos[logoIndex] : null;
+    // 1) Escucha navegación iniciada por nuestros enlaces/evento global
+    useEffect(() => {
+        const onCustom = () => trigger();
+        window.addEventListener("gs:transition", onCustom);
+        return () => {
+            window.removeEventListener("gs:transition", onCustom);
+        };
+    }, []);
+
+    // 2) “Atrás/Adelante” del navegador: no podemos retrasar la navegación,
+    //    pero activamos la cortina inmediatamente para maquillar el cambio.
+    useEffect(() => {
+        const onPop = () => {
+            // dispara ya; el navegador cambiará la ruta igualmente
+            trigger();
+        };
+        window.addEventListener("popstate", onPop);
+        return () => window.removeEventListener("popstate", onPop);
+    }, []);
+
+    const src = logos.length ? logos[logoIndex] : null;
 
     return (
         <div className={`pt ${active ? "is-active" : ""}`} aria-hidden="true">
+            {/* Orden visual: fade blanco (abajo) → cortina → logo (arriba) */}
+            <div className="pt__fade" />
             <div className="pt__track">
                 <div className="pt__panel" />
                 <div className="pt__panel" />

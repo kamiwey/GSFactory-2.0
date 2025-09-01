@@ -1,14 +1,17 @@
-/* Doble cortina L→R con logo central */
+/* Fade a blanco -> doble cortina TOP→BOTTOM con logo central */
 :root {
-  /* tiempos (puedes ajustar) */
-  --pt-in: 420ms; /* entra desde la izquierda */
+  /* tiempos */
+  --pt-fade-in: 180ms; /* aparece el blanco */
+  --pt-in: 420ms; /* cortina entra desde arriba */
   --pt-hold: 260ms; /* pausa con logo */
-  --pt-out: 520ms; /* sale hacia la derecha */
+  --pt-out: 520ms; /* cortina sale hacia abajo */
+  --pt-fade-out: 180ms; /* apaga el blanco al final */
   --pt-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  /* colores (toman de globals si existen) */
-  --pt-bg: var(--color-bg, #0a0a0a);
-  --pt-fg: var(--color-fg, #ffffff);
+  /* colores (hereda de tus tokens si existen) */
+  --pt-bg: var(--color-bg, #0a0a0a); /* color de la cortina */
+  --pt-fg: var(--color-fg, #ffffff); /* color del logo */
+  --pt-fade-bg: #fff; /* color del fade */
 }
 
 .pt {
@@ -19,29 +22,62 @@
   contain: layout paint;
   overflow: hidden;
 }
-
 .pt.is-active {
   pointer-events: all;
 } /* bloquea clicks mientras anima */
 
-/* TRACK: 2 paneles de 50% que recorren la pantalla de L→R */
+/* CAPA DE FADE A BLANCO (debajo de la cortina, encima de la página) */
+.pt__fade {
+  position: absolute;
+  inset: 0;
+  background: var(--pt-fade-bg);
+  opacity: 0;
+}
+.pt.is-active .pt__fade {
+  /* prende rápido al inicio, se apaga al final del ciclo */
+  animation: pt-fade-in var(--pt-fade-in) ease 0s 1 forwards,
+    pt-fade-out var(--pt-fade-out) ease
+      calc(
+        var(--pt-fade-in) + var(--pt-in) + var(--pt-hold) + var(--pt-out) -
+          var(--pt-fade-out)
+      )
+      1 forwards;
+}
+@keyframes pt-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes pt-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* TRACK VERTICAL: 2 paneles al 50% que barren de TOP→BOTTOM */
 .pt__track {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100%;
-  transform: translateX(-100%); /* empieza fuera por la izquierda */
+  transform: translateY(-100%); /* empieza fuera por arriba */
   will-change: transform;
 }
-
 .pt__panel {
-  width: 50%;
-  height: 100%;
+  width: 100%;
+  height: 50%;
   background: var(--pt-bg);
 }
 
-/* LOGO */
+/* LOGO centrado */
 .pt__logo {
   position: absolute;
   inset: 0;
@@ -53,31 +89,31 @@
   will-change: opacity, transform;
 }
 
-/* Estados activos: una sola animación compuesta en el track + logo */
+/* Animaciones compuestas con retraso = fade-in */
 .pt.is-active .pt__track {
-  animation: pt-sweep calc(var(--pt-in) + var(--pt-hold) + var(--pt-out))
-    var(--pt-ease) 0s 1 both;
+  animation: pt-sweepY calc(var(--pt-in) + var(--pt-hold) + var(--pt-out))
+    var(--pt-ease) var(--pt-fade-in) 1 both;
 }
 .pt.is-active .pt__logo {
   animation: pt-logo-in calc(var(--pt-in) * 0.85) var(--pt-ease)
-      calc(var(--pt-in) * 0.35) 1 forwards,
+      calc(var(--pt-fade-in) + var(--pt-in) * 0.35) 1 forwards,
     pt-logo-out calc(var(--pt-out) * 0.8) var(--pt-ease)
-      calc(var(--pt-in) + var(--pt-hold)) 1 forwards;
+      calc(var(--pt-fade-in) + var(--pt-in) + var(--pt-hold)) 1 forwards;
 }
 
-/* 0%: fuera a la izquierda; 40%: pantalla cubierta; 60%: aún cubierta; 100%: fuera a la derecha */
-@keyframes pt-sweep {
+/* 0% fuera arriba; 40% cubre; 60% aún cubre; 100% fuera abajo */
+@keyframes pt-sweepY {
   0% {
-    transform: translateX(-100%);
+    transform: translateY(-100%);
   }
   40% {
-    transform: translateX(0%);
+    transform: translateY(0%);
   }
   60% {
-    transform: translateX(0%);
+    transform: translateY(0%);
   }
   100% {
-    transform: translateX(100%);
+    transform: translateY(100%);
   }
 }
 
@@ -116,8 +152,9 @@
   display: block;
 }
 
-/* Respeto a accesibilidad */
+/* Accesibilidad */
 @media (prefers-reduced-motion: reduce) {
+  .pt.is-active .pt__fade,
   .pt.is-active .pt__track,
   .pt.is-active .pt__logo {
     animation: none !important;

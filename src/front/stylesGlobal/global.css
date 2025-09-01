@@ -1,5 +1,6 @@
 @import "./tokensGlobal.css";
 @import "./transitions.css";
+@import "./navbar.css";
 /* Google Fonts (rápido para dev; luego podemos auto-hostear) */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300..900&family=Space+Grotesk:wght@300..700&display=swap");
 

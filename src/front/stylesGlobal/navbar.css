@@ -1,0 +1,81 @@
+@import "./tokensGlobal.css";
+
+/* Altura y color pueden adaptarse por página con --nav-fg (ya lo usas en cada screen) */
+:root {
+  --nav-h: 72px;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  height: var(--nav-h);
+  /* fondo transparente por defecto: la transición ya cubre la pantalla */
+  background: transparent;
+  color: var(--nav-fg, var(--color-fg));
+}
+
+.navbar__inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Brand (izquierda) */
+.navbar__brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.navbar__logo {
+  display: block;
+  height: 28px;
+}
+.navbar__logo-text {
+  font-family: var(--font-display, system-ui);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 22px;
+  line-height: 1;
+}
+
+/* Menú (derecha) */
+.navbar__menu {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.navbar__link {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  text-decoration: none;
+  color: inherit;
+  transition: transform var(--dur-fast, 180ms) var(--ease, ease),
+    background var(--dur-fast, 180ms) var(--ease, ease),
+    border-color var(--dur-fast, 180ms) var(--ease, ease),
+    opacity var(--dur-fast, 180ms) var(--ease, ease);
+}
+
+.navbar__link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+/* Responsive mínimo */
+@media (max-width: 900px) {
+  .navbar__menu {
+    gap: 8px;
+  }
+  .navbar__link {
+    height: 36px;
+    padding: 0 12px;
+  }
+}
