@@ -1,42 +1,51 @@
-// Import necessary components and functions from react-router-dom.
-
-import {
-  createBrowserRouter,
-  createRoutesFromElements,
-  Route,
-} from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { Layout } from "./pages/Layout";
-import { Home } from "./pages/Home";
-import { Single } from "./pages/Single";
-import { Demo } from "./pages/Demo";
 
+// Páginas (todas son exports con nombre, NO default)
+import { Home } from "./pages/Home";
 import { Projects } from "./pages/navBarPages/Projects";
 import { PrimatePlanet } from "./pages/navBarPages/PrimatePlanet";
 import { Drops } from "./pages/navBarPages/Drops";
 import { Catalogo } from "./pages/navBarPages/Catalogo";
 import { AboutUs } from "./pages/navBarPages/AboutUs";
 
-export const router = createBrowserRouter(
-  createRoutesFromElements(
-    // CreateRoutesFromElements function allows you to build route elements declaratively.
-    // Create your routes here, if you want to keep the Navbar and Footer in all views, add your new routes inside the containing Route.
-    // Root, on the contrary, create a sister Route, if you have doubts, try it!
-    // Note: keep in mind that errorElement will be the default page when you don't get a route, customize that page to make your project more attractive.
-    // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
+/**
+ * Gate de transición:
+ * - Mantiene renderizada la "location" anterior mientras la cortina cubre.
+ * - Dispara la transición al detectar un cambio de location.
+ * - Cuando recibimos "gs:transition:cover", soltamos la nueva location.
+ */
+export default function AppRoutes() {
+  const location = useLocation();
+  const [displayLocation, setDisplayLocation] = useState(location);
 
-    // Root Route: All navigation will start from here.
-    <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
+  // Si cambia la location → dispara transición y espera COVER para soltarla
+  useEffect(() => {
+    if (location === displayLocation) return;
 
-      {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
-      <Route path="/" element={<Home />} />
-      <Route path="/single/:theId" element={<Single />} />  {/* Dynamic route for single items */}
-      <Route path="/demo" element={<Demo />} />
+    // Lanza la animación (PageTransition se activa por este evento)
+    window.dispatchEvent(new CustomEvent("gs:transition"));
 
-      <Route path="projects" element={<Projects />} />
-      <Route path="primate-planet" element={<PrimatePlanet />} />
-      <Route path="drops" element={<Drops />} />
-      <Route path="catalogo" element={<Catalogo />} />
-      <Route path="about-us" element={<AboutUs />} />
-    </Route>
-  )
-);
+    // Cuando la cortina cubra → actualizamos qué location renderizar
+    const onCover = () => setDisplayLocation(location);
+    window.addEventListener("gs:transition:cover", onCover, { once: true });
+
+    return () => window.removeEventListener("gs:transition:cover", onCover);
+  }, [location, displayLocation]);
+
+  return (
+    <Routes location={displayLocation}>
+      <Route element={<Layout />}>
+        <Route index element={<Home />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/primate-planet" element={<PrimatePlanet />} />
+        <Route path="/drops" element={<Drops />} />
+        <Route path="/catalogo" element={<Catalogo />} />
+        <Route path="/about-us" element={<AboutUs />} />
+        {/* 404 opcional */}
+        <Route path="*" element={<Home />} />
+      </Route>
+    </Routes>
+  );
+}

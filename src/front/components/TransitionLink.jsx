@@ -1,55 +1,69 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-// helper: espera al siguiente frame de render
+// Espera un frame de render
 const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
+// Espera un evento (una sola vez)
+const waitFor = (name) =>
+    new Promise(resolve => window.addEventListener(name, () => resolve(), { once: true }));
+// Fallback: si COVER no llega en X ms, navegamos igual
+const waitForCoverOrTimeout = (ms = 1200) =>
+    Promise.race([waitFor("gs:transition:cover"), new Promise(r => setTimeout(r, ms))]);
 
-/**
- * Enlace que dispara la transición ANTES de navegar para evitar el flash.
- * - Usa <a> en lugar de <Link> para controlar el timing.
- * - Respeta Ctrl/Cmd/Middle click y target="_blank" (no intercepta).
- * - Acepta `to` string u objeto (pathname/search/hash/state/replace).
- */
 export default function TransitionLink({
     to,
     children,
     onClick,
     replace = false,
     state = undefined,
-    ...rest
+    ...rest // ← CORREGIDO (antes había un ".rest")
 }) {
     const navigate = useNavigate();
+    const armed = useRef(false); // evita doble dispatch (pointerdown + click)
+
+    // Dispara lo antes posible
+    const handlePointerDown = (e) => {
+        if (
+            e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ||
+            e.button === 1 || rest.target === "_blank"
+        ) return; // clicks modificados / nueva pestaña => no interceptar
+
+        armed.current = true;
+        window.dispatchEvent(new CustomEvent("gs:transition"));
+    };
 
     const handleClick = async (e) => {
         if (onClick) onClick(e);
         if (e.defaultPrevented) return;
 
-        // clicks modificados: deja que el navegador haga lo suyo
         if (
             e.metaKey || e.ctrlKey || e.shiftKey || e.altKey ||
             e.button === 1 || rest.target === "_blank"
-        ) {
-            return;
-        }
+        ) return; // dejar pasar
 
         e.preventDefault();
 
-        // 1) Activa cortina YA
-        window.dispatchEvent(new CustomEvent("gs:transition"));
+        // Si no hubo pointerdown (teclado, etc.), dispara ahora
+        if (!armed.current) {
+            window.dispatchEvent(new CustomEvent("gs:transition"));
+        }
 
-        // 2) Espera 2 frames para que pinte el fade blanco y tape la pantalla
-        await nextFrame();
-        await nextFrame();
+        // Da margen al fade blanco para cubrir
+        await nextFrame(); await nextFrame();
 
-        // 3) Navega
+        // Espera cobertura real (o timeout de seguridad)
+        await waitForCoverOrTimeout(1200);
+
+        // Navega ya con la pantalla cubierta
         if (typeof to === "string") {
             navigate(to, { replace, state });
         } else if (to && typeof to === "object") {
             navigate(to, { replace, state: to.state ?? state });
         }
+
+        armed.current = false;
     };
 
-    // Construye href para accesibilidad/previsualización
     const href =
         typeof to === "string"
             ? to
@@ -58,7 +72,12 @@ export default function TransitionLink({
                 : "#";
 
     return (
-        <a href={href} onClick={handleClick} {...rest}>
+        <a
+            href={href}
+            onPointerDown={handlePointerDown}
+            onClick={handleClick}
+            {...rest}
+        >
             {children}
         </a>
     );

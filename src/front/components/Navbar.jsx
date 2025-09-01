@@ -1,12 +1,16 @@
-import React from "react";
-import TransitionLink from "./TransitionLink";
-
-// Si tienes un SVG/PNG de marca, descomenta e importa:
+import React, { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 // import logo from "../assets/brand/logo-gs.svg";
 
 export const Navbar = () => {
-	// Menú principal: 5 rutas ya definidas en tu router
+	const [open, setOpen] = useState(false);
+	const location = useLocation();
+
+	// Cierra el menú al cambiar de ruta (fiable, sin depender de onClick)
+	useEffect(() => { setOpen(false); }, [location]);
+
 	const items = [
+		{ to: "/", label: "Home", exact: true },
 		{ to: "/projects", label: "Projects" },
 		{ to: "/primate-planet", label: "Primate Planet" },
 		{ to: "/drops", label: "Drops" },
@@ -15,24 +19,37 @@ export const Navbar = () => {
 	];
 
 	return (
-		<header className="navbar" role="banner">
+		<header className="navbar" role="banner" data-open={open ? "true" : "false"}>
 			<div className="navbar__inner container">
 				<div className="navbar__brand">
-					<TransitionLink to="/" className="navbar__brand-link" aria-label="Ir a Home">
-						{/* Si usas imagen de logo, sustituye el span por <img src={logo} alt="GS Factory" className="navbar__logo" /> */}
+					<NavLink to="/" className="navbar__brand-link" aria-label="Ir a Home">
+						{/* <img src={logo} alt="GS Factory" className="navbar__logo" /> */}
 						<span className="navbar__logo-text">GS</span>
-					</TransitionLink>
+					</NavLink>
 				</div>
 
+				{/* Toggle móvil */}
+				<button
+					className="navbar__toggle"
+					aria-label={open ? "Cerrar menú" : "Abrir menú"}
+					aria-expanded={open ? "true" : "false"}
+					onClick={() => setOpen(v => !v)}
+				>
+					<span className="navbar__toggle-line" />
+					<span className="navbar__toggle-line" />
+					<span className="navbar__toggle-line" />
+				</button>
+
+				{/* Menú */}
 				<nav className="navbar__menu" aria-label="Navegación principal">
-					{items.map(item => (
-						<TransitionLink
+					{items.slice(1).map(item => (
+						<NavLink
 							key={item.to}
 							to={item.to}
 							className="navbar__link"
 						>
 							{item.label}
-						</TransitionLink>
+						</NavLink>
 					))}
 				</nav>
 			</div>
