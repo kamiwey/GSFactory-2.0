@@ -2,7 +2,7 @@
 
 /* Altura y color pueden adaptarse por página con --nav-fg */
 :root {
-  --nav-h: 72px;
+  --nav-h: 55px;
 }
 
 .navbar {

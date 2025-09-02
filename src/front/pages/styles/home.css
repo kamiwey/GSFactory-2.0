@@ -1,18 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=Saira:wght@700;800&display=swap");
 @import "./tokens.css";
 
-/* Ocupa toda la pantalla incluyendo navbar */
+/* Fondo global negro + scroll suave */
 .home {
   min-height: 100dvh;
+  background: #000;
+  scroll-behavior: smooth;
 }
 
-/* ---------- HERO con vídeo + PARALLAX ---------- */
+/* ---------- HERO ---------- */
 .hero {
-  /* altura = viewport - navbar; ajusta var(--nav-h) si tu navbar cambia */
   min-height: calc(100dvh - var(--nav-h, 72px));
   position: relative;
   isolation: isolate;
-  /* base del parallax */
-  --parY: 0px;
+  --parY: 0px; /* desplazamiento del hero */
+  --p: 0; /* progreso 0..1 para fade del subtítulo */
 }
 
 .hero__bg {
@@ -20,6 +22,7 @@
   inset: 0;
   z-index: 0;
   overflow: hidden;
+  background: #000;
 }
 .hero__video {
   position: absolute;
@@ -27,68 +30,157 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  backface-visibility: hidden;
   will-change: transform;
-  /* Parallax: el vídeo se mueve más lento hacia arriba */
   transform: translate3d(0, calc(var(--parY) * -0.15), 0);
 }
-.hero__scrim {
-  position: absolute;
-  inset: 0;
-  /* Oscurecido suave para legibilidad */
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.45));
+
+/* Fade inferior ANCLADO al vídeo */
+@supports (mask-image: linear-gradient(#fff, #fff)) {
+  .hero__video {
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 1) 83%,
+      rgba(255, 255, 255, 0) 95%
+    );
+    mask-image: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 1) 83%,
+      rgba(255, 255, 255, 0) 95%
+    );
+  }
+  .hero__fadeBottom {
+    display: none;
+  }
+}
+@supports not (mask-image: linear-gradient(#fff, #fff)) {
+  .hero__fadeBottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    height: clamp(120px, 22vh, 280px);
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0) 83%,
+      rgba(0, 0, 0, 1) 95%
+    );
+    pointer-events: none;
+    transform: translate3d(0, calc(var(--parY) * -0.15), 0);
+    will-change: transform;
+  }
 }
 
-/* Contenido más abajo de lo normal */
+/* Contenido del hero (como ya estaba) */
 .hero__content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: grid;
   place-items: center;
   text-align: center;
-  /* empuja el bloque hacia abajo (ajusta al gusto) */
-  padding-top: 50vh;
+  padding-top: 67vh;
   padding-left: var(--gap);
   padding-right: var(--gap);
 }
-
 .hero__title {
+  font-family: "Saira", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 700;
   font-size: var(--t-h1);
   margin: 0 0 0.3em;
+  transform: translate3d(0, calc(var(--parY) * 0.42), 0);
   will-change: transform;
-  /* Parallax: título ligeramente más lento que el scroll */
-  transform: translate3d(0, calc(var(--parY) * 0.2), 0);
 }
 .hero__subtitle {
-  font-size: var(--t-h2);
-  opacity: 0.9;
-  margin: 0 0 1.1em;
-  will-change: transform;
-  /* Parallax: un poco más de velocidad que el título */
-  transform: translate3d(0, calc(var(--parY) * 0.28), 0);
-}
-.hero__cta {
-  will-change: transform;
-  /* Parallax: la CTA va un poco más “rápida” */
-  transform: translate3d(0, calc(var(--parY) * 0.36), 0);
+  font-family: "Saira", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  font-size: clamp(14px, 2.2vw, 22px);
+  margin: 0 0 1.2em;
+  transform: translate3d(0, calc(var(--parY) * 0.5), 0);
+  opacity: calc(1 - var(--p));
+  transition: opacity 120ms linear;
+  will-change: transform, opacity;
 }
 
-/* ---------- Secciones de ejemplo para scroll ---------- */
+/* Flecha (sin círculo) sincronizada con el vídeo */
+.hero__arrow {
+  display: inline-grid;
+  place-items: center;
+  color: #ffd84d;
+  text-decoration: none;
+  transform: translate3d(0, calc(var(--parY) * -0.15), 0);
+  will-change: transform;
+}
+.hero__arrowIcon {
+  width: 44px;
+  height: 44px;
+  stroke: currentColor;
+  stroke-width: 3.2;
+  fill: none;
+}
+.hero__arrow:hover .hero__arrowIcon {
+  transform: translateY(-2px);
+}
+
+/* ---------- Sección siguiente ---------- */
 .section {
   padding: 12vh var(--gap);
 }
+
+/* No solapamos ni movemos el punto de aparición */
 .section--spacer {
+  --pinBottom: 10vh; /* altura fija donde se “ancla” mientras dura el hero */
+  --pinHeight: 0px; /* la medimos en JS para encajarla al soltar */
   min-height: 120vh;
-  display: grid;
-  align-content: start;
-  gap: 1rem;
+  position: relative;
 }
 
-/* Accesibilidad: si la persona pide reducir movimiento, sin parallax */
+/* Bloque pin: comportamiento
+   - Estado normal: participa en el flujo.
+   - En cuanto empieza el scroll del hero: pasa a fixed y se queda a --pinBottom del borde inferior.
+   - Al terminar el hero: vuelve a flujo y queda exactamente donde estaba el fixed. */
+.section__pin {
+  display: grid;
+  align-content: end;
+  gap: 1rem;
+  width: min(1200px, 100% - calc(var(--gap) * 2));
+  margin-inline: auto;
+}
+
+/* Pinned (mientras 0<p<1) */
+.section--spacer.pinning .section__pin {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--pinBottom);
+  z-index: 1;
+}
+
+/* Al terminar el hero, recolocamos el bloque donde terminó el fixed:
+   100vh - pinBottom - pinHeight ≈ distancia desde el top de la sección. */
+.section--spacer.done .section__pin {
+  position: relative;
+  margin-top: calc(100vh - var(--pinBottom) - var(--pinHeight));
+}
+
+/* Accesibilidad */
 @media (prefers-reduced-motion: reduce) {
   .hero__video,
   .hero__title,
   .hero__subtitle,
-  .hero__cta {
+  .hero__arrow {
     transform: none !important;
+  }
+  .hero__subtitle {
+    opacity: 1 !important;
+  }
+  .section--spacer.pinning .section__pin,
+  .section--spacer.done .section__pin {
+    position: relative !important;
+    margin-top: 0 !important;
   }
 }

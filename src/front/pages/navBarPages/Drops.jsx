@@ -10,8 +10,8 @@ export const Drops = () => {
                 minHeight: "100dvh",
                 display: "grid",
                 placeItems: "center",
-                backgroundColor: "#0EA5E9", // Sky
-                color: "#ffffff"
+                backgroundColor: "#ffffffff", // Sky
+                color: "#000000ff"
             }}
         >
             <h1 className="display-3 m-0">Drops</h1>

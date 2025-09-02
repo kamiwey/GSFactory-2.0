@@ -10,8 +10,8 @@ export const Catalogo = () => {
                 minHeight: "100dvh",
                 display: "grid",
                 placeItems: "center",
-                backgroundColor: "#F59E0B", // Sky
-                color: "#ffffff"
+                backgroundColor: "#ffffffff", // Sky
+                color: "#000000ff"
             }}
         >
             <h1 className="display-3 m-0">Catalogo</h1>
