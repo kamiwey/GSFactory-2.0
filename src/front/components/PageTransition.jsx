@@ -91,7 +91,7 @@ export default function PageTransition() {
                 <div className="pt__panel" />
             </div>
             <div className="pt__logo">
-                {src ? <img className="pt__img" src={src} alt="GS logo" /> : <span className="pt__g">G</span>}
+                {src ? <img className="pt__img" src={src} alt="GS logo" /> : <span className="pt__g">GS</span>}
             </div>
         </div>
     );
