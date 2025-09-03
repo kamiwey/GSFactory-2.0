@@ -1,15 +1,17 @@
 import React, { useEffect, useRef } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
 import "../pages/styles/home.css";
+// Si tu Home usa vídeo, mantén esta línea; si no, elimínala.
 import heroVideo from "../assets/video/hero-video.mp4";
+
+import HorizontalStrip from "../components/HorizontalStrip";
 
 export const Home = () => {
 	const { dispatch } = useGlobalReducer();
 	const videoRef = useRef(null);
 	const heroRef = useRef(null);
-	const nextRef = useRef(null);
 
-	// ping opcional al backend
+	// (Opcional) ping al backend del boilerplate
 	useEffect(() => {
 		const f = async () => {
 			try {
@@ -23,7 +25,7 @@ export const Home = () => {
 		f();
 	}, [dispatch]);
 
-	// autoplay robusto (mute)
+	// Autoplay robusto (si usas vídeo en el hero)
 	useEffect(() => {
 		const vid = videoRef.current;
 		if (!vid) return;
@@ -32,7 +34,6 @@ export const Home = () => {
 			const p = vid.play();
 			if (p && typeof p.then === "function") p.catch(() => { });
 		};
-
 		const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
 		const apply = () => {
 			if (mq.matches) {
@@ -43,7 +44,6 @@ export const Home = () => {
 				tryPlay();
 			}
 		};
-
 		apply();
 		vid.addEventListener("loadeddata", tryPlay, { once: true });
 		mq.addEventListener?.("change", apply);
@@ -53,56 +53,21 @@ export const Home = () => {
 		};
 	}, []);
 
-	// medir la altura del bloque "pineado" para encajarlo al soltar
+	// Parallax clamp del hero (si ya lo tienes implementado, no dupliques)
 	useEffect(() => {
-		const sec = nextRef.current;
-		if (!sec) return;
-		const pin = sec.querySelector(".section__pin");
-		if (!pin) return;
-
-		const setH = () => {
-			const h = pin.getBoundingClientRect().height;
-			sec.style.setProperty("--pinHeight", `${h}px`);
-		};
-		setH();
-
-		const ro = new ResizeObserver(setH);
-		ro.observe(pin);
-		window.addEventListener("resize", setH);
-		return () => {
-			ro.disconnect();
-			window.removeEventListener("resize", setH);
-		};
-	}, []);
-
-	// parallax del hero + estado de pinning de la siguiente sección
-	useEffect(() => {
-		const heroEl = heroRef.current;
-		const nextEl = nextRef.current;
-		if (!heroEl || !nextEl) return;
-
-		const FADE_DIST = 160; // px para desvanecer el subtítulo
-
+		const el = heroRef.current;
+		if (!el) return;
 		let raf = 0;
-		const onScroll = () => {
-			cancelAnimationFrame(raf);
-			raf = requestAnimationFrame(() => {
-				const rect = heroEl.getBoundingClientRect();
-				const h = Math.max(1, rect.height);
-				const y = Math.max(0, -rect.top);           // desplazamiento del hero
-				const p = Math.max(0, Math.min(1, y / h));  // progreso 0..1
-
-				// variables para el parallax existente
-				heroEl.style.setProperty("--parY", `${y}px`);
-				heroEl.style.setProperty("--p", String(Math.min(1, y / FADE_DIST)));
-
-				// pin activo entre 0<p<1
-				nextEl.classList.toggle("pinning", p > 0 && p < 1);
-				nextEl.classList.toggle("done", p >= 1); // al terminar el hero
-			});
+		const update = () => {
+			const rect = el.getBoundingClientRect();
+			const h = Math.max(1, rect.height);
+			const y = Math.max(0, -rect.top);
+			const range = h * 0.45;
+			const p = Math.max(0, Math.min(1, y / range));
+			el.style.setProperty("--p", p.toFixed(4));
 		};
-
-		onScroll();
+		const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); };
+		update();
 		window.addEventListener("scroll", onScroll, { passive: true });
 		window.addEventListener("resize", onScroll);
 		return () => {
@@ -112,8 +77,7 @@ export const Home = () => {
 		};
 	}, []);
 
-	// flecha: baja exactamente hasta el final del hero (sin cortina)
-	const onArrowClick = (e) => {
+	const scrollDown = (e) => {
 		e.preventDefault();
 		const heroEl = heroRef.current;
 		if (!heroEl) return;
@@ -123,7 +87,9 @@ export const Home = () => {
 
 	return (
 		<main className="home">
+			{/* ================= HERO ================= */}
 			<section ref={heroRef} className="hero" aria-label="GS Factory hero">
+				{/* Si usas vídeo de fondo, déjalo. Si no, usa un fondo negro liso. */}
 				<div className="hero__bg" aria-hidden="true">
 					<video
 						ref={videoRef}
@@ -135,14 +101,17 @@ export const Home = () => {
 						preload="auto"
 						muted
 					/>
-					<div className="hero__fadeBottom" />
+					<div className="hero__scrim" />
 				</div>
 
 				<div className="hero__content">
 					<h1 className="hero__title">GS FACTORY</h1>
 					<p className="hero__subtitle">DISEÑO + 3D + TECNOLOGÍA</p>
 
-					<a className="hero__arrow" href="#next" aria-label="Bajar" onClick={onArrowClick}>
+					<a className="btn btn--primary hero__cta" href="#next" onClick={scrollDown}>Empezar</a>
+
+					{/* Flecha intacta */}
+					<a className="hero__arrow" href="#next" aria-label="Bajar" onClick={scrollDown}>
 						<svg viewBox="0 0 24 24" className="hero__arrowIcon" aria-hidden="true">
 							<path d="M6 9l6 6 6-6" />
 						</svg>
@@ -150,12 +119,29 @@ export const Home = () => {
 				</div>
 			</section>
 
-			{/* Sección siguiente: aparece al empezar a scrollear, se queda a la misma altura y se suelta al final */}
-			<section id="next" ref={nextRef} className="section section--spacer">
-				<div className="section__pin">
-					<h2>Sección siguiente</h2>
-					<p>Placeholder para probar el scroll, el difuminado y el parallax.</p>
+			{/* ============== HORIZONTAL PINNED (6 paneles) ============== */}
+			<HorizontalStrip panels={6} navbarHeight={72} />
+
+			{/* ============== DOS PANELES VERTICALES FULLSCREEN ============== */}
+			<section className="vstack" aria-label="Bloque vertical tras horizontal">
+				<div className="vpanel">
+					<div className="vpanel__inner">
+						<h2 className="vpanel__title">Panel 7</h2>
+						<p className="vpanel__text">Primer panel vertical justo después del tramo horizontal. Ocupa toda la altura visible.</p>
+					</div>
 				</div>
+				<div className="vpanel vpanel--last">
+					<div className="vpanel__inner">
+						<h2 className="vpanel__title">Panel 8</h2>
+						<p className="vpanel__text">Segundo panel vertical a pantalla completa antes de volver al flujo normal.</p>
+					</div>
+				</div>
+			</section>
+
+			{/* ============== SECCIÓN NORMAL (tu contenido real) ============== */}
+			<section id="next" className="section section--spacer">
+				<h2>Sección siguiente (vertical)</h2>
+				<p>Tras el horizontal pinneado y los dos paneles verticales, el documento vuelve al flujo vertical normal hasta el footer.</p>
 			</section>
 		</main>
 	);

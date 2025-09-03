@@ -1,0 +1,62 @@
+/* HorizontalStrip — estilos base */
+.hstrip {
+  position: relative;
+}
+
+/* Modo desktop: pin + track horizontal */
+.hstrip__sticky {
+  position: sticky;
+  overflow: hidden;
+  /* height y top se setean inline desde el componente con navbarHeight */
+}
+
+/* El carril horizontal */
+.hstrip__track {
+  height: 100%;
+  display: flex;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+}
+
+/* Cada panel ocupa exactamente el ancho del viewport en desktop */
+.hstrip__panel {
+  flex: 0 0 100vw;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+}
+
+/* Contenido del panel */
+.hstrip__panelInner {
+  text-align: center;
+  padding: 0 2rem;
+  max-width: 64rem;
+}
+.hstrip__title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  margin-bottom: 0.4em;
+}
+.hstrip__text {
+  opacity: 0.8;
+}
+
+/* Mobile (≤900px): apilar vertical, sin pin ni transform */
+@media (max-width: 900px) {
+  .hstrip__sticky {
+    position: static;
+    height: auto !important;
+    top: auto !important;
+  }
+  .hstrip__track {
+    transform: none !important;
+    display: grid;
+  }
+  .hstrip__panel {
+    width: 100%;
+    height: calc(100dvh - var(--nav-h, 72px));
+  }
+}

@@ -184,3 +184,32 @@
     margin-top: 0 !important;
   }
 }
+
+/* ====== Fondo liso alternativo si no usas vídeo ====== */
+
+/* ====== Dos paneles verticales tras el tramo horizontal ====== */
+.vstack {
+  padding: 0;
+}
+.vpanel {
+  height: calc(100dvh - var(--nav-h, 72px));
+  display: grid;
+  place-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.vpanel--last {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.vpanel__inner {
+  text-align: center;
+  padding: 0 2rem;
+  max-width: 64rem;
+}
+.vpanel__title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  margin-bottom: 0.4em;
+}
+.vpanel__text {
+  opacity: 0.8;
+}
