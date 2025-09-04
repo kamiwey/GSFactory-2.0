@@ -13,7 +13,7 @@ export const Navbar = () => {
 		{ to: "/", label: "Home", exact: true },
 		{ to: "/projects", label: "Projects" },
 		{ to: "/primate-planet", label: "Primate Planet" },
-		{ to: "/drops", label: "Drops" },
+		{ to: "/nfc", label: "NFC" },
 		{ to: "/catalogo", label: "Catálogo" },
 		{ to: "/about-us", label: "About Us" }
 	];

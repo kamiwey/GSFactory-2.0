@@ -6,7 +6,7 @@ import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Projects } from "./pages/navBarPages/Projects";
 import { PrimatePlanet } from "./pages/navBarPages/PrimatePlanet";
-import { Drops } from "./pages/navBarPages/Drops";
+import { NFC } from "./pages/navBarPages/NFC";
 import { Catalogo } from "./pages/navBarPages/Catalogo";
 import { AboutUs } from "./pages/navBarPages/AboutUs";
 
@@ -40,7 +40,7 @@ export default function AppRoutes() {
         <Route index element={<Home />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/primate-planet" element={<PrimatePlanet />} />
-        <Route path="/drops" element={<Drops />} />
+        <Route path="/nfc" element={<NFC />} />
         <Route path="/catalogo" element={<Catalogo />} />
         <Route path="/about-us" element={<AboutUs />} />
         {/* 404 opcional */}

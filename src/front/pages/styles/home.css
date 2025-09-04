@@ -99,7 +99,7 @@
   letter-spacing: 0.1em;
   font-weight: 700;
   font-size: clamp(14px, 2.2vw, 22px);
-  margin: 0 0 1.2em;
+  margin: 0 0 1em;
   transform: translate3d(0, calc(var(--parY) * 0.5), 0);
   opacity: calc(1 - var(--p));
   transition: opacity 120ms linear;

@@ -1,0 +1,188 @@
+/* === Variables adaptadas a vuestro tema oscuro === */
+:root {
+  --timeline-accent: #17c3b2; /* turquesa de la demo */
+  --timeline-fg: #eaeaea;
+  --timeline-fg-soft: rgba(234, 234, 234, 0.85);
+  --timeline-bg-strong: #000; /* fondo de vuestra web */
+  --intro-bg: #f45b69; /* rojo de la intro del demo; cámbialo si quieres */
+}
+
+/* Reset local al módulo */
+.projects-page * {
+  box-sizing: border-box;
+}
+.projects-page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Página */
+.projects-page {
+  background: var(--timeline-bg-strong);
+  color: var(--timeline-fg);
+  padding-bottom: 50px;
+  min-height: 100dvh;
+}
+
+/* INTRO (como en el demo) */
+.intro {
+  color: white;
+  background: var(--intro-bg);
+  padding: 100px 0;
+}
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+.intro h1 {
+  font-size: 2.5rem;
+}
+
+/* TIMELINE base */
+.timeline {
+  padding: 50px 20px;
+  margin: 0 auto;
+  max-width: 1000px;
+  color: #227c9d; /* dark-blue del demo para textos dentro; si no te gusta, usa var(--timeline-fg) */
+}
+.timeline ol {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.timeline ol::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--timeline-accent);
+}
+
+/* ITEM */
+.timeline ol li .item-inner {
+  padding: 20px 180px;
+  margin-bottom: 8vh;
+  position: relative;
+}
+.timeline ol li .time-wrapper {
+  position: relative;
+  font-size: 4.5rem;
+  font-weight: 700;
+  line-height: 0.9;
+  color: var(--timeline-fg); /* año en blanco sobre oscuro */
+}
+
+/* Linea y punto animados */
+.timeline ol li .time-wrapper::before,
+.timeline ol li .time-wrapper::after {
+  content: "";
+  position: absolute;
+  background: var(--timeline-accent);
+}
+.timeline ol li .time-wrapper::before {
+  top: 50%;
+  left: -180px;
+  transform: translateY(-50%);
+  width: 0;
+  height: 3px;
+  transition: width 0.8s linear;
+}
+.timeline ol li .time-wrapper::after {
+  top: calc(50% - 8px);
+  left: -60px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  transform: scale(0);
+  transform-origin: left center;
+  transition: all 0.4s linear;
+}
+
+/* Aparición de textos */
+.timeline ol li time,
+.timeline ol li .details > * {
+  opacity: 0;
+  transition: 0.5s;
+}
+.timeline ol li time {
+  display: inline-block;
+  transform: translateY(-30px);
+}
+.timeline ol li .details > * {
+  transform: translateY(30px);
+}
+.timeline ol li .details h3 {
+  font-size: 2rem;
+  line-height: 1;
+  margin: 15px 0;
+  color: var(--timeline-fg);
+}
+.timeline ol li .details p {
+  color: var(--timeline-fg-soft);
+}
+
+/* ESTADOS ANIMADOS (cuando .in-view) */
+.timeline ol li.in-view .time-wrapper::before {
+  width: 120px;
+}
+.timeline ol li.in-view .time-wrapper::after {
+  transition-delay: 0.8s;
+  transform: scale(1.5);
+}
+.timeline ol li.in-view time,
+.timeline ol li.in-view .details > * {
+  opacity: 1;
+  transform: none;
+}
+.timeline ol li.in-view time {
+  transition-delay: 1.3s;
+}
+.timeline ol li.in-view .details h3 {
+  transition-delay: 1.5s;
+}
+.timeline ol li.in-view .details p {
+  transition-delay: 1.7s;
+}
+
+/* RESPONSIVE */
+@media (max-width: 700px) {
+  .timeline ol li .item-inner {
+    padding: 20px 40px;
+  }
+  .timeline ol li .time-wrapper::before {
+    display: none;
+  }
+  .timeline ol li .time-wrapper::after {
+    left: -45px;
+    transform-origin: center;
+  }
+  .timeline ol li.in-view .time-wrapper::after {
+    transition-delay: 0s;
+  }
+  .timeline ol li.in-view time {
+    transition-delay: 0.5s;
+  }
+  .timeline ol li.in-view .details h3 {
+    transition-delay: 0.7s;
+  }
+  .timeline ol li.in-view .details p {
+    transition-delay: 0.9s;
+  }
+}
+
+/* Accesibilidad: reducir movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .timeline ol li time,
+  .timeline ol li .details > *,
+  .timeline ol li .time-wrapper::before,
+  .timeline ol li .time-wrapper::after {
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}

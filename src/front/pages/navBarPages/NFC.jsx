@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-export const Drops = () => {
+export const NFC = () => {
     useEffect(() => {
         document.documentElement.style.setProperty("--nav-fg", "#ffffff"); // navbar blanca
     }, []);
@@ -14,7 +14,7 @@ export const Drops = () => {
                 color: "#000000ff"
             }}
         >
-            <h1 className="display-3 m-0">Drops</h1>
+            <h1 className="display-3 m-0">NFC</h1>
         </section>
     );
 };

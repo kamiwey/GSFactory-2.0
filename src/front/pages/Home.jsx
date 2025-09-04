@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
 import "../pages/styles/home.css";
-// Si tu Home usa vídeo, mantén esta línea; si no, elimínala.
 import heroVideo from "../assets/video/hero-video.mp4";
 
 import HorizontalStrip from "../components/HorizontalStrip";
@@ -25,7 +24,7 @@ export const Home = () => {
 		f();
 	}, [dispatch]);
 
-	// Autoplay robusto (si usas vídeo en el hero)
+	// Autoplay robusto (vídeo en mute)
 	useEffect(() => {
 		const vid = videoRef.current;
 		if (!vid) return;
@@ -53,7 +52,7 @@ export const Home = () => {
 		};
 	}, []);
 
-	// Parallax clamp del hero (si ya lo tienes implementado, no dupliques)
+	// Parallax clamp del hero — PUBLICA --parY y --p
 	useEffect(() => {
 		const el = heroRef.current;
 		if (!el) return;
@@ -61,9 +60,11 @@ export const Home = () => {
 		const update = () => {
 			const rect = el.getBoundingClientRect();
 			const h = Math.max(1, rect.height);
-			const y = Math.max(0, -rect.top);
-			const range = h * 0.45;
+			const y = Math.max(0, -rect.top);        // desplazamiento consumido dentro del hero
+			const range = h * 0.45;                   // ~45% del alto del hero
 			const p = Math.max(0, Math.min(1, y / range));
+
+			el.style.setProperty("--parY", `${y}px`); // << clave para título/subtítulo/flecha
 			el.style.setProperty("--p", p.toFixed(4));
 		};
 		const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); };
@@ -89,7 +90,6 @@ export const Home = () => {
 		<main className="home">
 			{/* ================= HERO ================= */}
 			<section ref={heroRef} className="hero" aria-label="GS Factory hero">
-				{/* Si usas vídeo de fondo, déjalo. Si no, usa un fondo negro liso. */}
 				<div className="hero__bg" aria-hidden="true">
 					<video
 						ref={videoRef}
@@ -101,14 +101,13 @@ export const Home = () => {
 						preload="auto"
 						muted
 					/>
-					<div className="hero__scrim" />
+					{/* Usa el overlay que tu CSS estiliza con var(--parY) */}
+					<div className="hero__fadeBottom" />
 				</div>
 
 				<div className="hero__content">
 					<h1 className="hero__title">GS FACTORY</h1>
 					<p className="hero__subtitle">DISEÑO + 3D + TECNOLOGÍA</p>
-
-					<a className="btn btn--primary hero__cta" href="#next" onClick={scrollDown}>Empezar</a>
 
 					{/* Flecha intacta */}
 					<a className="hero__arrow" href="#next" aria-label="Bajar" onClick={scrollDown}>
@@ -127,13 +126,17 @@ export const Home = () => {
 				<div className="vpanel">
 					<div className="vpanel__inner">
 						<h2 className="vpanel__title">Panel 7</h2>
-						<p className="vpanel__text">Primer panel vertical justo después del tramo horizontal. Ocupa toda la altura visible.</p>
+						<p className="vpanel__text">
+							Primer panel vertical justo después del tramo horizontal. Ocupa toda la altura visible.
+						</p>
 					</div>
 				</div>
 				<div className="vpanel vpanel--last">
 					<div className="vpanel__inner">
 						<h2 className="vpanel__title">Panel 8</h2>
-						<p className="vpanel__text">Segundo panel vertical a pantalla completa antes de volver al flujo normal.</p>
+						<p className="vpanel__text">
+							Segundo panel vertical a pantalla completa antes de volver al flujo normal.
+						</p>
 					</div>
 				</div>
 			</section>
@@ -141,7 +144,10 @@ export const Home = () => {
 			{/* ============== SECCIÓN NORMAL (tu contenido real) ============== */}
 			<section id="next" className="section section--spacer">
 				<h2>Sección siguiente (vertical)</h2>
-				<p>Tras el horizontal pinneado y los dos paneles verticales, el documento vuelve al flujo vertical normal hasta el footer.</p>
+				<p>
+					Tras el horizontal pinneado y los dos paneles verticales, el documento vuelve al flujo
+					vertical normal hasta el footer.
+				</p>
 			</section>
 		</main>
 	);

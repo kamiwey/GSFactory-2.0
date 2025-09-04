@@ -13,7 +13,7 @@ import "../stylesGlobal/horizontal-strip.css";
  */
 export default function HorizontalStrip({
     panels = 6,
-    navbarHeight = 72,
+    navbarHeight = 55,
     className = "",
     children,
 }) {
@@ -83,7 +83,7 @@ export default function HorizontalStrip({
                 <div className="hstrip__panelInner">
                     <div className="hstrip__title">Panel {i + 1}</div>
                     <p className="hstrip__text">
-                        Contenido de muestra horizontal. El scroll vertical se traduce 1:1 en desplazamiento horizontal.
+                        Contenido de muestra horizontal.
                     </p>
                 </div>
             </div>
