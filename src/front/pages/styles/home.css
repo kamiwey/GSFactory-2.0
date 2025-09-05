@@ -213,3 +213,52 @@
 .vpanel__text {
   opacity: 0.8;
 }
+
+/* === Botón fijo: volver arriba del Home === */
+.homeTopBtn {
+  position: fixed;
+  right: var(--gap, 20px); /* 👈 ahora a la derecha */
+  bottom: clamp(16px, 3vh, 28px);
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: #ffd84d; /* mismo acento que la flecha del hero */
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+.homeTopBtn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.homeTopBtn__icon {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  stroke-width: 3.2;
+  fill: none;
+}
+
+/* Un poco más grande en móvil para ser fácil de pulsar */
+@media (max-width: 900px) {
+  .homeTopBtn {
+    width: 52px;
+    height: 52px;
+  }
+  .homeTopBtn__icon {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* Respeta preferencias de movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .homeTopBtn {
+    transition: none;
+  }
+}

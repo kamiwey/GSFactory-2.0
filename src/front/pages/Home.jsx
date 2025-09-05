@@ -64,7 +64,7 @@ export const Home = () => {
 			const range = h * 0.45;                   // ~45% del alto del hero
 			const p = Math.max(0, Math.min(1, y / range));
 
-			el.style.setProperty("--parY", `${y}px`); // << clave para título/subtítulo/flecha
+			el.style.setProperty("--parY", `${y}px`);
 			el.style.setProperty("--p", p.toFixed(4));
 		};
 		const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); };
@@ -86,6 +86,13 @@ export const Home = () => {
 		window.scrollTo({ top: target, behavior: "smooth" });
 	};
 
+	// ⬆️ Botón “volver arriba” (siempre visible en Home)
+	const scrollToTop = (e) => {
+		e?.preventDefault?.();
+		const prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		window.scrollTo({ top: 0, left: 0, behavior: prefersReduce ? "auto" : "smooth" });
+	};
+
 	return (
 		<main className="home">
 			{/* ================= HERO ================= */}
@@ -101,7 +108,6 @@ export const Home = () => {
 						preload="auto"
 						muted
 					/>
-					{/* Usa el overlay que tu CSS estiliza con var(--parY) */}
 					<div className="hero__fadeBottom" />
 				</div>
 
@@ -109,7 +115,7 @@ export const Home = () => {
 					<h1 className="hero__title">GS FACTORY</h1>
 					<p className="hero__subtitle">DISEÑO + 3D + TECNOLOGÍA</p>
 
-					{/* Flecha intacta */}
+					{/* Flecha hacia la sección siguiente */}
 					<a className="hero__arrow" href="#next" aria-label="Bajar" onClick={scrollDown}>
 						<svg viewBox="0 0 24 24" className="hero__arrowIcon" aria-hidden="true">
 							<path d="M6 9l6 6 6-6" />
@@ -149,6 +155,13 @@ export const Home = () => {
 					vertical normal hasta el footer.
 				</p>
 			</section>
+
+			{/* ⬅️ Botón fijo inferior-izquierda (volver arriba) */}
+			<button className="homeTopBtn" aria-label="Volver arriba" onClick={scrollToTop}>
+				<svg viewBox="0 0 24 24" className="homeTopBtn__icon" aria-hidden="true">
+					<path d="M6 15l6-6 6 6" />
+				</svg>
+			</button>
 		</main>
 	);
 };
