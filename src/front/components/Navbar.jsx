@@ -11,10 +11,11 @@ export const Navbar = () => {
 
 	const items = [
 		{ to: "/", label: "Home", exact: true },
-		{ to: "/projects", label: "Projects" },
-		{ to: "/primate-planet", label: "Primate Planet" },
+		{ to: "/projects", label: "Proyectos" },
+		{ to: "/colaboraciones", label: "Colaboraciones" },
+		//		{ to: "/primate-planet", label: "Primate Planet" },
 		{ to: "/nfc", label: "NFC" },
-		{ to: "/catalogo", label: "Catálogo" },
+		//		{ to: "/catalogo", label: "Catálogo" },
 		{ to: "/about-us", label: "About Us" }
 	];
 

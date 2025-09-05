@@ -9,6 +9,7 @@ import { PrimatePlanet } from "./pages/navBarPages/PrimatePlanet";
 import { NFC } from "./pages/navBarPages/NFC";
 import { Catalogo } from "./pages/navBarPages/Catalogo";
 import { AboutUs } from "./pages/navBarPages/AboutUs";
+import { Colaboraciones } from "./pages/navBarPages/Colaboraciones";
 
 /**
  * Gate de transición:
@@ -43,6 +44,7 @@ export default function AppRoutes() {
         <Route path="/nfc" element={<NFC />} />
         <Route path="/catalogo" element={<Catalogo />} />
         <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/colaboraciones" element={<Colaboraciones />} />
         {/* 404 opcional */}
         <Route path="*" element={<Home />} />
       </Route>
