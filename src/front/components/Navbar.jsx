@@ -1,59 +1,100 @@
 import React, { useEffect, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
-// import logo from "../assets/brand/logo-gs.svg";
+import { Link } from "react-router-dom"; // ← usamos Link para navegar
+import "./../stylesGlobal/navbar.css";
 
-export const Navbar = () => {
+// Ajusta la ruta si tu carpeta no es "img"
+import LogoGS from "../assets/img/logo-color.svg";
+
+export default function Navbar() {
 	const [open, setOpen] = useState(false);
-	const location = useLocation();
+	const [closing, setClosing] = useState(false);
 
-	// Cierra el menú al cambiar de ruta (fiable, sin depender de onClick)
-	useEffect(() => { setOpen(false); }, [location]);
+	// Cerrar con ESC
+	useEffect(() => {
+		const onEsc = (e) => e.key === "Escape" && startClose();
+		document.addEventListener("keydown", onEsc);
+		return () => document.removeEventListener("keydown", onEsc);
+	}, []);
 
-	const items = [
-		{ to: "/", label: "Home", exact: true },
-		{ to: "/projects", label: "Proyectos" },
-		{ to: "/colaboraciones", label: "Colaboraciones" },
-		//		{ to: "/primate-planet", label: "Primate Planet" },
-		{ to: "/nfc", label: "NFC" },
-		//		{ to: "/catalogo", label: "Catálogo" },
-		{ to: "/about-us", label: "About Us" }
-	];
+	const startClose = () => {
+		if (!open) return;
+		setClosing(true);
+		// Debe coincidir con .overlay-slide-up (800ms en tu CSS)
+		setTimeout(() => {
+			setClosing(false);
+			setOpen(false);
+		}, 800);
+	};
+
+	const toggle = () => {
+		if (open) startClose();
+		else setOpen(true);
+	};
+
+	// Cierra overlay al hacer click en un item
+	const onItemClick = () => startClose();
 
 	return (
-		<header className="navbar" role="banner" data-open={open ? "true" : "false"}>
-			<div className="navbar__inner container">
-				<div className="navbar__brand">
-					<NavLink to="/" className="navbar__brand-link" aria-label="Ir a Home">
-						{/* <img src={logo} alt="GS Factory" className="navbar__logo" /> */}
-						<span className="navbar__logo-text">GS</span>
-					</NavLink>
-				</div>
+		<>
+			{/* NAV fija, transparente, texto negro */}
+			<nav className="gsNav" role="navigation" aria-label="GS navbar">
+				<Link className="brand" to="/">
+					<img className="brand__logo" src={LogoGS} alt="GS" />
+					<span className="brand__txt">GS</span>
+				</Link>
 
-				{/* Toggle móvil */}
-				<button
-					className="navbar__toggle"
-					aria-label={open ? "Cerrar menú" : "Abrir menú"}
-					aria-expanded={open ? "true" : "false"}
-					onClick={() => setOpen(v => !v)}
+				{/* Botón burger con 3 barras blancas (Fluxus) */}
+				<div
+					className={`open-overlay ${open ? "is-open" : ""} ${closing ? "is-closing" : ""}`}
+					onClick={toggle}
+					role="button"
+					aria-label="Abrir menú"
+					tabIndex={0}
 				>
-					<span className="navbar__toggle-line" />
-					<span className="navbar__toggle-line" />
-					<span className="navbar__toggle-line" />
-				</button>
+					<span className="bar-top"></span>
+					<span className="bar-middle"></span>
+					<span className="bar-bottom"></span>
+				</div>
+			</nav>
 
-				{/* Menú */}
-				<nav className="navbar__menu" aria-label="Navegación principal">
-					{items.slice(1).map(item => (
-						<NavLink
-							key={item.to}
-							to={item.to}
-							className="navbar__link"
-						>
-							{item.label}
-						</NavLink>
-					))}
-				</nav>
-			</div>
-		</header>
+			{/* OVERLAY FULLSCREEN (4 columnas) */}
+			{(open || closing) && (
+				<div
+					className={`overlay-navigation ${open ? "overlay-slide-down" : ""} ${closing ? "overlay-slide-up" : ""}`}
+					onClick={(e) => {
+						// cerrar si clicas fuera de los enlaces
+						if (e.target.classList.contains("overlay-navigation")) startClose();
+					}}
+				>
+					<nav role="navigation">
+						<ul>
+							<li>
+								<Link to="/projects" className="overlayLink" onClick={onItemClick}>
+									Proyectos
+								</Link>
+							</li>
+							<li>
+								<Link to="/colaboraciones" className="overlayLink" onClick={onItemClick}>
+									Colaboraciones
+								</Link>
+							</li>
+							<li>
+								<Link to="/nfc" className="overlayLink" onClick={onItemClick}>
+									NFC
+								</Link>
+							</li>
+							<li>
+								<Link to="/about-us" className="overlayLink" onClick={onItemClick}>
+									About us
+								</Link>
+							</li>
+						</ul>
+					</nav>
+				</div>
+			)}
+		</>
 	);
-};
+}
+
+// Export nombrado opcional si tu Layout lo importa como { Navbar }
+export { Navbar };

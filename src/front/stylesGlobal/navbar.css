@@ -1,125 +1,326 @@
-@import "./tokensGlobal.css";
-
-/* Altura y color pueden adaptarse por página con --nav-fg */
+/* ====================================
+  NAVBAR base (transparente)
+==================================== */
 :root {
-  --nav-h: 55px;
+  --nav-h: 72px;
+  --gap: 20px;
 }
-
-.navbar {
-  position: sticky;
+.gsNav {
+  position: fixed;
   top: 0;
-  z-index: 1000;
+  left: 0;
+  right: 0;
   height: var(--nav-h);
-  background: transparent;
-  color: var(--nav-fg, var(--color-fg));
-}
-
-.navbar__inner {
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  padding: 0 var(--gap);
+  background: transparent; /* se ve el vídeo detrás */
+  color: #111; /* texto negro */
+  z-index: 99;
 }
-
-/* Brand (izquierda) */
-.navbar__brand-link {
+.brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-}
-.navbar__logo {
-  display: block;
-  height: 28px;
-}
-.navbar__logo-text {
-  font-family: var(--font-display, system-ui);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  font-size: 22px;
-  line-height: 1;
-}
-
-/* Menú (derecha) desktop */
-.navbar__menu {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.navbar__link {
-  display: inline-flex;
-  align-items: center;
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid transparent;
+  gap: 0.6rem;
   text-decoration: none;
-  color: inherit;
-  transition: transform var(--dur-fast, 180ms) var(--ease, ease),
-    background var(--dur-fast, 180ms) var(--ease, ease),
-    border-color var(--dur-fast, 180ms) var(--ease, ease),
-    opacity var(--dur-fast, 180ms) var(--ease, ease);
+  color: #111;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
-.navbar__link:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.18);
-  transform: translateY(-1px);
-}
-
-/* Toggle (oculto en desktop) */
-.navbar__toggle {
-  display: none;
-  width: 40px;
-  height: 40px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 10px;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 5px;
-}
-.navbar__toggle-line {
-  width: 18px;
-  height: 2px;
-  background: currentColor;
+.brand__logo {
+  width: 26px;
+  height: 26px;
   display: block;
 }
+.brand__txt {
+  font-size: 1.05rem;
+  transform: translateY(1px);
+}
 
-/* Responsive */
-@media (max-width: 900px) {
-  .navbar__toggle {
-    display: flex;
-  }
+/* ====================================
+  Burger (3 barras blancas, animaciones Fluxus)
+==================================== */
+.open-overlay {
+  position: absolute;
+  right: 5rem;
+  top: 3.2rem;
+  width: 34px;
+  cursor: pointer;
+  z-index: 100;
+}
+.open-overlay span {
+  display: block;
+  height: 1px;
+  background: #fff;
+  margin-top: 8px;
+}
 
-  .navbar__menu {
-    position: fixed;
-    top: var(--nav-h, 72px);
-    right: 0;
-    width: min(90vw, 320px);
-    height: calc(100dvh - var(--nav-h, 72px));
-    background: rgba(10, 10, 10, 0.96);
-    backdrop-filter: blur(8px);
-    border-left: 1px solid rgba(255, 255, 255, 0.12);
-    transform: translateX(100%);
-    transition: transform var(--dur, 360ms)
-      var(--ease, cubic-bezier(0.22, 0.61, 0.36, 1));
-    display: flex;
-    flex-direction: column;
-    padding: 16px;
-    gap: 12px;
-    z-index: 1001;
-  }
-  .navbar[data-open="true"] .navbar__menu {
-    transform: translateX(0);
-  }
+/* estados */
+.open-overlay.is-open .bar-top {
+  animation: animate-top-bar 0.6s linear both;
+}
+.open-overlay.is-open .bar-middle {
+  animation: animate-middle-bar 0.6s linear both;
+}
+.open-overlay.is-open .bar-bottom {
+  animation: animate-bottom-bar 0.6s linear both;
+}
 
-  .navbar__link {
-    height: 44px;
-    padding: 0 12px;
-    border-radius: 10px;
+.open-overlay.is-closing .bar-top {
+  animation: animate-out-top-bar 0.6s linear both;
+}
+.open-overlay.is-closing .bar-middle {
+  animation: animate-out-middle-bar 0.6s linear both;
+}
+.open-overlay.is-closing .bar-bottom {
+  animation: animate-out-bottom-bar 0.6s linear both;
+}
+
+/* ====================================
+  Overlay fullscreen (4 columnas)
+==================================== */
+.overlay-navigation {
+  position: fixed;
+  inset: 0;
+  z-index: 98;
+  background: hsla(0, 0%, 0%, 0.8);
+  transform: translateY(-100%);
+}
+.overlay-slide-down {
+  transition: all 0.4s ease-in-out;
+  transform: translateY(0);
+}
+.overlay-slide-up {
+  transition: all 0.8s ease-in-out;
+  transform: translateY(-100%);
+}
+
+.overlay-navigation nav,
+.overlay-navigation nav ul {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+.overlay-navigation nav ul {
+  display: flex;
+  list-style: none;
+}
+.overlay-navigation nav ul li {
+  flex-basis: 25%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  overflow: hidden;
+  transform: translateY(-100%);
+}
+
+/* Enlaces dentro de columnas */
+.overlayLink {
+  position: relative;
+  color: #fff;
+  text-transform: uppercase;
+  font: 300 0.9rem/1 "Work Sans", system-ui, sans-serif;
+  letter-spacing: 4px;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  padding: 0.2rem 0.6rem;
+}
+.overlayLink::before {
+  content: "";
+  width: 70px;
+  height: 2px;
+  background: #fff;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateX(-100%);
+  opacity: 0;
+  transition: all 0.2s linear;
+}
+.overlayLink::after {
+  content: attr(data-content);
+  font-size: 0.7rem;
+  transition: all 0.2s linear;
+  opacity: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -50px;
+  font-weight: 300;
+  letter-spacing: 0;
+}
+.overlayLink:hover::before {
+  transform: translateX(0);
+  opacity: 1;
+}
+.overlayLink:hover::after {
+  transform: translateY(15px);
+  opacity: 1;
+}
+
+/* Colores de cada columna (4) */
+.overlay-navigation nav ul li:nth-of-type(1) {
+  background: #29363b;
+}
+.overlay-navigation nav ul li:nth-of-type(2) {
+  background: #ea495f;
+}
+.overlay-navigation nav ul li:nth-of-type(3) {
+  background: #f4837d;
+}
+.overlay-navigation nav ul li:nth-of-type(4) {
+  background: #fdcea9;
+}
+
+/* Entradas (stagger) cuando baja */
+.overlay-slide-down nav ul li:nth-of-type(1) {
+  animation: slide-in-nav-item 0.4s linear 0.2s both;
+}
+.overlay-slide-down nav ul li:nth-of-type(2) {
+  animation: slide-in-nav-item 0.4s linear 0.4s both;
+}
+.overlay-slide-down nav ul li:nth-of-type(3) {
+  animation: slide-in-nav-item 0.4s linear 0.6s both;
+}
+.overlay-slide-down nav ul li:nth-of-type(4) {
+  animation: slide-in-nav-item 0.4s linear 0.8s both;
+}
+
+/* Salidas (stagger inverso) cuando sube */
+.overlay-slide-up nav ul li:nth-of-type(1) {
+  animation: slide-in-nav-item-reverse 0.3s linear 0.35s both;
+}
+.overlay-slide-up nav ul li:nth-of-type(2) {
+  animation: slide-in-nav-item-reverse 0.3s linear 0.25s both;
+}
+.overlay-slide-up nav ul li:nth-of-type(3) {
+  animation: slide-in-nav-item-reverse 0.3s linear 0.15s both;
+}
+.overlay-slide-up nav ul li:nth-of-type(4) {
+  animation: slide-in-nav-item-reverse 0.3s linear 0s both;
+}
+
+/* Keyframes (idénticos al pen) */
+@keyframes slide-in-nav-item {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes slide-in-nav-item-reverse {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes animate-top-bar {
+  0% {
+    background: #fff;
+  }
+  50% {
+    transform: translateY(9px);
+  }
+  80% {
+    transform: translateY(5px);
+    background: #fff;
+  }
+  100% {
+    transform: translateY(0);
+    background: #29363b;
+  }
+}
+@keyframes animate-bottom-bar {
+  0% {
+    background: #fff;
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+  80% {
+    transform: translateY(-5px);
+    background: #fff;
+  }
+  100% {
+    transform: translateY(0);
+    background: #29363b;
+  }
+}
+@keyframes animate-middle-bar {
+  0% {
+    background: #fff;
+  }
+  80% {
+    background: #fff;
+  }
+  100% {
+    background: #29363b;
+  }
+}
+@keyframes animate-out-top-bar {
+  0% {
+    background: #29363b;
+  }
+  50% {
+    transform: translateY(9px);
+  }
+  80% {
+    transform: translateY(5px);
+    background: #29363b;
+  }
+  100% {
+    transform: translateY(0);
+    background: #fff;
+  }
+}
+@keyframes animate-out-bottom-bar {
+  0% {
+    background: #29363b;
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+  80% {
+    transform: translateY(-5px);
+    background: #29363b;
+  }
+  100% {
+    transform: translateY(0);
+    background: #fff;
+  }
+}
+@keyframes animate-out-middle-bar {
+  0% {
+    background: #29363b;
+  }
+  80% {
+    background: #29363b;
+  }
+  100% {
+    background: #fff;
+  }
+}
+
+/* Responsive: botón más cerca del borde en móvil */
+@media (max-width: 640px) {
+  .open-overlay {
+    right: 1rem;
+  }
+  .overlayLink {
+    font-size: 11px;
+  }
+  .overlayLink::after {
+    font-size: 0.6rem;
+  }
+  .overlayLink::before {
+    width: 15px;
   }
 }
