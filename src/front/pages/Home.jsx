@@ -2,13 +2,13 @@ import React, { useEffect, useRef } from "react";
 import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
 import "../pages/styles/home.css";
 import heroVideo from "../assets/video/hero-video.mp4";
-
 import HorizontalStrip from "../components/HorizontalStrip";
 
 export const Home = () => {
 	const { dispatch } = useGlobalReducer();
 	const videoRef = useRef(null);
 	const heroRef = useRef(null);
+	const homeRef = useRef(null); // ← leeremos --arrow-jump desde aquí
 
 	// (Opcional) ping al backend del boilerplate
 	useEffect(() => {
@@ -60,8 +60,8 @@ export const Home = () => {
 		const update = () => {
 			const rect = el.getBoundingClientRect();
 			const h = Math.max(1, rect.height);
-			const y = Math.max(0, -rect.top);        // desplazamiento consumido dentro del hero
-			const range = h * 0.45;                   // ~45% del alto del hero
+			const y = Math.max(0, -rect.top);
+			const range = h * 0.45;
 			const p = Math.max(0, Math.min(1, y / range));
 
 			el.style.setProperty("--parY", `${y}px`);
@@ -78,28 +78,24 @@ export const Home = () => {
 		};
 	}, []);
 
+	// ↓ Flecha: baja una distancia configurable (CSS var --arrow-jump en .home)
 	const scrollDown = (e) => {
 		e.preventDefault();
-		const heroEl = heroRef.current;
-		if (!heroEl) return;
+		const scope = homeRef.current || document.documentElement;
+		let raw = getComputedStyle(scope).getPropertyValue("--arrow-jump").trim();
 
-		// Altura de navbar desde la CSS var si existe (fallback 72)
-		const navH = parseFloat(
-			getComputedStyle(document.documentElement).getPropertyValue("--nav-h")
-		) || 72;
+		// Permite px / vh / vw
+		let jump = parseFloat(raw);
+		if (raw.endsWith("vh")) jump = (parseFloat(raw) / 100) * window.innerHeight;
+		else if (raw.endsWith("vw")) jump = (parseFloat(raw) / 100) * window.innerWidth;
 
-		// Destino: justo tras el hero, restando navbar y un pequeño respiro
-		const target = heroEl.getBoundingClientRect().bottom + window.scrollY - (navH + 8);
-
-		// 🔒 Bloquea X: fuerza left=0 para que no haya deriva lateral
+		if (!Number.isFinite(jump)) jump = 480; // fallback
 		window.scrollTo({
-			top: Math.max(0, Math.round(target)),
-			left: 0,
+			top: Math.max(0, Math.round(window.scrollY + jump)),
+			left: window.scrollX,             // no tocar eje X
 			behavior: "smooth",
 		});
 	};
-
-
 
 	// ⬆️ Botón “volver arriba” (siempre visible en Home)
 	const scrollToTop = (e) => {
@@ -109,7 +105,7 @@ export const Home = () => {
 	};
 
 	return (
-		<main className="home">
+		<main ref={homeRef} className="home">
 			{/* ================= HERO ================= */}
 			<section ref={heroRef} className="hero" aria-label="GS Factory hero">
 				<div className="hero__bg" aria-hidden="true">
@@ -130,7 +126,7 @@ export const Home = () => {
 					<h1 className="hero__title">GS FACTORY</h1>
 					<p className="hero__subtitle">DISEÑO + 3D + TECNOLOGÍA</p>
 
-					{/* Flecha hacia la sección siguiente */}
+					{/* Flecha hacia abajo: decide la distancia con --arrow-jump */}
 					<a className="hero__arrow" href="#next" aria-label="Bajar" onClick={scrollDown}>
 						<svg viewBox="0 0 24 24" className="hero__arrowIcon" aria-hidden="true">
 							<path d="M6 9l6 6 6-6" />
@@ -171,7 +167,7 @@ export const Home = () => {
 				</p>
 			</section>
 
-			{/* ⬅️ Botón fijo inferior-izquierda (volver arriba) */}
+			{/* ⬆️ Botón fijo (volver arriba) */}
 			<button className="homeTopBtn" aria-label="Volver arriba" onClick={scrollToTop}>
 				<svg viewBox="0 0 24 24" className="homeTopBtn__icon" aria-hidden="true">
 					<path d="M6 15l6-6 6 6" />

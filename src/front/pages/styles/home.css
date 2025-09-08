@@ -6,6 +6,9 @@
   min-height: 100dvh;
   background: #000;
   scroll-behavior: smooth;
+
+  /* ← Ajusta aquí la distancia que baja la flecha (px, vh o vw) */
+  --arrow-jump: 670px; /* p.ej. 60px, 560px, 60vh, etc. */
 }
 
 /* ---------- HERO ---------- */
@@ -72,7 +75,7 @@
   }
 }
 
-/* Contenido del hero (como ya estaba) */
+/* Contenido del hero */
 .hero__content {
   position: relative;
   z-index: 2;
@@ -139,10 +142,7 @@
   position: relative;
 }
 
-/* Bloque pin: comportamiento
-   - Estado normal: participa en el flujo.
-   - En cuanto empieza el scroll del hero: pasa a fixed y se queda a --pinBottom del borde inferior.
-   - Al terminar el hero: vuelve a flujo y queda exactamente donde estaba el fixed. */
+/* Bloque pin */
 .section__pin {
   display: grid;
   align-content: end;
@@ -160,8 +160,7 @@
   z-index: 1;
 }
 
-/* Al terminar el hero, recolocamos el bloque donde terminó el fixed:
-   100vh - pinBottom - pinHeight ≈ distancia desde el top de la sección. */
+/* Al terminar el hero, recolocamos el bloque donde terminó el fixed */
 .section--spacer.done .section__pin {
   position: relative;
   margin-top: calc(100vh - var(--pinBottom) - var(--pinHeight));
@@ -184,8 +183,6 @@
     margin-top: 0 !important;
   }
 }
-
-/* ====== Fondo liso alternativo si no usas vídeo ====== */
 
 /* ====== Dos paneles verticales tras el tramo horizontal ====== */
 .vstack {
@@ -217,14 +214,14 @@
 /* === Botón fijo: volver arriba del Home === */
 .homeTopBtn {
   position: fixed;
-  right: var(--gap, 20px); /* 👈 ahora a la derecha */
+  right: var(--gap, 20px);
   bottom: clamp(16px, 3vh, 28px);
   z-index: 10;
   width: 44px;
   height: 44px;
   display: grid;
   place-items: center;
-  color: #ffd84d; /* mismo acento que la flecha del hero */
+  color: #ffd84d;
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 999px;
@@ -244,7 +241,6 @@
   fill: none;
 }
 
-/* Un poco más grande en móvil para ser fácil de pulsar */
 @media (max-width: 900px) {
   .homeTopBtn {
     width: 52px;
@@ -255,8 +251,6 @@
     height: 26px;
   }
 }
-
-/* Respeta preferencias de movimiento */
 @media (prefers-reduced-motion: reduce) {
   .homeTopBtn {
     transition: none;
