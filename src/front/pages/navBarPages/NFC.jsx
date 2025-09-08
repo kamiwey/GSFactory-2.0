@@ -10,8 +10,8 @@ export const NFC = () => {
                 minHeight: "100dvh",
                 display: "grid",
                 placeItems: "center",
-                backgroundColor: "#ffffffff", // Sky
-                color: "#000000ff"
+                backgroundColor: "#f4837d", // Sky
+                color: "#ffffffff"
             }}
         >
             <h1 className="display-3 m-0">NFC</h1>

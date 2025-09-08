@@ -10,7 +10,7 @@
 
 /* ---------- HERO ---------- */
 .hero {
-  min-height: calc(100dvh - var(--nav-h, 72px));
+  min-height: calc(100dvh - var(--nav-h, 52px));
   position: relative;
   isolation: isolate;
   --parY: 0px; /* desplazamiento del hero */

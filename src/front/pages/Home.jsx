@@ -82,9 +82,24 @@ export const Home = () => {
 		e.preventDefault();
 		const heroEl = heroRef.current;
 		if (!heroEl) return;
-		const target = heroEl.getBoundingClientRect().bottom + window.scrollY;
-		window.scrollTo({ top: target, behavior: "smooth" });
+
+		// Altura de navbar desde la CSS var si existe (fallback 72)
+		const navH = parseFloat(
+			getComputedStyle(document.documentElement).getPropertyValue("--nav-h")
+		) || 72;
+
+		// Destino: justo tras el hero, restando navbar y un pequeño respiro
+		const target = heroEl.getBoundingClientRect().bottom + window.scrollY - (navH + 8);
+
+		// 🔒 Bloquea X: fuerza left=0 para que no haya deriva lateral
+		window.scrollTo({
+			top: Math.max(0, Math.round(target)),
+			left: 0,
+			behavior: "smooth",
+		});
 	};
+
+
 
 	// ⬆️ Botón “volver arriba” (siempre visible en Home)
 	const scrollToTop = (e) => {

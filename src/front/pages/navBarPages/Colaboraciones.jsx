@@ -10,8 +10,8 @@ export const Colaboraciones = () => {
                 minHeight: "100dvh",
                 display: "grid",
                 placeItems: "center",
-                backgroundColor: "#ffffffff", // Sky
-                color: "#000000ff"
+                backgroundColor: "#ea495f", // Sky
+                color: "#ffffffff"
             }}
         >
             <h1 className="display-3 m-0">Colaboraciones</h1>

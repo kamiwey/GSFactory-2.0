@@ -4,7 +4,7 @@
   --timeline-fg: #eaeaea;
   --timeline-fg-soft: rgba(234, 234, 234, 0.85);
   --timeline-bg-strong: #000; /* fondo de vuestra web */
-  --intro-bg: #f45b69; /* rojo de la intro del demo; cámbialo si quieres */
+  --intro-bg: #29363b; /* rojo de la intro del demo; cámbialo si quieres */
 }
 
 /* Reset local al módulo */

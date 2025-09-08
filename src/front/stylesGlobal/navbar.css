@@ -2,7 +2,7 @@
   NAVBAR base (transparente)
 ==================================== */
 :root {
-  --nav-h: 72px;
+  --nav-h: 52px;
   --gap: 20px;
 }
 .gsNav {
@@ -23,18 +23,20 @@
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
+  font-family: "Saira", sans-serif;
   text-decoration: none;
-  color: #111;
+  color: #ffffff;
   font-weight: 800;
   letter-spacing: 0.02em;
 }
 .brand__logo {
-  width: 26px;
-  height: 26px;
+  width: 50px;
+  height: 50px;
   display: block;
 }
 .brand__txt {
-  font-size: 1.05rem;
+  font-size: 2rem;
+  padding-bottom: 3px;
   transform: translateY(1px);
 }
 
@@ -43,15 +45,15 @@
 ==================================== */
 .open-overlay {
   position: absolute;
-  right: 5rem;
-  top: 3.2rem;
+  right: 3rem;
+  top: 0.5rem;
   width: 34px;
   cursor: pointer;
   z-index: 100;
 }
 .open-overlay span {
   display: block;
-  height: 1px;
+  height: 2px;
   background: #fff;
   margin-top: 8px;
 }
@@ -79,6 +81,7 @@
 
 /* ====================================
   Overlay fullscreen (4 columnas)
+  – Ajuste clave: transiciona SOLO transform y se arma en el siguiente frame
 ==================================== */
 .overlay-navigation {
   position: fixed;
@@ -86,14 +89,18 @@
   z-index: 98;
   background: hsla(0, 0%, 0%, 0.8);
   transform: translateY(-100%);
+  will-change: transform;
+  pointer-events: none; /* evita clics mientras está arriba */
 }
 .overlay-slide-down {
-  transition: all 0.4s ease-in-out;
+  transition: transform 0.4s ease-in-out; /* solo transform, no 'all' */
   transform: translateY(0);
+  pointer-events: auto;
 }
 .overlay-slide-up {
-  transition: all 0.8s ease-in-out;
+  transition: transform 0.8s ease-in-out;
   transform: translateY(-100%);
+  pointer-events: auto;
 }
 
 .overlay-navigation nav,
@@ -122,7 +129,7 @@
   position: relative;
   color: #fff;
   text-transform: uppercase;
-  font: 300 0.9rem/1 "Work Sans", system-ui, sans-serif;
+  font: 300 0.9rem/1 "Saira", sans-serif;
   letter-spacing: 4px;
   text-decoration: none;
   display: block;
@@ -309,7 +316,7 @@
   }
 }
 
-/* Responsive: botón más cerca del borde en móvil */
+/* Responsive */
 @media (max-width: 640px) {
   .open-overlay {
     right: 1rem;

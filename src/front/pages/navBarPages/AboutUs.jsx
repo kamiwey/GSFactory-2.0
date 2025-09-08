@@ -10,8 +10,8 @@ export const AboutUs = () => {
                 minHeight: "100dvh",
                 display: "grid",
                 placeItems: "center",
-                backgroundColor: "#ffffffff", // Sky
-                color: "#060000ff"
+                backgroundColor: "#fdcea9", // Sky
+                color: "#ffffffff"
             }}
         >
             <h1 className="display-3 m-0">About Us</h1>
