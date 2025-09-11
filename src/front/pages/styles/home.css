@@ -284,4 +284,7 @@
   z-index: 1;
 }
 
-/* sin “velo” adicional */
+/* Quita el halo/blanco cuando ColorStage marca .no-glow (negro) */
+.colorStage__bg.no-glow {
+  background: linear-gradient(180deg, var(--bgStart), var(--bgEnd)) !important;
+}
