@@ -1,23 +1,25 @@
 @import url("https://fonts.googleapis.com/css2?family=Saira:wght@700;800&display=swap");
 @import "./tokens.css";
 
-/* Fondo global negro + scroll suave */
+/* ======= LAYOUT GLOBAL DEL HOME ======= */
 .home {
   min-height: 100dvh;
   background: #000;
   scroll-behavior: smooth;
 
-  /* ← Ajusta aquí la distancia que baja la flecha (px, vh o vw) */
-  --arrow-jump: 670px; /* p.ej. 60px, 560px, 60vh, etc. */
+  /* distancia de salto con la flecha */
+  --arrow-jump: 670px;
 }
 
-/* ---------- HERO ---------- */
+/* ---------- HERO (vídeo + títulos) ---------- */
 .hero {
   min-height: calc(100dvh - var(--nav-h, 52px));
   position: relative;
-  isolation: isolate;
-  --parY: 0px; /* desplazamiento del hero */
-  --p: 0; /* progreso 0..1 para fade del subtítulo */
+  isolation: isolate; /* crea nuevo stacking context */
+  z-index: 5; /* SIEMPRE por delante del fondo de ColorStage */
+
+  --parY: 0px;
+  --p: 0;
 }
 
 .hero__bg {
@@ -27,6 +29,7 @@
   overflow: hidden;
   background: #000;
 }
+
 .hero__video {
   position: absolute;
   inset: 0;
@@ -38,24 +41,26 @@
   transform: translate3d(0, calc(var(--parY) * -0.15), 0);
 }
 
-/* Fade inferior ANCLADO al vídeo */
+/* Fade inferior del vídeo con mask-image (cuando hay soporte) */
 @supports (mask-image: linear-gradient(#fff, #fff)) {
   .hero__video {
     -webkit-mask-image: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 1) 83%,
-      rgba(255, 255, 255, 0) 95%
+      rgba(255, 255, 255, 1) 82%,
+      rgba(255, 255, 255, 0) 96%
     );
     mask-image: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 1) 83%,
-      rgba(255, 255, 255, 0) 95%
+      rgba(255, 255, 255, 1) 82%,
+      rgba(255, 255, 255, 0) 96%
     );
   }
   .hero__fadeBottom {
     display: none;
   }
 }
+
+/* Fallback breve del fade si no hay mask-image (sin “velos” largos) */
 @supports not (mask-image: linear-gradient(#fff, #fff)) {
   .hero__fadeBottom {
     position: absolute;
@@ -63,22 +68,20 @@
     right: 0;
     bottom: 0;
     z-index: 1;
-    height: clamp(120px, 22vh, 280px);
+    height: 18vh;
     background: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0) 83%,
-      rgba(0, 0, 0, 1) 95%
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.75) 90%,
+      rgba(0, 0, 0, 1) 100%
     );
     pointer-events: none;
-    transform: translate3d(0, calc(var(--parY) * -0.15), 0);
-    will-change: transform;
   }
 }
 
-/* Contenido del hero */
 .hero__content {
   position: relative;
-  z-index: 2;
+  z-index: 6; /* por encima del fade y del fondo */
   display: grid;
   place-items: center;
   text-align: center;
@@ -86,6 +89,7 @@
   padding-left: var(--gap);
   padding-right: var(--gap);
 }
+
 .hero__title {
   font-family: "Saira", sans-serif;
   text-transform: uppercase;
@@ -96,6 +100,7 @@
   transform: translate3d(0, calc(var(--parY) * 0.42), 0);
   will-change: transform;
 }
+
 .hero__subtitle {
   font-family: "Saira", sans-serif;
   text-transform: uppercase;
@@ -109,7 +114,6 @@
   will-change: transform, opacity;
 }
 
-/* Flecha (sin círculo) sincronizada con el vídeo */
 .hero__arrow {
   display: inline-grid;
   place-items: center;
@@ -129,20 +133,17 @@
   transform: translateY(-2px);
 }
 
-/* ---------- Sección siguiente ---------- */
+/* ---------- BLOQUE QUE PINNEA BAJO EL HERO ---------- */
 .section {
   padding: 12vh var(--gap);
 }
 
-/* No solapamos ni movemos el punto de aparición */
 .section--spacer {
-  --pinBottom: 10vh; /* altura fija donde se “ancla” mientras dura el hero */
-  --pinHeight: 0px; /* la medimos en JS para encajarla al soltar */
+  --pinBottom: 10vh;
+  --pinHeight: 0px;
   min-height: 120vh;
   position: relative;
 }
-
-/* Bloque pin */
 .section__pin {
   display: grid;
   align-content: end;
@@ -151,16 +152,14 @@
   margin-inline: auto;
 }
 
-/* Pinned (mientras 0<p<1) */
+/* estados del pin */
 .section--spacer.pinning .section__pin {
   position: fixed;
   left: 0;
   right: 0;
   bottom: var(--pinBottom);
-  z-index: 1;
+  z-index: 2;
 }
-
-/* Al terminar el hero, recolocamos el bloque donde terminó el fixed */
 .section--spacer.done .section__pin {
   position: relative;
   margin-top: calc(100vh - var(--pinBottom) - var(--pinHeight));
@@ -184,7 +183,7 @@
   }
 }
 
-/* ====== Dos paneles verticales tras el tramo horizontal ====== */
+/* ---------- PANEL VERTICAL (después del tramo horizontal) ---------- */
 .vstack {
   padding: 0;
 }
@@ -211,7 +210,7 @@
   opacity: 0.8;
 }
 
-/* === Botón fijo: volver arriba del Home === */
+/* ---------- BOTÓN FLOTANTE ARRIBA ---------- */
 .homeTopBtn {
   position: fixed;
   right: var(--gap, 20px);
@@ -256,11 +255,14 @@
     transition: none;
   }
 }
+
+/* ---------- COLORSTAGE (fondo sticky) ---------- */
 .colorStage {
   position: relative;
-  --bgStart: #0a0a0a;
-  --bgEnd: #000;
-}
+  z-index: 0;
+} /* detrás del hero */
+
+/* El fondo que pintamos desde JS con --bgStart / --bgEnd */
 .colorStage__bg {
   position: sticky;
   top: 0;
@@ -272,15 +274,14 @@
       rgba(255, 255, 255, 0.06),
       transparent 70%
     ),
-    linear-gradient(180deg, var(--bgStart), var(--bgEnd));
-  transition: background 160ms linear;
+    linear-gradient(180deg, var(--bgStart, #000000), var(--bgEnd, #000000));
+  transition: background 120ms linear;
 }
+
+/* contenido del tramo horizontal por encima del fondo sticky */
 .colorStage__content {
   position: relative;
   z-index: 1;
 }
-@media (prefers-reduced-motion: reduce) {
-  .colorStage__bg {
-    transition: none;
-  }
-}
+
+/* sin “velo” adicional */

@@ -1,74 +1,108 @@
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 /**
- * ColorStage
- * Fija un fondo sticky detrás del tramo horizontal y
- * va interpolando colores entre paneles mientras haces scroll.
+ * Paleta de fondos por secciones.
+ * Si tenías una importación tipo `PALETTE_HOME` la puedes mantener,
+ * pero aquí la inlinéo para que funcione tal cual.
  *
- * Cómo calcula el progreso:
- * - Lee el `left` del PRIMER panel (.hstrip__panel) respecto al viewport
- *   y lo divide por el ancho de la ventana: eso nos da un índice flotante
- *   i..i+1 sin depender de scrollLeft (tu carril usa transform).
+ * IMPORTANTE: añadimos un color 0 NEGRO para que el primer blend
+ * sea negro -> azul (sección 1) con el MISMO motor que el resto.
  */
-export default function ColorStage({ colors, children }) {
-    const stageRef = useRef(null);
+const PALETTE_HOME = [
+    // === color 0: NEGRO (nuevo) ===
+    { start: "#000000", end: "#000000" },
+
+    // === color 1..6: tus colores por secciones (ejemplo tomado de tus capturas) ===
+    // Sección 1 (azules)
+    { start: "#3D7CC8", end: "#183E83" },
+    // Sección 2 (verde teal)
+    { start: "#2B958F", end: "#1E7470" },
+    // Sección 3 (verde)
+    { start: "#3E9B49", end: "#2E7B38" },
+    // Sección 4 (morado)
+    { start: "#4D3EC0", end: "#2E279A" },
+    // Sección 5 (rojo)
+    { start: "#C64549", end: "#A23338" },
+    // Sección 6 (mostaza)
+    { start: "#A5A01A", end: "#6F6C10" },
+];
+
+// Utilidades de mezcla de color
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const hexToRgb = (hex) => {
+    const s = hex.replace("#", "");
+    const n = parseInt(s.length === 3 ? s.split("").map(c => c + c).join("") : s, 16);
+    return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+};
+const rgbToHex = ({ r, g, b }) =>
+    "#" +
+    [r, g, b]
+        .map((v) => {
+            const s = Math.round(v).toString(16);
+            return s.length === 1 ? "0" + s : s;
+        })
+        .join("");
+
+const mixHex = (a, b, t) => {
+    const ca = hexToRgb(a);
+    const cb = hexToRgb(b);
+    return rgbToHex({
+        r: ca.r + (cb.r - ca.r) * t,
+        g: ca.g + (cb.g - ca.g) * t,
+        b: ca.b + (cb.b - ca.b) * t,
+    });
+};
+
+export default function ColorStage({ children }) {
+    const rootRef = useRef(null);
+    const bgRef = useRef(null);
 
     useEffect(() => {
-        const stage = stageRef.current;
-        if (!stage) return;
+        const root = rootRef.current;
+        const bg = bgRef.current;
+        if (!root || !bg) return;
 
-        const hexToRgb = (hex) => {
-            const h = hex.replace("#", "");
-            const v = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
-            return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
-        };
-        const mix = (c1, c2, t) => {
-            const [r1, g1, b1] = hexToRgb(c1);
-            const [r2, g2, b2] = hexToRgb(c2);
-            const lerp = (a, b) => Math.round(a + (b - a) * t);
-            return `rgb(${lerp(r1, r2)}, ${lerp(g1, g2)}, ${lerp(b1, b2)})`;
-        };
-
-        const getPanels = () => Array.from(stage.querySelectorAll(".hstrip__panel"));
+        const palette = PALETTE_HOME; // ya incluye negro en [0]
+        const steps = palette.length - 1; // nº de transiciones
 
         let raf = 0;
+
         const update = () => {
-            const panels = getPanels();
-            if (!panels.length) return;
+            const rect = root.getBoundingClientRect();
+            const vh = window.innerHeight;
 
-            const vw = Math.max(1, window.innerWidth);
-            const left0 = panels[0].getBoundingClientRect().left; // negativo al avanzar
-            const idxFloat = Math.max(0, Math.min(panels.length - 1, -left0 / vw));
+            // progreso vertical del tramo ColorStage en [0..1]
+            // 0 cuando su borde superior toca la parte inferior del viewport (sale del hero),
+            // 1 cuando está completamente recorrido.
+            const total = rect.height - vh;
+            const localY = clamp((vh - rect.top) / Math.max(1, vh + total)); // robusto
+            const p = clamp(localY);
 
-            const i = Math.floor(idxFloat);
-            const t = Math.min(1, Math.max(0, idxFloat - i));
+            // mapeamos progreso global [0..1] a “pasos” de paleta
+            const g = p * steps;
+            const i = Math.floor(g);
+            const t = clamp(g - i);
 
-            const from = colors[i] || colors[colors.length - 1];
-            const to = colors[i + 1] || from;
+            const from = palette[i] ?? palette[0];
+            const to = palette[i + 1] ?? palette[i];
 
-            stage.style.setProperty("--bgStart", mix(from.top, to.top, t));
-            stage.style.setProperty("--bgEnd", mix(from.bottom, to.bottom, t));
+            const bgStart = mixHex(from.start, to.start, t);
+            const bgEnd = mixHex(from.end, to.end, t);
+
+            // variables CSS que usa tu CSS en .colorStage__bg
+            bg.style.setProperty("--bgStart", bgStart);
+            bg.style.setProperty("--bgEnd", bgEnd);
+
+            raf = requestAnimationFrame(update);
         };
 
-        const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(update); };
-        update();
-        window.addEventListener("scroll", onScroll, { passive: true });
-        window.addEventListener("resize", onScroll);
-
-        const ro = new ResizeObserver(onScroll);
-        ro.observe(stage);
-
-        return () => {
-            window.removeEventListener("scroll", onScroll);
-            window.removeEventListener("resize", onScroll);
-            ro.disconnect();
-            cancelAnimationFrame(raf);
-        };
-    }, [colors]);
+        raf = requestAnimationFrame(update);
+        return () => cancelAnimationFrame(raf);
+    }, []);
 
     return (
-        <section ref={stageRef} className="colorStage">
-            <div className="colorStage__bg" aria-hidden="true" />
+        <section className="colorStage" ref={rootRef}>
+            <div className="colorStage__bg" ref={bgRef} />
             <div className="colorStage__content">{children}</div>
         </section>
     );
