@@ -256,3 +256,31 @@
     transition: none;
   }
 }
+.colorStage {
+  position: relative;
+  --bgStart: #0a0a0a;
+  --bgEnd: #000;
+}
+.colorStage__bg {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+      90% 55% at 50% 0%,
+      rgba(255, 255, 255, 0.06),
+      transparent 70%
+    ),
+    linear-gradient(180deg, var(--bgStart), var(--bgEnd));
+  transition: background 160ms linear;
+}
+.colorStage__content {
+  position: relative;
+  z-index: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .colorStage__bg {
+    transition: none;
+  }
+}

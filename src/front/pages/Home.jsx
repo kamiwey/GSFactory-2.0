@@ -1,16 +1,27 @@
 import React, { useEffect, useRef } from "react";
-import useGlobalReducer from "../hooks/useGlobalReducer.jsx";
-import "../pages/styles/home.css";
+import useGlobalReducer from "../hooks/useGlobalReducer";
+import "./styles/home.css";
 import heroVideo from "../assets/video/hero-video.mp4";
+
 import HorizontalStrip from "../components/HorizontalStrip";
+import ColorStage from "../components/ColorStage";
+
+// Paleta (6 secciones; top/bottom para un degradado sutil)
+const PALETTE = [
+	{ top: "#4a86d9", bottom: "#0f3f86" }, // 1 Azul
+	{ top: "#2aa0a0", bottom: "#1f7073" }, // 2 Verde azulado
+	{ top: "#39a84e", bottom: "#2b6f39" }, // 3 Verde
+	{ top: "#5240c9", bottom: "#2d1f90" }, // 4 Morado
+	{ top: "#bb8d43", bottom: "#9c702f" }, // 5 Ocre
+	{ top: "#cf4e50", bottom: "#a43a3c" }, // 6 Rojo
+];
 
 export const Home = () => {
 	const { dispatch } = useGlobalReducer();
 	const videoRef = useRef(null);
 	const heroRef = useRef(null);
-	const homeRef = useRef(null); // ← leeremos --arrow-jump desde aquí
+	const homeRef = useRef(null);
 
-	// (Opcional) ping al backend del boilerplate
 	useEffect(() => {
 		const f = async () => {
 			try {
@@ -24,7 +35,7 @@ export const Home = () => {
 		f();
 	}, [dispatch]);
 
-	// Autoplay robusto (vídeo en mute)
+	// Autoplay robusto
 	useEffect(() => {
 		const vid = videoRef.current;
 		if (!vid) return;
@@ -52,7 +63,7 @@ export const Home = () => {
 		};
 	}, []);
 
-	// Parallax clamp del hero — PUBLICA --parY y --p
+	// Parallax del hero (publica --parY y --p)
 	useEffect(() => {
 		const el = heroRef.current;
 		if (!el) return;
@@ -63,7 +74,6 @@ export const Home = () => {
 			const y = Math.max(0, -rect.top);
 			const range = h * 0.45;
 			const p = Math.max(0, Math.min(1, y / range));
-
 			el.style.setProperty("--parY", `${y}px`);
 			el.style.setProperty("--p", p.toFixed(4));
 		};
@@ -78,26 +88,20 @@ export const Home = () => {
 		};
 	}, []);
 
-	// ↓ Flecha: baja una distancia configurable (CSS var --arrow-jump en .home)
+	// Flecha: bajar desde el hero
 	const scrollDown = (e) => {
 		e.preventDefault();
-		const scope = homeRef.current || document.documentElement;
-		let raw = getComputedStyle(scope).getPropertyValue("--arrow-jump").trim();
+		const heroEl = heroRef.current;
+		if (!heroEl) return;
 
-		// Permite px / vh / vw
-		let jump = parseFloat(raw);
-		if (raw.endsWith("vh")) jump = (parseFloat(raw) / 100) * window.innerHeight;
-		else if (raw.endsWith("vw")) jump = (parseFloat(raw) / 100) * window.innerWidth;
+		const navH = parseFloat(
+			getComputedStyle(document.documentElement).getPropertyValue("--nav-h")
+		) || 72;
 
-		if (!Number.isFinite(jump)) jump = 480; // fallback
-		window.scrollTo({
-			top: Math.max(0, Math.round(window.scrollY + jump)),
-			left: window.scrollX,             // no tocar eje X
-			behavior: "smooth",
-		});
+		const target = heroEl.getBoundingClientRect().bottom + window.scrollY - (navH + 8);
+		window.scrollTo({ top: Math.max(0, Math.round(target)), left: 0, behavior: "smooth" });
 	};
 
-	// ⬆️ Botón “volver arriba” (siempre visible en Home)
 	const scrollToTop = (e) => {
 		e?.preventDefault?.();
 		const prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -126,7 +130,6 @@ export const Home = () => {
 					<h1 className="hero__title">GS FACTORY</h1>
 					<p className="hero__subtitle">DISEÑO + 3D + TECNOLOGÍA</p>
 
-					{/* Flecha hacia abajo: decide la distancia con --arrow-jump */}
 					<a className="hero__arrow" href="#next" aria-label="Bajar" onClick={scrollDown}>
 						<svg viewBox="0 0 24 24" className="hero__arrowIcon" aria-hidden="true">
 							<path d="M6 9l6 6 6-6" />
@@ -135,40 +138,29 @@ export const Home = () => {
 				</div>
 			</section>
 
-			{/* ============== HORIZONTAL PINNED (6 paneles) ============== */}
-			<HorizontalStrip panels={6} navbarHeight={72} />
+			{/* ======= FONDO DE COLOR + TRAMO HORIZONTAL ======= */}
+			<ColorStage colors={PALETTE}>
+				<HorizontalStrip panels={6} navbarHeight={72} />
+			</ColorStage>
 
-			{/* ============== DOS PANELES VERTICALES FULLSCREEN ============== */}
+			{/* (lo demás de tu Home se mantiene tal cual) */}
 			<section className="vstack" aria-label="Bloque vertical tras horizontal">
 				<div className="vpanel">
 					<div className="vpanel__inner">
 						<h2 className="vpanel__title">Panel 7</h2>
-						<p className="vpanel__text">
-							Primer panel vertical justo después del tramo horizontal. Ocupa toda la altura visible.
-						</p>
+						<p className="vpanel__text">Contenido de muestra vertical.</p>
 					</div>
 				</div>
 				<div className="vpanel vpanel--last">
 					<div className="vpanel__inner">
 						<h2 className="vpanel__title">Panel 8</h2>
-						<p className="vpanel__text">
-							Segundo panel vertical a pantalla completa antes de volver al flujo normal.
-						</p>
+						<p className="vpanel__text">Contenido de muestra vertical.</p>
 					</div>
 				</div>
 			</section>
 
-			{/* ============== SECCIÓN NORMAL (tu contenido real) ============== */}
-			<section id="next" className="section section--spacer">
-				<h2>Sección siguiente (vertical)</h2>
-				<p>
-					Tras el horizontal pinneado y los dos paneles verticales, el documento vuelve al flujo
-					vertical normal hasta el footer.
-				</p>
-			</section>
-
-			{/* ⬆️ Botón fijo (volver arriba) */}
-			<button className="homeTopBtn" aria-label="Volver arriba" onClick={scrollToTop}>
+			{/* Botón subir */}
+			<button className="homeTopBtn" onClick={scrollToTop} aria-label="Volver arriba">
 				<svg viewBox="0 0 24 24" className="homeTopBtn__icon" aria-hidden="true">
 					<path d="M6 15l6-6 6 6" />
 				</svg>
