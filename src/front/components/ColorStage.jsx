@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from "react";
 
 /**
- * Mantiene tu lógica de mezcla de colores y añade:
- *  - Detección de "near-black" para apagar el halo blanco (clase .no-glow)
+ * Fondo de color con mezcla y detección de near-black.
+ * Ajustado para retrasar la transición de color y mantener
+ * el color fijo cuando los paneles están centrados.
  */
 export default function ColorStage({
     palette = ["#000000", "#4586d7ff", "#41a152ff", "#4d44b6ff", "#b28c48ff", "#a39d1fff", "#A3A31E"],
-    hold0 = 0.0, // deja tu valor actual; no lo uso para el fix del brillo
+    hold0 = 0.0,
     children,
 }) {
     const sectionRef = useRef(null);
@@ -45,7 +46,7 @@ export default function ColorStage({
             return rgbToHex({ r: r * f, g: g * f, b: b * f });
         };
 
-        // luminancia relativa (WCAG) para detectar "casi negro"
+        // Luminancia relativa (WCAG) para detectar casi negro
         const luminance = (hex) => {
             const { r, g, b } = hexToRgb(hex);
             const norm = [r, g, b].map((v) => {
@@ -56,16 +57,45 @@ export default function ColorStage({
         };
 
         const onScroll = () => {
-            const start = el.offsetTop;
-            const end = start + el.scrollHeight - window.innerHeight;
-            const t = clamp((window.scrollY - start) / Math.max(1, end - start), 0, 1);
+            // Progreso alineado con HorizontalStrip (si existe)
+            // para que el color quede fijo cuando cada panel está centrado.
+            const hwrap = el.querySelector?.('.hstrip');
+            const hsticky = hwrap?.querySelector?.('.hstrip__sticky');
+            const htrack = hwrap?.querySelector?.('.hstrip__track');
 
-            // repartimos 0..1 entre (palette.length-1) transiciones
-            const segments = palette.length - 1;
-            const scaled = t * segments;
+            let p = 0; // progreso 0..1 del tramo horizontal
+            if (hwrap && hsticky && htrack && (hwrap.dataset.mode !== 'vertical')) {
+                const topPx = parseFloat(getComputedStyle(hsticky).top || '0') || 0; // navbarHeight
+                const totalX = Math.max(0, htrack.scrollWidth - hsticky.clientWidth);
+                const top = hwrap.getBoundingClientRect().top;
+                const scrolledY = Math.min(totalX, Math.max(0, topPx - top));
+                p = totalX > 0 ? scrolledY / totalX : 0;
+            } else {
+                // Fallback: usar el tramo del propio ColorStage
+                const start = el.offsetTop;
+                const end = start + el.scrollHeight - window.innerHeight;
+                p = clamp((window.scrollY - start) / Math.max(1, end - start), 0, 1);
+            }
+
+            // Repartimos 0..1 entre (palette.length-1) transiciones
+            const segments = Math.max(1, palette.length - 1);
+            const scaled = p * segments;
             const seg = clamp(Math.floor(scaled), 0, segments - 1);
-            const localT = scaled - seg;
-            const eased = localT * localT * (3 - 2 * localT); // suavizado leve
+            const localT = scaled - seg; // 0..1 dentro del segmento
+
+            // Plateau/hold para retrasar el cambio cerca de centros
+            const HOLD = 0.18; // fracción mantenida por extremo del segmento
+            const plateau = (t) => {
+                if (HOLD <= 0) return t;
+                const lo = HOLD;
+                const hi = 1 - HOLD;
+                if (t <= lo) return 0;
+                if (t >= hi) return 1;
+                return (t - lo) / (hi - lo);
+            };
+
+            const t2 = plateau(localT);
+            const eased = t2 * t2 * (3 - 2 * t2); // suavizado leve
 
             const from = palette[seg];
             const to = palette[seg + 1];
@@ -74,13 +104,12 @@ export default function ColorStage({
             const top = base;
             const bottom = shade(base, 0.78);
 
-            bg.style.setProperty("--bgStart", top);
-            bg.style.setProperty("--bgEnd", bottom);
+            bg.style.setProperty('--bgStart', top);
+            bg.style.setProperty('--bgEnd', bottom);
 
-            // --- NUEVO: apaga el halo cuando el color actual es muy oscuro (casi negro)
-            // umbral de luminancia muy bajo; y además mantenlo off en el primer segmento
+            // Apaga el halo cuando el color actual es muy oscuro (casi negro)
             const nearBlack = luminance(base) < 0.02 || (seg === 0 && localT < 0.15);
-            bg.classList.toggle("no-glow", !!nearBlack);
+            bg.classList.toggle('no-glow', !!nearBlack);
         };
 
         const onResize = () => onScroll();
@@ -101,3 +130,4 @@ export default function ColorStage({
         </section>
     );
 }
+
