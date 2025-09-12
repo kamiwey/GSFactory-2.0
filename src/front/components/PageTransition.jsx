@@ -1,47 +1,55 @@
 import React, { useEffect, useRef, useState } from "react";
+import gsMono from "../assets/img/logo-color.svg";
 
-/* IMPORTA TUS LOGOS CUANDO LOS TENGAS
-import g1 from "../assets/logos/g-1.svg";
-import g2 from "../assets/logos/g-2.svg";
-import g3 from "../assets/logos/g-3.svg";
-import g4 from "../assets/logos/g-4.svg";
-import g5 from "../assets/logos/g-5.svg";
-import g6 from "../assets/logos/g-6.svg";
-const logos = [g1, g2, g3, g4, g5, g6];
-*/
-const logos = []; // fallback tipográfico "G"
+// Paleta para las cortinas (rota en cada transición)
+const COLORS = [
+    "#3E78D1", // azul
+    "#2DA57F", // verde
+    "#5342D9", // violeta
+    "#B5823E", // ocre
+    "#D24545", // rojo
+    "#A3A31E", // oliva
+    "#111111", // casi negro (por si queréis uno oscuro)
+];
 
-// Debe casar con stylesGlobal/transitions.css
+// Debe casar con transitions.css existente
 const FADE_IN = 180, IN = 420, HOLD = 260, OUT = 520;
-// sweep vertical dura IN+HOLD+OUT (=1200ms). Cover real = fade_in + 40% del sweep
-const COVER_MS = FADE_IN + Math.round(0.4 * (IN + HOLD + OUT)); // 180 + 480 = 660ms
-const TOTAL_MS = FADE_IN + IN + HOLD + OUT; // 1380ms
+const COVER_MS = FADE_IN + Math.round(0.4 * (IN + HOLD + OUT));
+const TOTAL_MS = FADE_IN + IN + HOLD + OUT;
 
 export default function PageTransition() {
     const [active, setActive] = useState(false);
-    const [logoIndex, setLogoIndex] = useState(0);
+    const [logoIndex, setLogoIndex] = useState(0); // por si algún día volvéis a rotar logos
+    const [colorIdx, setColorIdx] = useState(0);
+    const lastColor = useRef(-1);
     const lastIndex = useRef(-1);
     const timers = useRef({ cover: null, end: null, off: null });
-    const running = useRef(false); // evita re-disparos
+    const running = useRef(false);
 
-    // Pre-carga de logos (si hay)
+    // Pre-carga (si añadís más SVGs algún día)
     useEffect(() => {
-        logos.forEach(src => { const img = new Image(); img.src = src; });
+        const img = new Image();
+        img.src = gsMono;
     }, []);
+
+    const pickNextColor = () => {
+        if (COLORS.length <= 1) return 0;
+        let next = Math.floor(Math.random() * COLORS.length);
+        if (next === lastColor.current) next = (next + 1) % COLORS.length;
+        lastColor.current = next;
+        return next;
+    };
 
     const trigger = () => {
         if (running.current) return;
         running.current = true;
 
-        // Rotar logo (evitar repetir)
-        if (logos.length > 1) {
-            let next = Math.floor(Math.random() * logos.length);
-            if (next === lastIndex.current) next = (next + 1) % logos.length;
-            lastIndex.current = next;
-            setLogoIndex(next);
-        } else if (logos.length === 1) {
-            setLogoIndex(0);
-        }
+        // Color para ESTA transición
+        setColorIdx(pickNextColor());
+
+        // Logo (queda el mono fijo, pero mantenemos el índice por compatibilidad)
+        setLogoIndex(0);
+        lastIndex.current = 0;
 
         setActive(true);
 
@@ -61,37 +69,34 @@ export default function PageTransition() {
         }, TOTAL_MS);
     };
 
-    // Disparo por el router (evento global)
     useEffect(() => {
         const onCustom = () => trigger();
         window.addEventListener("gs:transition", onCustom);
         return () => window.removeEventListener("gs:transition", onCustom);
     }, []);
 
-    // Back/forward: maquillamos igual
     useEffect(() => {
         const onPop = () => trigger();
         window.addEventListener("popstate", onPop);
         return () => window.removeEventListener("popstate", onPop);
     }, []);
 
-    // Limpieza
     useEffect(() => () => {
-        Object.values(timers.current).forEach(t => clearTimeout(t));
+        Object.values(timers.current).forEach((t) => clearTimeout(t));
     }, []);
 
-    const src = logos.length ? logos[logoIndex] : null;
+    const styleVars = { "--pt-accent": COLORS[colorIdx] };
 
     return (
-        <div className={`pt ${active ? "is-active" : ""}`} aria-hidden="true">
-            {/* orden: fade blanco → cortina → logo */}
+        <div className={`pt ${active ? "is-active" : ""}`} aria-hidden="true" style={styleVars}>
+            {/* orden: fade blanco → cortinas → logo */}
             <div className="pt__fade" />
             <div className="pt__track">
                 <div className="pt__panel" />
                 <div className="pt__panel" />
             </div>
             <div className="pt__logo">
-                {src ? <img className="pt__img" src={src} alt="GS logo" /> : <span className="pt__g">GS</span>}
+                <img className="pt__img" src={gsMono} alt="GS Factory" />
             </div>
         </div>
     );

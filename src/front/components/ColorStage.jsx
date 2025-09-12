@@ -1,16 +1,15 @@
-import React, { useEffect, useRef } from "react";
+﻿import React, { useEffect, useRef } from "react";
 
 /**
  * ColorStage
- * - Fondo con degradado controlado por scroll.
- * - Mantiene negro debajo del video hasta que el hero sale por arriba.
- * - Desde ese punto hasta el pin, mezcla negro -> azul para que el Panel 1 llegue azul completo.
- * - Con el pin activo, sincroniza cada transicion con el centro de los paneles.
+ * - Negro bajo el vídeo hasta que el hero sale por arriba.
+ * - Fundido negro→azul hasta que entra el pin del horizontal.
+ * - Con pin activo: transiciones por panel alineadas a centro + plateau.
+ * - NUEVO: al terminar el horizontal, micro-fade del color del panel 6 → negro
+ *          en un pequeño tramo (SMOOTH_PX), luego negro fijo (paneles 7 y 8).
  */
 export default function ColorStage({
-  // Si se pasa, usar [{top,bottom}, ...] (uno por panel visible)
-  colors = null,
-  // Alternativa simple con hex; si empieza en negro, se toma como stop inicial.
+  colors = null, // [{top,bottom}, ...] opcional
   palette = ["#000000", "#4586d7ff", "#41a152ff", "#4d44b6ff", "#b28c48ff", "#a39d1fff", "#A3A31E"],
   hold0 = 0.0,
   children,
@@ -59,11 +58,10 @@ export default function ColorStage({
       return 0.2126 * norm[0] + 0.7152 * norm[1] + 0.0722 * norm[2];
     };
 
-    const HOLD = 0.14; // mantiene color pleno alrededor del centro
+    const HOLD = 0.14; // plateau alrededor del centro del panel
     const plateau = (t) => {
       if (HOLD <= 0) return t;
-      const lo = HOLD;
-      const hi = 1 - HOLD;
+      const lo = HOLD, hi = 1 - HOLD;
       if (t <= lo) return 0;
       if (t >= hi) return 1;
       return (t - lo) / (hi - lo);
@@ -75,7 +73,7 @@ export default function ColorStage({
       const htrack = hwrap?.querySelector?.(".hstrip__track");
       const hero = document.querySelector?.(".hero");
 
-      // Determinar el color del Panel 1 (azul) y su bottom sombreado
+      // Color base del primer panel (azul)
       const firstTop = (() => {
         if (Array.isArray(colors) && colors.length) {
           const c = colors[0] || {};
@@ -93,25 +91,25 @@ export default function ColorStage({
       })();
 
       if (hwrap && hsticky && htrack && (hwrap.dataset.mode !== "vertical")) {
-        const topPx = parseFloat(getComputedStyle(hsticky).top || "0") || 0; // navbarHeight
+        const topPx = parseFloat(getComputedStyle(hsticky).top || "0") || 0; // altura navbar (offset sticky)
         const top = hwrap.getBoundingClientRect().top;
         const beforePin = top > topPx;
-        const totalX = Math.max(0, htrack.scrollWidth - hsticky.clientWidth);
 
-        // 1) Antes del pin: mantener NEGRO hasta que el hero desaparezca por arriba
+        const totalX = Math.max(0, htrack.scrollWidth - hsticky.clientWidth);
+        const panelW = Math.max(1, hsticky.clientWidth);
+
+        // 1) Antes del pin: negro hasta que el hero desaparezca; luego fundido negro→azul
         if (beforePin) {
           const heroBottom = hero?.getBoundingClientRect?.().bottom ?? Infinity;
-          const heroOut = heroBottom <= topPx + 0.5; // letras han desaparecido
+          const heroOut = heroBottom <= topPx + 0.5;
           if (!heroOut) {
             bg.style.setProperty("--bgStart", "#000000");
             bg.style.setProperty("--bgEnd", "#000000");
             bg.classList.add("no-glow");
             return;
           }
-
-          // 2) Entre heroOut y pin: mezclar NEGRO -> AZUL para llegar con azul completo al pin
-          const d1 = Math.max(0, topPx - heroBottom); // progreso desde que el hero salio
-          const d2 = Math.max(0, top - topPx);        // distancia restante hasta pin
+          const d1 = Math.max(0, topPx - heroBottom);
+          const d2 = Math.max(0, top - topPx);
           const s = (d1 + d2) > 0 ? d1 / (d1 + d2) : 1; // 0 en heroOut, 1 en pin
           const t2 = plateau(clamp(s, 0, 1));
           const eased = t2 * t2 * (3 - 2 * t2);
@@ -124,56 +122,11 @@ export default function ColorStage({
           return;
         }
 
-        // Si ya pasamos el final del wrap horizontal, continuar la transición en la parte vertical
-        if (!beforePin && (topPx - top) > totalX + 0.5) {
-          const vstack = el.querySelector?.('.vstack');
-          if (vstack) {
-            const startY = window.scrollY + vstack.getBoundingClientRect().top;
-            const endY = startY + vstack.scrollHeight - window.innerHeight;
-            const p = clamp((window.scrollY - startY) / Math.max(1, endY - startY), 0, 1);
+        // 2) Con pin activo o después del pin
+        const y = (topPx - top); // “avance” vertical equivalente al desplazamiento horizontal
+        const over = y - totalX;  // >0 cuando YA hemos terminado el horizontal
 
-            // partimos del último color y oscurecemos sutilmente hacia el final
-            let baseTop = [];
-            let baseBot = [];
-            if (Array.isArray(colors) && colors.length) {
-              baseTop = colors.map((c) => c.top ?? c.bottom ?? firstTop);
-              baseBot = colors.map((c) => c.bottom ?? c.top ?? firstBot);
-            } else {
-              const eff = Array.isArray(palette) && palette.length ? palette : ["#000000", firstTop];
-              const base = (eff[0] && luminance(eff[0]) < 0.02) ? eff.slice(1) : eff.slice();
-              baseTop = base.slice();
-              baseBot = base.map((hex) => shade(hex, 0.78));
-            }
-            const lastTop = baseTop[baseTop.length - 1] ?? firstTop;
-            const lastBot = baseBot[baseBot.length - 1] ?? firstBot;
-            const extTop = [lastTop, shade(lastTop, 0.9), shade(lastTop, 0.8)];
-            const extBot = [lastBot, shade(lastBot, 0.92), shade(lastBot, 0.84)];
-
-            const totalSeg = Math.max(1, extTop.length - 1); // 2 segmentos (paneles 7 y 8)
-            const scaled = p * totalSeg;
-            const seg = Math.max(0, Math.min(totalSeg - 1, Math.floor(scaled)));
-            const localT = scaled - seg;
-            const t2v = plateau(localT);
-            const eased = t2v * t2v * (3 - 2 * t2v);
-
-            const fromTop = extTop[seg];
-            const toTop = extTop[seg + 1] ?? extTop[seg];
-            const fromBot = extBot[seg];
-            const toBot = extBot[seg + 1] ?? extBot[seg];
-            const topHex = mix(fromTop, toTop, eased);
-            const bottomHex = mix(fromBot, toBot, eased);
-            bg.style.setProperty("--bgStart", topHex);
-            bg.style.setProperty("--bgEnd", bottomHex);
-            bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
-            return;
-          }
-        }
-
-        // 3) Con pin activo: transiciones por panel (desde AZUL hacia los siguientes)
-        const panelW = Math.max(1, hsticky.clientWidth);
-        const u = (topPx - top) / panelW; // 0 en centro del Panel 1
-
-        // Construye stops a partir del Panel 1 (sin negro)
+        // Construimos stops de color para los paneles 1..N (sin negro)
         let stopsTop = [];
         let stopsBot = [];
         if (Array.isArray(colors) && colors.length) {
@@ -186,93 +139,49 @@ export default function ColorStage({
           stopsBot = base.map((hex) => shade(hex, 0.78));
         }
 
-        const totalSeg = Math.max(1, stopsTop.length - 1);
-        const seg = Math.max(0, Math.min(totalSeg - 1, Math.floor(u)));
-        const localT = clamp(u - seg, 0, 1);
-        const t2 = plateau(localT);
-        const eased = t2 * t2 * (3 - 2 * t2);
+        // 2.a) AÚN dentro del horizontal (over <= 0): color por panel
+        if (over <= 0.5) {
+          const u = y / panelW; // 0 en centro del panel 1
+          const totalSeg = Math.max(1, stopsTop.length - 1);
+          const seg = Math.max(0, Math.min(totalSeg - 1, Math.floor(u)));
+          const localT = clamp(u - seg, 0, 1);
+          const t2 = plateau(localT);
+          const eased = t2 * t2 * (3 - 2 * t2);
 
-        const fromTop = stopsTop[seg];
-        const toTop = stopsTop[seg + 1] ?? stopsTop[seg];
-        const fromBot = stopsBot[seg];
-        const toBot = stopsBot[seg + 1] ?? stopsBot[seg];
+          const fromTop = stopsTop[seg];
+          const toTop = stopsTop[seg + 1] ?? stopsTop[seg];
+          const fromBot = stopsBot[seg];
+          const toBot = stopsBot[seg + 1] ?? stopsBot[seg];
 
-        const topHex = mix(fromTop, toTop, eased);
-        const bottomHex = mix(fromBot, toBot, eased);
+          const topHex = mix(fromTop, toTop, eased);
+          const bottomHex = mix(fromBot, toBot, eased);
+          bg.style.setProperty("--bgStart", topHex);
+          bg.style.setProperty("--bgEnd", bottomHex);
+          bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
+          return;
+        }
+
+        // 2.b) NUEVO: fin del horizontal → micro-fade colorFinal → negro
+        // ventana de suavizado proporcional al viewport para que se sienta igual en 1080p/4K
+        const SMOOTH_PX = Math.max(160, Math.min(320, window.innerHeight * 0.18));
+        const lastTop = stopsTop[stopsTop.length - 1];
+        const lastBot = stopsBot[stopsBot.length - 1];
+
+        const s = clamp(over / SMOOTH_PX, 0, 1);
+        const ease = s * s * (3 - 2 * s); // ease-in-out
+        const topHex = mix(lastTop, "#000000", ease);
+        const bottomHex = mix(lastBot, "#000000", ease);
+
         bg.style.setProperty("--bgStart", topHex);
         bg.style.setProperty("--bgEnd", bottomHex);
         bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
         return;
       }
 
-      // 4) Fallback (vertical): replica la logica de desktop (mantener negro bajo hero y mezclar hasta tocar navbar)
-      const getNavH = () => {
-        const v = getComputedStyle(document.documentElement).getPropertyValue("--nav-h") || "0";
-        const n = parseFloat(v);
-        return Number.isFinite(n) ? n : 0;
-      };
-      const topPx = getNavH();
-
-      const hwrapTop = hwrap?.getBoundingClientRect?.().top ?? Infinity;
-      const heroBottom = hero?.getBoundingClientRect?.().bottom ?? Infinity;
-
-      // 4.a) Hero aun visible: negro
-      if (heroBottom > topPx + 0.5) {
-        bg.style.setProperty("--bgStart", "#000000");
-        bg.style.setProperty("--bgEnd", "#000000");
-        bg.classList.add("no-glow");
-        return;
-      }
-
-      // 4.b) Hero salio pero el tramo aun no llego a la navbar: mezcla negro -> azul
-      if (hwrapTop > topPx + 0.5) {
-        const d1 = Math.max(0, topPx - heroBottom);
-        const d2 = Math.max(0, hwrapTop - topPx);
-        const s = (d1 + d2) > 0 ? d1 / (d1 + d2) : 1;
-        const t2 = plateau(clamp(s, 0, 1));
-        const eased = t2 * t2 * (3 - 2 * t2);
-
-        const topHex = mix("#000000", firstTop, eased);
-        const bottomHex = mix("#000000", firstBot, eased);
-        bg.style.setProperty("--bgStart", topHex);
-        bg.style.setProperty("--bgEnd", bottomHex);
-        bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
-        return;
-      }
-
-      // 4.c) Progreso normal por la seccion completa (desde azul hacia siguientes colores)
-      const start = el.offsetTop;
-      const end = start + el.scrollHeight - window.innerHeight;
-      const p = clamp((window.scrollY - start) / Math.max(1, end - start), 0, 1);
-
-      let stopsTop = [];
-      let stopsBot = [];
-      if (Array.isArray(colors) && colors.length) {
-        stopsTop = colors.map((c) => c.top ?? c.bottom ?? firstTop);
-        stopsBot = colors.map((c) => c.bottom ?? c.top ?? firstBot);
-      } else {
-        const eff = Array.isArray(palette) && palette.length ? palette : ["#000000", firstTop];
-        const base = (eff[0] && luminance(eff[0]) < 0.02) ? eff.slice(1) : eff.slice();
-        stopsTop = base.slice();
-        stopsBot = base.map((hex) => shade(hex, 0.78));
-      }
-
-      const totalSeg = Math.max(1, stopsTop.length - 1);
-      const scaled = p * totalSeg;
-      const seg = Math.max(0, Math.min(totalSeg - 1, Math.floor(scaled)));
-      const localT = scaled - seg;
-      const t2 = plateau(localT);
-      const eased = t2 * t2 * (3 - 2 * t2);
-
-      const fromTop = stopsTop[seg];
-      const toTop = stopsTop[seg + 1] ?? stopsTop[seg];
-      const fromBot = stopsBot[seg];
-      const toBot = stopsBot[seg + 1] ?? stopsBot[seg];
-      const topHex = mix(fromTop, toTop, eased);
-      const bottomHex = mix(fromBot, toBot, eased);
-      bg.style.setProperty("--bgStart", topHex);
-      bg.style.setProperty("--bgEnd", bottomHex);
-      bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
+      // 3) Fallback vertical (modo apilado): mantenemos negro seguro
+      bg.style.setProperty("--bgStart", "#000000");
+      bg.style.setProperty("--bgEnd", "#000000");
+      bg.classList.add("no-glow");
     };
 
     const onResize = () => onScroll();

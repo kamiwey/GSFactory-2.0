@@ -160,3 +160,12 @@
     animation: none !important;
   }
 }
+/* Color de las cortinas controlado por --pt-accent */
+.pt {
+  --pt-accent: #000;
+}
+
+/* Forzamos que ambas cortinas usen el color activo de la rotación */
+.pt.is-active .pt__panel {
+  background: var(--pt-accent) !important;
+}
