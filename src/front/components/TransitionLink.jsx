@@ -56,9 +56,17 @@ export default function TransitionLink({
 
         // Navega ya con la pantalla cubierta
         if (typeof to === "string") {
-            navigate(to, { replace, state });
+            const nextState = typeof state === "object" && state !== null
+                ? { ...state, __gs_tl: true }
+                : { __gs_tl: true };
+            navigate(to, { replace, state: nextState });
         } else if (to && typeof to === "object") {
-            navigate(to, { replace, state: to.state ?? state });
+            const mergedState = {
+                ...(to.state || {}),
+                ...(typeof state === "object" && state !== null ? state : {}),
+                __gs_tl: true,
+            };
+            navigate({ ...to }, { replace, state: mergedState });
         }
 
         armed.current = false;
