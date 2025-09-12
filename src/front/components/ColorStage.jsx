@@ -3,9 +3,9 @@ import React, { useEffect, useRef } from "react";
 /**
  * ColorStage
  * - Fondo con degradado controlado por scroll.
- * - Mantiene negro debajo del video hasta que el hero (GS FACTORY) sale por arriba.
- * - Desde ese punto hasta el pin, mezcla negro→azul para que el Panel 1 llegue azul completo.
- * - Con el pin activo, sincroniza cada transición con el centro de los paneles.
+ * - Mantiene negro debajo del video hasta que el hero sale por arriba.
+ * - Desde ese punto hasta el pin, mezcla negro -> azul para que el Panel 1 llegue azul completo.
+ * - Con el pin activo, sincroniza cada transicion con el centro de los paneles.
  */
 export default function ColorStage({
   // Si se pasa, usar [{top,bottom}, ...] (uno por panel visible)
@@ -96,6 +96,7 @@ export default function ColorStage({
         const topPx = parseFloat(getComputedStyle(hsticky).top || "0") || 0; // navbarHeight
         const top = hwrap.getBoundingClientRect().top;
         const beforePin = top > topPx;
+        const totalX = Math.max(0, htrack.scrollWidth - hsticky.clientWidth);
 
         // 1) Antes del pin: mantener NEGRO hasta que el hero desaparezca por arriba
         if (beforePin) {
@@ -108,8 +109,8 @@ export default function ColorStage({
             return;
           }
 
-          // 2) Entre heroOut y pin: mezclar NEGRO→AZUL para llegar con azul completo al pin
-          const d1 = Math.max(0, topPx - heroBottom); // progreso desde que el hero salió
+          // 2) Entre heroOut y pin: mezclar NEGRO -> AZUL para llegar con azul completo al pin
+          const d1 = Math.max(0, topPx - heroBottom); // progreso desde que el hero salio
           const d2 = Math.max(0, top - topPx);        // distancia restante hasta pin
           const s = (d1 + d2) > 0 ? d1 / (d1 + d2) : 1; // 0 en heroOut, 1 en pin
           const t2 = plateau(clamp(s, 0, 1));
@@ -121,6 +122,51 @@ export default function ColorStage({
           bg.style.setProperty("--bgEnd", bottomHex);
           bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
           return;
+        }
+
+        // Si ya pasamos el final del wrap horizontal, continuar la transición en la parte vertical
+        if (!beforePin && (topPx - top) > totalX + 0.5) {
+          const vstack = el.querySelector?.('.vstack');
+          if (vstack) {
+            const startY = window.scrollY + vstack.getBoundingClientRect().top;
+            const endY = startY + vstack.scrollHeight - window.innerHeight;
+            const p = clamp((window.scrollY - startY) / Math.max(1, endY - startY), 0, 1);
+
+            // partimos del último color y oscurecemos sutilmente hacia el final
+            let baseTop = [];
+            let baseBot = [];
+            if (Array.isArray(colors) && colors.length) {
+              baseTop = colors.map((c) => c.top ?? c.bottom ?? firstTop);
+              baseBot = colors.map((c) => c.bottom ?? c.top ?? firstBot);
+            } else {
+              const eff = Array.isArray(palette) && palette.length ? palette : ["#000000", firstTop];
+              const base = (eff[0] && luminance(eff[0]) < 0.02) ? eff.slice(1) : eff.slice();
+              baseTop = base.slice();
+              baseBot = base.map((hex) => shade(hex, 0.78));
+            }
+            const lastTop = baseTop[baseTop.length - 1] ?? firstTop;
+            const lastBot = baseBot[baseBot.length - 1] ?? firstBot;
+            const extTop = [lastTop, shade(lastTop, 0.9), shade(lastTop, 0.8)];
+            const extBot = [lastBot, shade(lastBot, 0.92), shade(lastBot, 0.84)];
+
+            const totalSeg = Math.max(1, extTop.length - 1); // 2 segmentos (paneles 7 y 8)
+            const scaled = p * totalSeg;
+            const seg = Math.max(0, Math.min(totalSeg - 1, Math.floor(scaled)));
+            const localT = scaled - seg;
+            const t2v = plateau(localT);
+            const eased = t2v * t2v * (3 - 2 * t2v);
+
+            const fromTop = extTop[seg];
+            const toTop = extTop[seg + 1] ?? extTop[seg];
+            const fromBot = extBot[seg];
+            const toBot = extBot[seg + 1] ?? extBot[seg];
+            const topHex = mix(fromTop, toTop, eased);
+            const bottomHex = mix(fromBot, toBot, eased);
+            bg.style.setProperty("--bgStart", topHex);
+            bg.style.setProperty("--bgEnd", bottomHex);
+            bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
+            return;
+          }
         }
 
         // 3) Con pin activo: transiciones por panel (desde AZUL hacia los siguientes)
@@ -159,7 +205,42 @@ export default function ColorStage({
         return;
       }
 
-      // 4) Fallback (vertical): progreso por sección a partir de azul
+      // 4) Fallback (vertical): replica la logica de desktop (mantener negro bajo hero y mezclar hasta tocar navbar)
+      const getNavH = () => {
+        const v = getComputedStyle(document.documentElement).getPropertyValue("--nav-h") || "0";
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n : 0;
+      };
+      const topPx = getNavH();
+
+      const hwrapTop = hwrap?.getBoundingClientRect?.().top ?? Infinity;
+      const heroBottom = hero?.getBoundingClientRect?.().bottom ?? Infinity;
+
+      // 4.a) Hero aun visible: negro
+      if (heroBottom > topPx + 0.5) {
+        bg.style.setProperty("--bgStart", "#000000");
+        bg.style.setProperty("--bgEnd", "#000000");
+        bg.classList.add("no-glow");
+        return;
+      }
+
+      // 4.b) Hero salio pero el tramo aun no llego a la navbar: mezcla negro -> azul
+      if (hwrapTop > topPx + 0.5) {
+        const d1 = Math.max(0, topPx - heroBottom);
+        const d2 = Math.max(0, hwrapTop - topPx);
+        const s = (d1 + d2) > 0 ? d1 / (d1 + d2) : 1;
+        const t2 = plateau(clamp(s, 0, 1));
+        const eased = t2 * t2 * (3 - 2 * t2);
+
+        const topHex = mix("#000000", firstTop, eased);
+        const bottomHex = mix("#000000", firstBot, eased);
+        bg.style.setProperty("--bgStart", topHex);
+        bg.style.setProperty("--bgEnd", bottomHex);
+        bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
+        return;
+      }
+
+      // 4.c) Progreso normal por la seccion completa (desde azul hacia siguientes colores)
       const start = el.offsetTop;
       const end = start + el.scrollHeight - window.innerHeight;
       const p = clamp((window.scrollY - start) / Math.max(1, end - start), 0, 1);
