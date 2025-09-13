@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
+import '../i18n/i18n'
 import { BrowserRouter } from 'react-router-dom'
 import AppRoutes from './routes'                 // <-- ahora exporta el componente de rutas con "gate"
 import { StoreProvider } from './hooks/useGlobalReducer'

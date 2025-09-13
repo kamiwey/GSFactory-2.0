@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
+import { PALETTE_HOME } from "../theme/paletteHome";
 
 /**
  * ColorStage
@@ -10,7 +11,9 @@
  */
 export default function ColorStage({
   colors = null, // [{top,bottom}, ...] opcional
-  palette = ["#000000", "#4586d7ff", "#41a152ff", "#4d44b6ff", "#b28c48ff", "#a39d1fff", "#A3A31E"],
+  palette = (Array.isArray(PALETTE_HOME)
+    ? PALETTE_HOME.map((c) => c.top ?? c.bottom)
+    : ["#000000", "#4586d7ff", "#41a152ff", "#4d44b6ff", "#b28c48ff", "#a39d1fff", "#A3A31E"]),
   hold0 = 0.0,
   children,
 }) {
@@ -123,7 +126,7 @@ export default function ColorStage({
         }
 
         // 2) Con pin activo o después del pin
-        const y = (topPx - top); // “avance” vertical equivalente al desplazamiento horizontal
+        const y = (topPx - top); // "avance" vertical equivalente al desplazamiento horizontal
         const over = y - totalX;  // >0 cuando YA hemos terminado el horizontal
 
         // Construimos stops de color para los paneles 1..N (sin negro)
@@ -202,3 +205,4 @@ export default function ColorStage({
     </section>
   );
 }
+

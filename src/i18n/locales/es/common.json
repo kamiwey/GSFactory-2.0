@@ -1,0 +1,17 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "projects": "Proyectos",
+    "collaborations": "Colaboraciones",
+    "nfc": "NFC",
+    "about": "Sobre nosotros",
+    "catalogue": "Catálogo"
+  },
+  "hero": { "artToys": "ART TOYS", "scrollDown": "Bajar", "backToTop": "Volver arriba" }
+  ,
+  "aria": {
+    "navbar": "Barra de navegación de GS",
+    "openMenu": "Abrir menú",
+    "changeLanguage": "Cambiar idioma"
+  }
+}

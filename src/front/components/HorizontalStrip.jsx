@@ -11,7 +11,7 @@ import "../stylesGlobal/horizontal-strip.css";
  *  - navbarHeight: px de la navbar sticky (default 72)
  *  - className: clase extra para el wrapper
  */
-export default function HorizontalStrip({
+function HorizontalStrip({
     panels = 6,
     navbarHeight = 55,
     className = "",
@@ -103,4 +103,6 @@ export default function HorizontalStrip({
         </section>
     );
 }
+
+export default React.memo(HorizontalStrip);
 

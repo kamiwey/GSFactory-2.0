@@ -288,3 +288,95 @@
 .colorStage__bg.no-glow {
   background: linear-gradient(180deg, var(--bgStart), var(--bgEnd)) !important;
 }
+
+/* === PANEL HERO (panel 1) === */
+.panel--hero {
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+
+.panelHero {
+  position: relative;
+  width: min(92vw, 1600px);
+  height: min(78vh, 900px);
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+
+/* Título por detrás — lo subimos un poco para que se lea mejor */
+/* === PANEL HERO (panel 1) === */
+.panelHero__word {
+  font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
+    sans-serif;
+  font-weight: 400;
+  line-height: 0.92;
+  margin: 0;
+  margin-bottom: 460px;
+  color: #fff;
+  text-align: center;
+  font-size: clamp(72px, 11vw, 240px);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1; /* detrás del mono */
+  pointer-events: none;
+  transform: translateY(-12%); /* <- antes -6%. Subido para que se lea más */
+}
+
+/* Ajuste en móviles */
+@media (max-width: 900px) {
+  .panelHero__word {
+    transform: translateY(-8%); /* <- antes -4% */
+    font-size: clamp(56px, 15vw, 180px);
+  }
+}
+
+/* Botón con el mono — reducimos tamaño y limitamos por altura de viewport */
+.panelHero__cta {
+  -webkit-tap-highlight-color: transparent;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  position: relative;
+  z-index: 2; /* delante */
+  cursor: pointer;
+  transform-origin: center bottom;
+  transition: transform 260ms ease;
+}
+
+.panelHero__cta:hover,
+.panelHero__cta:focus-visible {
+  transform: scale(1.1);
+  outline: none;
+}
+
+.panelHero__img {
+  /* Antes: width: clamp(260px, 30vw, 620px); */
+  /* Ahora controlamos por altura de viewport para que nunca se recorte */
+  width: auto;
+  max-height: clamp(360px, 58vh, 700px);
+  /* De apoyo, limitamos la anchura para pantallas muy anchas */
+  max-width: clamp(260px, 24vw, 520px);
+  height: auto;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Ajustes ligeros en móviles para mantener proporción y lectura */
+@media (max-width: 900px) {
+  .panelHero__word {
+    transform: translateY(-4%);
+    font-size: clamp(56px, 15vw, 180px);
+  }
+  .panelHero__img {
+    max-height: clamp(320px, 54vh, 620px);
+    max-width: clamp(220px, 36vw, 460px);
+  }
+}

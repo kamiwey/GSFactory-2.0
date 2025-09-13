@@ -1,22 +1,16 @@
 import React, { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import "./styles/home.css";
 import heroVideo from "../assets/video/hero-video.mp4";
+import monoImg from "../assets/img/gsf_monkey_transparent.png";
 
 import HorizontalStrip from "../components/HorizontalStrip";
 import ColorStage from "../components/ColorStage";
-
-// Paleta (6 secciones; top/bottom para un degradado sutil)
-const PALETTE = [
-  { top: "#4a86d9", bottom: "#0f3f86" }, // 1 Azul
-  { top: "#2aa0a0", bottom: "#1f7073" }, // 2 Verde azulado
-  { top: "#39a84e", bottom: "#2b6f39" }, // 3 Verde
-  { top: "#5240c9", bottom: "#2d1f90" }, // 4 Morado
-  { top: "#bb8d43", bottom: "#9c702f" }, // 5 Ocre
-  { top: "#cf4e50", bottom: "#a43a3c" }, // 6 Rojo
-];
+import { PALETTE_HOME } from "../theme/paletteHome";
 
 export const Home = () => {
+  const { t } = useTranslation('common');
   const { dispatch } = useGlobalReducer();
   const videoRef = useRef(null);
   const heroRef = useRef(null);
@@ -147,7 +141,7 @@ export const Home = () => {
           <a
             className="hero__arrow"
             href="#next"
-            aria-label="Bajar"
+            aria-label={t('hero.scrollDown')}
             onClick={scrollDown}
           >
             <svg viewBox="0 0 24 24" className="hero__arrowIcon" aria-hidden="true">
@@ -158,8 +152,75 @@ export const Home = () => {
       </section>
 
       {/* ======= FONDO DE COLOR + TRAMO HORIZONTAL + VERTICAL ======= */}
-      <ColorStage colors={PALETTE}>
-        <HorizontalStrip panels={6} navbarHeight={72} />
+      <ColorStage colors={PALETTE_HOME}>
+        <HorizontalStrip panels={6} navbarHeight={72}>
+          {/* PANEL 1 */}
+          <div className="hstrip__panel" key="p1">
+            <section className="panel panel--hero" aria-label="ART TOYS">
+              <div className="panelHero">
+                {/* Título gigante por detrás */}
+                <h2 className="panelHero__word" aria-hidden="true">
+                  {t('hero.artToys')}
+                </h2>
+
+                {/* Imagen botón (modal más adelante) */}
+                <button
+                  type="button"
+                  className="panelHero__cta"
+                  aria-label="Abrir ART TOYS"
+                >
+                  <img
+                    className="panelHero__img"
+                    src={monoImg}
+                    alt="Figura mono astronauta — GS Factory"
+                    loading="eager"
+                    decoding="async"
+                  />
+                </button>
+              </div>
+            </section>
+          </div>
+
+          {/* PANEL 2 */}
+          <div className="hstrip__panel" key="p2">
+            <div className="hstrip__panelInner">
+              <div className="hstrip__title">Panel 2</div>
+              <p className="hstrip__text">Contenido de muestra horizontal.</p>
+            </div>
+          </div>
+
+          {/* PANEL 3 */}
+          <div className="hstrip__panel" key="p3">
+            <div className="hstrip__panelInner">
+              <div className="hstrip__title">Panel 3</div>
+              <p className="hstrip__text">Contenido de muestra horizontal.</p>
+            </div>
+          </div>
+
+          {/* PANEL 4 */}
+          <div className="hstrip__panel" key="p4">
+            <div className="hstrip__panelInner">
+              <div className="hstrip__title">Panel 4</div>
+              <p className="hstrip__text">Contenido de muestra horizontal.</p>
+            </div>
+          </div>
+
+          {/* PANEL 5 */}
+          <div className="hstrip__panel" key="p5">
+            <div className="hstrip__panelInner">
+              <div className="hstrip__title">Panel 5</div>
+              <p className="hstrip__text">Contenido de muestra horizontal.</p>
+            </div>
+          </div>
+
+          {/* PANEL 6 */}
+          <div className="hstrip__panel" key="p6">
+            <div className="hstrip__panelInner">
+              <div className="hstrip__title">Panel 6</div>
+              <p className="hstrip__text">Contenido de muestra horizontal.</p>
+            </div>
+          </div>
+        </HorizontalStrip>
         {/* Paneles 7 y 8 dentro del mismo fondo para continuidad */}
         <section className="vstack" aria-label="Bloque vertical tras horizontal">
           <div className="vpanel">
@@ -178,7 +239,7 @@ export const Home = () => {
       </ColorStage>
 
       {/* Botón subir */}
-      <button className="homeTopBtn" onClick={scrollToTop} aria-label="Volver arriba">
+      <button className="homeTopBtn" onClick={scrollToTop} aria-label={t('hero.backToTop')}>
         <svg viewBox="0 0 24 24" className="homeTopBtn__icon" aria-hidden="true">
           <path d="M6 15l6-6 6 6" />
         </svg>
