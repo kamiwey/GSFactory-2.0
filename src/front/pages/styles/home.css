@@ -278,6 +278,17 @@
   transition: background 120ms linear;
 }
 
+/* Mobile: si sticky fallara por transform/overflow en ancestros, usar fixed */
+@media (max-width: 900px) {
+  .colorStage__bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+}
+
 /* contenido del tramo horizontal por encima del fondo sticky */
 .colorStage__content {
   position: relative;
@@ -290,6 +301,13 @@
 }
 
 /* === PANEL HERO (panel 1) === */
+/*
+  Causa raíz: el título "ART TOYS" no obedecía cambios porque había
+  - desalineación de selector (se usaba panelHero__word en JSX mientras se editaba panelHero_word en CSS), y
+  - posible orden de carga (global.css antes; este home.css después). 
+  Alineamos ambos a .panelHero__word y mantenemos este CSS cargado tras los globales
+  (index.css importa global.css; Home.jsx importa este home.css), asegurando la prioridad.
+*/
 .panel--hero {
   display: grid;
   place-items: center;
@@ -313,7 +331,7 @@
   font-weight: 400;
   line-height: 0.92;
   margin: 0;
-  margin-bottom: 460px;
+  margin-bottom: 470px;
   color: #fff;
   text-align: center;
   font-size: clamp(72px, 11vw, 240px);
@@ -346,8 +364,8 @@
   position: relative;
   z-index: 2; /* delante */
   cursor: pointer;
-  transform-origin: center bottom;
-  transition: transform 260ms ease;
+  transform-origin: bottom center;
+  transition: transform 220ms ease;
 }
 
 .panelHero__cta:hover,
@@ -379,4 +397,9 @@
     max-height: clamp(320px, 54vh, 620px);
     max-width: clamp(220px, 36vw, 460px);
   }
+}
+
+/* Suavidad del título del panel hero */
+.panelHero__word {
+  will-change: transform;
 }

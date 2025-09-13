@@ -19,6 +19,51 @@
   color: #111; /* texto negro */
   z-index: 99;
 }
+
+/* Agrupador derecha: idiomas + hamburguesa (idiomas primero) */
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+}
+
+.langSwitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+  color: #fff;
+}
+.langSwitch button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 0 2px;
+}
+
+.menuToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navRight .open-overlay {
+  position: static;
+  right: auto;
+  top: auto;
+}
+
+@media (max-width: 480px) {
+  .navRight {
+    gap: 12px;
+  }
+  .langSwitch {
+    gap: 8px;
+  }
+}
 .brand {
   display: inline-flex;
   align-items: center;

@@ -68,12 +68,12 @@ export default function Navbar() {
         </Link>
 
         {/* Selector de idioma discreto */}
-        <div role="group" aria-label={t('aria.changeLanguage')} style={{ display: 'inline-flex', gap: '8px', alignItems: 'center', color: '#fff' }}>
+        <div className="navRight">
+        <div role="group" className="langSwitch" aria-label={t('aria.changeLanguage')}>
           <button
             type="button"
             onClick={() => { i18n.changeLanguage('es'); localStorage.setItem('lang', 'es'); }}
             aria-pressed={i18n.resolvedLanguage === 'es'}
-            style={{ background: 'transparent', border: 0, color: 'inherit', cursor: 'pointer' }}
           >
             ES
           </button>
@@ -82,7 +82,6 @@ export default function Navbar() {
             type="button"
             onClick={() => { i18n.changeLanguage('en'); localStorage.setItem('lang', 'en'); }}
             aria-pressed={i18n.resolvedLanguage === 'en'}
-            style={{ background: 'transparent', border: 0, color: 'inherit', cursor: 'pointer' }}
           >
             EN
           </button>
@@ -90,7 +89,7 @@ export default function Navbar() {
 
         {/* Botón burger (3 barras) */}
         <div
-          className={`open-overlay ${open ? "is-open" : ""} ${closing ? "is-closing" : ""}`}
+          className={`open-overlay menuToggle ${open ? "is-open" : ""} ${closing ? "is-closing" : ""}`}
           onClick={toggle}
           role="button"
           aria-label={t('aria.openMenu')}
@@ -99,6 +98,7 @@ export default function Navbar() {
           <span className="bar-top"></span>
           <span className="bar-middle"></span>
           <span className="bar-bottom"></span>
+        </div>
         </div>
       </nav>
 
@@ -158,4 +158,6 @@ export default function Navbar() {
 }
 
 export { Navbar };
+
+
 

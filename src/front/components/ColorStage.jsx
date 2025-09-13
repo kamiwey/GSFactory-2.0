@@ -181,7 +181,94 @@ export default function ColorStage({
         return;
       }
 
-      // 3) Fallback vertical (modo apilado): mantenemos negro seguro
+      // 3) Modo vertical (mobile/apilado): reproducimos la misma lógica de color por panel
+      if (hwrap) {
+        const navVar = getComputedStyle(document.documentElement).getPropertyValue('--nav-h') || '72px';
+        const topPx = parseFloat(navVar) || 72;
+        const top = hwrap.getBoundingClientRect().top;
+        const beforePin = top > topPx;
+
+        // Color base del primer panel (azul) y su sombra
+        const firstTopV = firstTop;
+        const firstBotV = firstBot;
+
+        if (beforePin) {
+          const heroBottom = hero?.getBoundingClientRect?.().bottom ?? Infinity;
+          const heroOut = heroBottom <= topPx + 0.5;
+          if (!heroOut) {
+            bg.style.setProperty("--bgStart", "#000000");
+            bg.style.setProperty("--bgEnd", "#000000");
+            bg.classList.add("no-glow");
+            return;
+          }
+          const d1 = Math.max(0, topPx - heroBottom);
+          const d2 = Math.max(0, top - topPx);
+          const s = (d1 + d2) > 0 ? d1 / (d1 + d2) : 1;
+          const t2 = plateau(clamp(s, 0, 1));
+          const eased = t2 * t2 * (3 - 2 * t2);
+          const topHex = mix("#000000", firstTopV, eased);
+          const bottomHex = mix("#000000", firstBotV, eased);
+          bg.style.setProperty("--bgStart", topHex);
+          bg.style.setProperty("--bgEnd", bottomHex);
+          bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
+          return;
+        }
+
+        const panelH = Math.max(1, window.innerHeight - topPx);
+
+        // stops (sin negro)
+        let stopsTop = [];
+        let stopsBot = [];
+        if (Array.isArray(colors) && colors.length) {
+          stopsTop = colors.map((c) => c.top ?? c.bottom ?? firstTopV);
+          stopsBot = colors.map((c) => c.bottom ?? c.top ?? firstBotV);
+        } else {
+          const eff = Array.isArray(palette) && palette.length ? palette : ["#000000", firstTopV];
+          const base = (eff[0] && luminance(eff[0]) < 0.02) ? eff.slice(1) : eff.slice();
+          stopsTop = base.slice();
+          stopsBot = base.map((hex) => shade(hex, 0.78));
+        }
+
+        const y = (topPx - top);
+        const totalY = Math.max(0, panelH * Math.max(0, stopsTop.length - 1));
+        const over = y - totalY;
+
+        if (over <= 0.5) {
+          const u = y / Math.max(1, panelH);
+          const totalSeg = Math.max(1, stopsTop.length - 1);
+          const seg = Math.max(0, Math.min(totalSeg - 1, Math.floor(u)));
+          const localT = clamp(u - seg, 0, 1);
+          const t2 = plateau(localT);
+          const eased = t2 * t2 * (3 - 2 * t2);
+
+          const fromTop = stopsTop[seg];
+          const toTop = stopsTop[seg + 1] ?? stopsTop[seg];
+          const fromBot = stopsBot[seg];
+          const toBot = stopsBot[seg + 1] ?? stopsBot[seg];
+
+          const topHex = mix(fromTop, toTop, eased);
+          const bottomHex = mix(fromBot, toBot, eased);
+          bg.style.setProperty("--bgStart", topHex);
+          bg.style.setProperty("--bgEnd", bottomHex);
+          bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
+          return;
+        }
+
+        // micro-fade final a negro al terminar los paneles
+        const SMOOTH_PX = Math.max(160, Math.min(320, window.innerHeight * 0.18));
+        const lastTop = stopsTop[stopsTop.length - 1];
+        const lastBot = stopsBot[stopsBot.length - 1];
+        const s = clamp(over / SMOOTH_PX, 0, 1);
+        const ease = s * s * (3 - 2 * s);
+        const topHex = mix(lastTop, "#000000", ease);
+        const bottomHex = mix(lastBot, "#000000", ease);
+        bg.style.setProperty("--bgStart", topHex);
+        bg.style.setProperty("--bgEnd", bottomHex);
+        bg.classList.toggle("no-glow", luminance(topHex) < 0.02);
+        return;
+      }
+
+      // Fallback extremo: negro
       bg.style.setProperty("--bgStart", "#000000");
       bg.style.setProperty("--bgEnd", "#000000");
       bg.classList.add("no-glow");
@@ -205,4 +292,3 @@ export default function ColorStage({
     </section>
   );
 }
-
