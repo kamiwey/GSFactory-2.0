@@ -31,6 +31,7 @@
 .langSwitch {
   display: inline-flex;
   align-items: center;
+  font-family: "Saira", sans-serif;
   gap: 10px;
   white-space: nowrap;
   color: #fff;
@@ -48,6 +49,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
+  z-index: 40;
+}
+.navbar__toggle {
+  border-radius: 999px;
+  padding: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  backdrop-filter: saturate(120%) blur(2px);
+}
+.menuToggle svg {
+  width: 28px;
+  height: 28px;
+  stroke: #fff;
+  fill: none;
+  opacity: 1;
 }
 
 .navRight .open-overlay {
@@ -98,9 +115,11 @@
 }
 .open-overlay span {
   display: block;
-  height: 2px;
+  width: 28px;
+  height: 3px;
   background: #fff;
-  margin-top: 8px;
+  border-radius: 15px;
+  opacity: 1;
 }
 
 /* estados */
@@ -287,7 +306,7 @@
   }
   100% {
     transform: translateY(0);
-    background: #29363b;
+    background: #fff;
   }
 }
 @keyframes animate-bottom-bar {
@@ -303,7 +322,7 @@
   }
   100% {
     transform: translateY(0);
-    background: #29363b;
+    background: #fff;
   }
 }
 @keyframes animate-middle-bar {
@@ -314,7 +333,7 @@
     background: #fff;
   }
   100% {
-    background: #29363b;
+    background: #fff;
   }
 }
 @keyframes animate-out-top-bar {

@@ -89,10 +89,11 @@ export default function Navbar() {
 
         {/* Botón burger (3 barras) */}
         <div
-          className={`open-overlay menuToggle ${open ? "is-open" : ""} ${closing ? "is-closing" : ""}`}
+          className={`open-overlay menuToggle navbar__toggle ${open ? "is-open" : ""} ${closing ? "is-closing" : ""}`}
           onClick={toggle}
           role="button"
           aria-label={t('aria.openMenu')}
+          aria-expanded={open}
           tabIndex={0}
         >
           <span className="bar-top"></span>

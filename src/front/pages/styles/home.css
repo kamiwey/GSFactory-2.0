@@ -15,9 +15,8 @@
 .hero {
   min-height: calc(100dvh - var(--nav-h, 52px));
   position: relative;
-  isolation: isolate; /* crea nuevo stacking context */
+  isolation: isolate; /* nuevo stacking context */
   z-index: 5; /* SIEMPRE por delante del fondo de ColorStage */
-
   --parY: 0px;
   --p: 0;
 }
@@ -262,11 +261,11 @@
   z-index: 0;
 } /* detrás del hero */
 
-/* El fondo que pintamos desde JS con --bgStart / --bgEnd */
 .colorStage__bg {
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100svh;
+  min-height: 100vh;
   z-index: 0;
   pointer-events: none;
   background: radial-gradient(
@@ -277,37 +276,26 @@
     linear-gradient(180deg, var(--bgStart, #000000), var(--bgEnd, #000000));
   transition: background 120ms linear;
 }
-
-/* Mobile: si sticky fallara por transform/overflow en ancestros, usar fixed */
-@media (max-width: 900px) {
+@supports (height: 100dvh) {
   .colorStage__bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    height: 100dvh;
   }
 }
-
-/* contenido del tramo horizontal por encima del fondo sticky */
+@media (max-width: 900px) {
+  .colorStage__bg {
+    position: sticky;
+    top: 0;
+  }
+}
 .colorStage__content {
   position: relative;
   z-index: 1;
 }
-
-/* Quita el halo/blanco cuando ColorStage marca .no-glow (negro) */
 .colorStage__bg.no-glow {
   background: linear-gradient(180deg, var(--bgStart), var(--bgEnd)) !important;
 }
 
-/* === PANEL HERO (panel 1) === */
-/*
-  Causa raíz: el título "ART TOYS" no obedecía cambios porque había
-  - desalineación de selector (se usaba panelHero__word en JSX mientras se editaba panelHero_word en CSS), y
-  - posible orden de carga (global.css antes; este home.css después). 
-  Alineamos ambos a .panelHero__word y mantenemos este CSS cargado tras los globales
-  (index.css importa global.css; Home.jsx importa este home.css), asegurando la prioridad.
-*/
+/* ========== PANEL HERO (panel 1) ========== */
 .panel--hero {
   display: grid;
   place-items: center;
@@ -321,38 +309,47 @@
   display: grid;
   place-items: center;
   z-index: 1;
+
+  /* evita que se "corte" el rótulo al subir */
+  overflow: visible;
+
+  /* Variables animadas desde JS (Home.jsx) */
+  --wordVis: 1; /* 1 visible, 0 oculto */
+  --wordOut: 0; /* 1 - vis (comodín para cálculos) */
 }
 
-/* Título por detrás — lo subimos un poco para que se lea mejor */
-/* === PANEL HERO (panel 1) === */
+/* Rótulo por detrás del mono */
 .panelHero__word {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
     sans-serif;
   font-weight: 400;
   line-height: 0.92;
   margin: 0;
-  margin-bottom: 470px;
   color: #fff;
   text-align: center;
+
   font-size: clamp(72px, 11vw, 240px);
   position: absolute;
-  inset: 0;
+  inset: 0; /* ocupa el contenedor para centrar fácil */
   display: grid;
   place-items: center;
-  z-index: 1; /* detrás del mono */
+  z-index: 1;
   pointer-events: none;
-  transform: translateY(-12%); /* <- antes -6%. Subido para que se lea más */
+
+  /* Posición base (subido) + animación por scroll */
+  opacity: var(--wordVis);
+  transform: translateY(
+      calc(
+        var(--heroWordY, clamp(-12rem, -19vh, -26rem)) /* base (subido) */ -
+          (var(--wordOut) * 10vh) /* al salir sube */
+      )
+    )
+    scale(calc(1 + var(--wordOut) * 0.16)); /* y hace zoom */
+  transition: transform 120ms linear, opacity 120ms linear;
+  will-change: transform, opacity;
 }
 
-/* Ajuste en móviles */
-@media (max-width: 900px) {
-  .panelHero__word {
-    transform: translateY(-8%); /* <- antes -4% */
-    font-size: clamp(56px, 15vw, 180px);
-  }
-}
-
-/* Botón con el mono — reducimos tamaño y limitamos por altura de viewport */
+/* Botón con el mono delante */
 .panelHero__cta {
   -webkit-tap-highlight-color: transparent;
   background: transparent;
@@ -362,24 +359,19 @@
   display: grid;
   place-items: center;
   position: relative;
-  z-index: 2; /* delante */
+  z-index: 2;
   cursor: pointer;
   transform-origin: bottom center;
   transition: transform 220ms ease;
 }
-
 .panelHero__cta:hover,
 .panelHero__cta:focus-visible {
   transform: scale(1.1);
   outline: none;
 }
-
 .panelHero__img {
-  /* Antes: width: clamp(260px, 30vw, 620px); */
-  /* Ahora controlamos por altura de viewport para que nunca se recorte */
   width: auto;
   max-height: clamp(360px, 58vh, 700px);
-  /* De apoyo, limitamos la anchura para pantallas muy anchas */
   max-width: clamp(260px, 24vw, 520px);
   height: auto;
   display: block;
@@ -387,19 +379,19 @@
   pointer-events: none;
 }
 
-/* Ajustes ligeros en móviles para mantener proporción y lectura */
+/* Mobile tweaks */
 @media (max-width: 900px) {
   .panelHero__word {
-    transform: translateY(-4%);
     font-size: clamp(56px, 15vw, 180px);
+    transform: translateY(
+        calc(
+          var(--heroWordY, clamp(-8rem, -14vh, -20rem)) - (var(--wordOut) * 8vh)
+        )
+      )
+      scale(calc(1 + var(--wordOut) * 0.14));
   }
   .panelHero__img {
     max-height: clamp(320px, 54vh, 620px);
     max-width: clamp(220px, 36vw, 460px);
   }
-}
-
-/* Suavidad del título del panel hero */
-.panelHero__word {
-  will-change: transform;
 }

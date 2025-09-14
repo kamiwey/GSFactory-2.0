@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import "./styles/home.css";
@@ -10,12 +10,20 @@ import ColorStage from "../components/ColorStage";
 import { PALETTE_HOME } from "../theme/paletteHome";
 
 export const Home = () => {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
   const { dispatch } = useGlobalReducer();
   const videoRef = useRef(null);
   const heroRef = useRef(null);
   const homeRef = useRef(null);
 
+  // === Ajuste fino de la altura del rótulo (más arriba que antes) ===
+  // Sube/baja cambiando estos clamps (más negativo = más arriba).
+  const DESKTOP_Y = "clamp(-16rem, -24vh, -30rem)";
+  const MOBILE_Y = "clamp(-10rem, -17vh, -23rem)";
+
+  const [heroWordY, setHeroWordY] = useState(DESKTOP_Y);
+
+  // Ping opcional al backend de ejemplo (si no hay backend, ignora el error)
   useEffect(() => {
     const f = async () => {
       try {
@@ -24,19 +32,21 @@ export const Home = () => {
         const r = await fetch(url + "/api/hello");
         const d = await r.json();
         if (r.ok) dispatch({ type: "set_hello", payload: d.message });
-      } catch {}
+      } catch {
+        // sin backend => sin bloqueos
+      }
     };
     f();
   }, [dispatch]);
 
-  // Autoplay robusto
+  // Autoplay robusto del vídeo
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
     const tryPlay = () => {
       vid.muted = true;
       const p = vid.play();
-      if (p && typeof p.then === "function") p.catch(() => {});
+      if (p && typeof p.then === "function") p.catch(() => { });
     };
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const apply = () => {
@@ -85,15 +95,51 @@ export const Home = () => {
     };
   }, []);
 
+  // Responsivo: Y del título en móviles/desktop
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 900px)");
+    const apply = () => setHeroWordY(mq.matches ? MOBILE_Y : DESKTOP_Y);
+    apply();
+    mq.addEventListener?.("change", apply);
+    return () => mq.removeEventListener?.("change", apply);
+  }, []); // eslint-disable-line
+
+  // === Aparición / desaparición del rótulo por foco de panel (IO) ===
+  // Con HorizontalStrip, lo que cambia es la intersección horizontal.
+  // IO nos da un ratio 0..1; lo mapeamos a visibilidad/zoom de las letras.
+  useEffect(() => {
+    const panels = Array.from(document.querySelectorAll(".panelHero"));
+    if (!panels.length) return;
+
+    const thresholds = [0, 0.1, 0.25, 0.4, 0.55, 0.7, 0.85, 1];
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          // mapeo: visible al 100% cuando ratio>=0.7; oculta cuando <=0.3
+          const r = e.intersectionRatio;
+          const vis = Math.max(0, Math.min(1, (r - 0.3) / 0.4)); // 0.3→0, 0.7→1
+          e.target.style.setProperty("--wordVis", vis.toFixed(3));
+          e.target.style.setProperty("--wordOut", (1 - vis).toFixed(3));
+        });
+      },
+      { threshold: thresholds }
+    );
+
+    panels.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
   // Flecha: bajar desde el hero
   const scrollDown = (e) => {
     e.preventDefault();
     const heroEl = heroRef.current;
     if (!heroEl) return;
 
-    const navH = parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue("--nav-h")
-    ) || 72;
+    const navH =
+      parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--nav-h")
+      ) || 72;
 
     const target =
       heroEl.getBoundingClientRect().bottom + window.scrollY - (navH + 8);
@@ -118,7 +164,7 @@ export const Home = () => {
 
   return (
     <main ref={homeRef} className="home">
-      {/* ================= HERO ================= */}
+      {/* HERO */}
       <section ref={heroRef} className="hero" aria-label="GS Factory hero">
         <div className="hero__bg" aria-hidden="true">
           <video
@@ -141,7 +187,7 @@ export const Home = () => {
           <a
             className="hero__arrow"
             href="#next"
-            aria-label={t('hero.scrollDown')}
+            aria-label={t("hero.scrollDown")}
             onClick={scrollDown}
           >
             <svg viewBox="0 0 24 24" className="hero__arrowIcon" aria-hidden="true">
@@ -151,16 +197,16 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* ======= FONDO DE COLOR + TRAMO HORIZONTAL + VERTICAL ======= */}
+      {/* COLOR + HORIZONTAL + VERTICAL */}
       <ColorStage colors={PALETTE_HOME}>
         <HorizontalStrip panels={6} navbarHeight={72}>
           {/* PANEL 1 */}
           <div className="hstrip__panel" key="p1">
             <section className="panel panel--hero" aria-label="ART TOYS">
-              <div className="panelHero">
-                {/* Título gigante por detrás */}
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                {/* Rótulo gigante detrás */}
                 <h2 className="panelHero__word" aria-hidden="true">
-                  {t('hero.artToys')}
+                  {t("hero.artToys")}
                 </h2>
 
                 {/* Imagen botón (modal más adelante) */}
@@ -181,7 +227,7 @@ export const Home = () => {
             </section>
           </div>
 
-          {/* PANEL 2 */}
+          {/* PANEL 2..6 (placeholders) */}
           <div className="hstrip__panel" key="p2">
             <div className="hstrip__panelInner">
               <div className="hstrip__title">Panel 2</div>
@@ -189,7 +235,6 @@ export const Home = () => {
             </div>
           </div>
 
-          {/* PANEL 3 */}
           <div className="hstrip__panel" key="p3">
             <div className="hstrip__panelInner">
               <div className="hstrip__title">Panel 3</div>
@@ -197,7 +242,6 @@ export const Home = () => {
             </div>
           </div>
 
-          {/* PANEL 4 */}
           <div className="hstrip__panel" key="p4">
             <div className="hstrip__panelInner">
               <div className="hstrip__title">Panel 4</div>
@@ -205,7 +249,6 @@ export const Home = () => {
             </div>
           </div>
 
-          {/* PANEL 5 */}
           <div className="hstrip__panel" key="p5">
             <div className="hstrip__panelInner">
               <div className="hstrip__title">Panel 5</div>
@@ -213,7 +256,6 @@ export const Home = () => {
             </div>
           </div>
 
-          {/* PANEL 6 */}
           <div className="hstrip__panel" key="p6">
             <div className="hstrip__panelInner">
               <div className="hstrip__title">Panel 6</div>
@@ -221,7 +263,8 @@ export const Home = () => {
             </div>
           </div>
         </HorizontalStrip>
-        {/* Paneles 7 y 8 dentro del mismo fondo para continuidad */}
+
+        {/* 7 y 8 en vertical */}
         <section className="vstack" aria-label="Bloque vertical tras horizontal">
           <div className="vpanel">
             <div className="vpanel__inner">
@@ -239,7 +282,7 @@ export const Home = () => {
       </ColorStage>
 
       {/* Botón subir */}
-      <button className="homeTopBtn" onClick={scrollToTop} aria-label={t('hero.backToTop')}>
+      <button className="homeTopBtn" onClick={scrollToTop} aria-label={t("hero.backToTop")}>
         <svg viewBox="0 0 24 24" className="homeTopBtn__icon" aria-hidden="true">
           <path d="M6 15l6-6 6 6" />
         </svg>
@@ -247,4 +290,3 @@ export const Home = () => {
     </main>
   );
 };
-
