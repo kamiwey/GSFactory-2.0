@@ -6,7 +6,8 @@
 /* Modo desktop: pin + track horizontal */
 .hstrip__sticky {
   position: sticky;
-  overflow: hidden;
+  /* Permite que el contenido (rótulos) invada bajo la navbar transparente */
+  overflow: visible;
   /* height y top se setean inline desde el componente con navbarHeight */
 }
 
@@ -21,7 +22,8 @@
 /* Cada panel ocupa exactamente el ancho del viewport en desktop */
 .hstrip__panel {
   flex: 0 0 100vw;
-  height: 100%;
+  /* Asegura cubrir el viewport útil bajo la navbar y no recortar contenidos altos */
+  min-height: calc(100dvh - var(--nav-h, 72px));
   display: grid;
   place-items: center;
 

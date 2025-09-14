@@ -130,6 +130,46 @@ export const Home = () => {
     return () => io.disconnect();
   }, []);
 
+  // Visibilidad basada en distancia al centro (RAF compartido)
+  // Sincroniza el fade/zoom-out con el desplazamiento del panel (ColorStage).
+  useEffect(() => {
+    const items = Array.from(document.querySelectorAll(".panelHero")).map((el) => ({
+      el,
+      host: el.closest(".hstrip__panel") || el,
+    }));
+    if (!items.length) return;
+
+    const clamp01 = (v) => Math.max(0, Math.min(1, v));
+    const THRESH = 0.22; // empieza a salir al dejar el centro (~22% del medio viewport)
+
+    let raf = 0;
+    const update = () => {
+      const vw = Math.max(1, window.innerWidth);
+      const mid = vw / 2;
+      for (const it of items) {
+        const rect = it.host.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const d = Math.abs(cx - mid) / mid; // 0 centrado .. 1 extremo
+        const vis = clamp01(1 - d / THRESH);
+        it.el.style.setProperty("--wordVis", vis.toFixed(3));
+        it.el.style.setProperty("--wordOut", (1 - vis).toFixed(3));
+      }
+    };
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    };
+    // Inicial + listeners
+    schedule();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   // Flecha: bajar desde el hero
   const scrollDown = (e) => {
     e.preventDefault();
@@ -227,40 +267,54 @@ export const Home = () => {
             </section>
           </div>
 
-          {/* PANEL 2..6 (placeholders) */}
+          {/* PANEL 2 */}
           <div className="hstrip__panel" key="p2">
-            <div className="hstrip__panelInner">
-              <div className="hstrip__title">Panel 2</div>
-              <p className="hstrip__text">Contenido de muestra horizontal.</p>
-            </div>
+            <section className="panel panel--hero" aria-label="NFC">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                {/* TODO i18n: t('hero.nfc') */}
+                <h2 className="panelHero__word" aria-hidden="true">NFC</h2>
+              </div>
+            </section>
           </div>
 
+          {/* PANEL 3 */}
           <div className="hstrip__panel" key="p3">
-            <div className="hstrip__panelInner">
-              <div className="hstrip__title">Panel 3</div>
-              <p className="hstrip__text">Contenido de muestra horizontal.</p>
-            </div>
+            <section className="panel panel--hero" aria-label="TUFTING">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                {/* TODO i18n: t('hero.tufting') */}
+                <h2 className="panelHero__word" aria-hidden="true">TUFTING</h2>
+              </div>
+            </section>
           </div>
 
+          {/* PANEL 4 */}
           <div className="hstrip__panel" key="p4">
-            <div className="hstrip__panelInner">
-              <div className="hstrip__title">Panel 4</div>
-              <p className="hstrip__text">Contenido de muestra horizontal.</p>
-            </div>
+            <section className="panel panel--hero" aria-label="MERCHANDISING">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                {/* TODO i18n: t('hero.merchandising') */}
+                <h2 className="panelHero__word" aria-hidden="true">MERCHANDISING</h2>
+              </div>
+            </section>
           </div>
 
+          {/* PANEL 5 */}
           <div className="hstrip__panel" key="p5">
-            <div className="hstrip__panelInner">
-              <div className="hstrip__title">Panel 5</div>
-              <p className="hstrip__text">Contenido de muestra horizontal.</p>
-            </div>
+            <section className="panel panel--hero" aria-label="COLABORACIONES">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                {/* TODO i18n: t('hero.colaboraciones') */}
+                <h2 className="panelHero__word" aria-hidden="true">COLABORACIONES</h2>
+              </div>
+            </section>
           </div>
 
+          {/* PANEL 6 */}
           <div className="hstrip__panel" key="p6">
-            <div className="hstrip__panelInner">
-              <div className="hstrip__title">Panel 6</div>
-              <p className="hstrip__text">Contenido de muestra horizontal.</p>
-            </div>
+            <section className="panel panel--hero" aria-label="VELAS Y LED">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                {/* TODO i18n: t('hero.velasYLed') */}
+                <h2 className="panelHero__word" aria-hidden="true">VELAS Y LED</h2>
+              </div>
+            </section>
           </div>
         </HorizontalStrip>
 

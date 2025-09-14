@@ -7,7 +7,16 @@
     "about": "About us",
     "catalogue": "Catalogue"
   },
-  "hero": { "artToys": "ART TOYS", "scrollDown": "Scroll down", "backToTop": "Back to top" }
+  "hero": {
+    "artToys": "ART TOYS",
+    "nfc": "NFC",
+    "tufting": "TUFTING",
+    "merchandising": "MERCHANDISING",
+    "colaboraciones": "COLLABORATIONS",
+    "velasYLed": "CANDLES & LED",
+    "scrollDown": "Scroll down",
+    "backToTop": "Back to top"
+  }
   ,
   "aria": {
     "navbar": "GS navbar",

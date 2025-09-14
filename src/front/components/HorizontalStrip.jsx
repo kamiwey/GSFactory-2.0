@@ -94,7 +94,9 @@ function HorizontalStrip({
             <div
                 ref={stickyRef}
                 className="hstrip__sticky"
-                style={{ height: `calc(100dvh - ${navbarHeight}px)`, top: `${navbarHeight}px` }}
+                // Altura sticky extendida para permitir que el contenido invada bajo la navbar
+                // Evita que se "corten" los rótulos grandes al aparecer.
+                style={{ height: `calc(100dvh + ${navbarHeight}px)`, top: `${navbarHeight}px` }}
             >
                 <div ref={trackRef} className="hstrip__track">
                     {items}
