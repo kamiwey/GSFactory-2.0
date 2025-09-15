@@ -2,7 +2,7 @@
   NAVBAR base (transparente)
 ==================================== */
 :root {
-  --nav-h: 52px;
+  --nav-h: 72px;
   --gap: 20px;
 }
 .gsNav {

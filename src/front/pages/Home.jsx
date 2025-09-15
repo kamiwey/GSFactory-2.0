@@ -312,7 +312,7 @@ export const Home = () => {
             <section className="panel panel--hero" aria-label="VELAS Y LED">
               <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
                 {/* TODO i18n: t('hero.velasYLed') */}
-                <h2 className="panelHero__word" aria-hidden="true">VELAS Y LED</h2>
+                <h2 className="panelHero__word" aria-hidden="true">HOME</h2>
               </div>
             </section>
           </div>
