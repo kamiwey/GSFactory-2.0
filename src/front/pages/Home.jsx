@@ -105,33 +105,55 @@ export const Home = () => {
   }, []); // eslint-disable-line
 
   // === Aparición / desaparición del rótulo por foco de panel (IO) ===
-  // Con HorizontalStrip, lo que cambia es la intersección horizontal.
-  // IO nos da un ratio 0..1; lo mapeamos a visibilidad/zoom de las letras.
+  // Nuevo: histeresis en los umbrales para anticipar el fade-out sin romper el feel del fade-in.
   useEffect(() => {
     const panels = Array.from(document.querySelectorAll(".panelHero"));
     if (!panels.length) return;
 
-    const thresholds = [0, 0.1, 0.25, 0.4, 0.55, 0.7, 0.85, 1];
+    // Umbrales densos para suavidad
+    const thresholds = Array.from({ length: 21 }, (_, i) => i / 20);
+
+    // Mapa de últimos ratios para detectar dirección (entrando vs saliendo)
+    const lastRatio = new WeakMap();
+
+    // Umbrales diferenciados
+    // ENTRANDO (querías este "look" tal cual): 0%→0 a 68%→100%
+    const ENTER_R0 = 0.22;
+    const ENTER_R1 = 0.68;
+
+    // SALIENDO (antes se iba tarde): empieza a caer mucho antes
+    // 0.88 fuerza que con un 88% visible ya empiece a perder fuerza.
+    const LEAVE_R0 = 0.58;
+    const LEAVE_R1 = 1;
+
+    const clamp01 = (x) => Math.max(0, Math.min(1, x));
 
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
-          // mapeo: visible al 100% cuando ratio>=0.7; oculta cuando <=0.3
           const r = e.intersectionRatio;
-          const vis = Math.max(0, Math.min(1, (r - 0.3) / 0.4)); // 0.3→0, 0.7→1
+          const prev = lastRatio.get(e.target) ?? r;
+          const leaving = r < prev - 0.0005; // tolerancia anti-ruido
+
+          const r0 = leaving ? LEAVE_R0 : ENTER_R0;
+          const r1 = leaving ? LEAVE_R1 : ENTER_R1;
+
+          const vis = clamp01((r - r0) / (r1 - r0));
           e.target.style.setProperty("--wordVis", vis.toFixed(3));
           e.target.style.setProperty("--wordOut", (1 - vis).toFixed(3));
+
+          lastRatio.set(e.target, r);
         });
       },
       { threshold: thresholds }
     );
 
-    panels.forEach((el) => io.observe(el));
+    panels.forEach((el) => {
+      lastRatio.set(el, 0);
+      io.observe(el);
+    });
     return () => io.disconnect();
   }, []);
-
-  // ⛔ Eliminado el segundo bucle de visibilidad por distancia al centro
-  // (duplicaba escrituras de --wordVis/--wordOut y generaba micro-tirones)
 
   // Flecha: bajar desde el hero
   const scrollDown = (e) => {
