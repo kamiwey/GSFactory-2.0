@@ -130,45 +130,8 @@ export const Home = () => {
     return () => io.disconnect();
   }, []);
 
-  // Visibilidad basada en distancia al centro (RAF compartido)
-  // Sincroniza el fade/zoom-out con el desplazamiento del panel (ColorStage).
-  useEffect(() => {
-    const items = Array.from(document.querySelectorAll(".panelHero")).map((el) => ({
-      el,
-      host: el.closest(".hstrip__panel") || el,
-    }));
-    if (!items.length) return;
-
-    const clamp01 = (v) => Math.max(0, Math.min(1, v));
-    const THRESH = 0.22; // empieza a salir al dejar el centro (~22% del medio viewport)
-
-    let raf = 0;
-    const update = () => {
-      const vw = Math.max(1, window.innerWidth);
-      const mid = vw / 2;
-      for (const it of items) {
-        const rect = it.host.getBoundingClientRect();
-        const cx = rect.left + rect.width / 2;
-        const d = Math.abs(cx - mid) / mid; // 0 centrado .. 1 extremo
-        const vis = clamp01(1 - d / THRESH);
-        it.el.style.setProperty("--wordVis", vis.toFixed(3));
-        it.el.style.setProperty("--wordOut", (1 - vis).toFixed(3));
-      }
-    };
-    const schedule = () => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(update);
-    };
-    // Inicial + listeners
-    schedule();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    return () => {
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
+  // ⛔ Eliminado el segundo bucle de visibilidad por distancia al centro
+  // (duplicaba escrituras de --wordVis/--wordOut y generaba micro-tirones)
 
   // Flecha: bajar desde el hero
   const scrollDown = (e) => {
