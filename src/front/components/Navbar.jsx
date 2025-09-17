@@ -58,6 +58,32 @@ export default function Navbar() {
     }
   }, [open]);
 
+  // ===== Lock de scroll mientras el overlay está visible (open o closing) =====
+  useEffect(() => {
+    const body = document.body;
+    const html = document.documentElement;
+    const isVisible = open || closing;
+
+    if (isVisible) {
+      const y = window.scrollY || html.scrollTop || body.scrollTop || 0;
+      const sbw = window.innerWidth - html.clientWidth; // ancho scrollbar
+
+      body.dataset.oldTop = String(y);
+      body.classList.add("u-lock-scroll");
+      if (sbw > 0) body.style.paddingRight = `${sbw}px`; // evita “salto” de layout
+      body.style.top = `-${y}px`; // iOS fix cuando usamos position: fixed en CSS
+    } else {
+      // cleanup
+      const oldTop = parseInt(body.dataset.oldTop || "0", 10);
+      body.classList.remove("u-lock-scroll");
+      body.style.paddingRight = "";
+      body.style.top = "";
+      delete body.dataset.oldTop;
+      // devuelve al scroll original
+      window.scrollTo(0, oldTop);
+    }
+  }, [open, closing]);
+
   const startClose = () => {
     if (!open) return;
     setClosing(true);
@@ -99,8 +125,7 @@ export default function Navbar() {
             decoding="async"
           />
           {/* Texto de marca visible: GS FACTORY */}
-          <span className="brand__text">GS <br></br>FACTORY</span>
-
+          <span className="brand__text">GS <br />FACTORY</span>
         </Link>
 
         <div className="navRight">

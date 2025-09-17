@@ -26,6 +26,22 @@
   gap: 16px;
   margin-left: auto;
 }
+
+/* ===== Scroll lock global (mientras overlay visible) ===== */
+.u-lock-scroll,
+html.u-lock-scroll,
+body.u-lock-scroll {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  height: 100%;
+}
+/* Fix iOS: bloqueamos con position: fixed conservando la posición via body.style.top */
+body.u-lock-scroll {
+  position: fixed;
+  width: 100%;
+}
+
+/* ===== Idiomas (activo más grande + animado) ===== */
 .langSwitch {
   display: inline-flex;
   align-items: center;
@@ -41,6 +57,20 @@
   cursor: pointer;
   font: inherit;
   padding: 0 2px;
+  transition: transform 160ms ease, opacity 160ms ease, filter 160ms ease;
+  will-change: transform, filter, opacity;
+}
+.langSwitch button[aria-pressed="true"] {
+  transform: scale(1.14) translateY(-0.5px);
+  font-weight: 800;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+}
+.langSwitch button[aria-pressed="false"] {
+  opacity: 0.65;
+}
+.langSwitch button:hover {
+  transform: translateY(-0.5px) scale(1.06);
+  opacity: 0.95;
 }
 
 .menuToggle {
@@ -80,7 +110,7 @@
   }
 }
 
-/* Marca */
+/* ===== Marca (hover corto y limpio) ===== */
 .brand {
   display: inline-flex;
   align-items: center;
@@ -90,11 +120,15 @@
   color: #ffffff;
   font-weight: 800;
   letter-spacing: 0.02em;
+  transition: transform 160ms ease, filter 160ms ease;
+  will-change: transform, filter;
 }
 .brand__logo {
   width: 60%;
   height: 60px;
   display: block;
+  transform-origin: bottom left;
+  transition: transform 160ms ease, filter 160ms ease;
 }
 .brand__text {
   display: inline-block;
@@ -105,6 +139,27 @@
   letter-spacing: 0.08em;
   white-space: nowrap;
   transform: translateY(1px);
+  transition: transform 160ms ease, letter-spacing 160ms ease,
+    text-shadow 160ms ease;
+}
+
+.brand:hover {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.3));
+}
+.brand:hover .brand__logo {
+  transform: translateY(-0.5px) scale(1.04) rotate(-1.2deg);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.28));
+}
+.brand:hover .brand__text {
+  transform: translateY(0) scale(1.02);
+  letter-spacing: 0.1em;
+  text-shadow: 0 5px 12px rgba(0, 0, 0, 0.28);
+}
+.brand:focus-visible {
+  outline: 2px solid rgba(255, 216, 77, 0.9);
+  outline-offset: 4px;
+  border-radius: 8px;
 }
 
 /* ====================================
@@ -232,7 +287,7 @@
   opacity: 1;
 }
 
-/* Stagger de entrada (7 ítems) */
+/* ===== Stagger (entrada/salida) tal como tenías ===== */
 .overlay-slide-down nav ul li:nth-of-type(1) {
   animation: slide-in-nav-item 0.4s linear 0.2s both;
 }
@@ -255,7 +310,6 @@
   animation: slide-in-nav-item 0.4s linear 1.4s both;
 }
 
-/* Stagger de salida (inverso) */
 .overlay-slide-up nav ul li:nth-of-type(1) {
   animation: slide-in-nav-item-reverse 0.3s linear 0.45s both;
 }
@@ -297,21 +351,20 @@
 }
 
 /* ====================================
-  MODO MÓVIL: franjas horizontales
-  (apilado vertical, ancho completo)
+  MODO MÓVIL: franjas horizontales (apilado vertical)
 ==================================== */
 @media (max-width: 720px) {
   .overlay-navigation nav ul {
-    flex-direction: column; /* Ahora son filas horizontales */
+    flex-direction: column;
   }
   .overlay-navigation nav ul li {
-    flex-basis: calc(100% / 7); /* 7 filas */
+    flex-basis: calc(100% / 7);
     height: calc(100% / 7);
-    transform: translateY(-100%); /* mismo slide-in vertical, ahora por filas */
+    transform: translateY(-100%);
   }
   .overlayLink {
     font-size: clamp(12px, 4.4vw, 16px);
-    letter-spacing: 2px; /* hace sitio para palabras largas */
+    letter-spacing: 2px;
     padding: 0.6rem 1rem;
     width: 100%;
   }
@@ -415,5 +468,15 @@
   }
   .overlayLink::after {
     font-size: 0.6rem;
+  }
+}
+
+/* Accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .brand,
+  .brand__logo,
+  .brand__text,
+  .langSwitch button {
+    transition: none !important;
   }
 }
