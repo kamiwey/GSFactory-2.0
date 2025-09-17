@@ -79,6 +79,8 @@
     gap: 8px;
   }
 }
+
+/* Marca */
 .brand {
   display: inline-flex;
   align-items: center;
@@ -93,6 +95,16 @@
   width: 50px;
   height: 50px;
   display: block;
+}
+.brand__text {
+  display: inline-block;
+  color: #fff;
+  font-size: clamp(14px, 1.7vw, 20px);
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  transform: translateY(1px);
 }
 
 /* ====================================
@@ -137,7 +149,7 @@
 }
 
 /* ====================================
-  Overlay fullscreen (7 columnas)
+  Overlay fullscreen (7 columnas en desktop)
 ==================================== */
 .overlay-navigation {
   position: fixed;
@@ -168,8 +180,9 @@
   padding: 0;
 }
 .overlay-navigation nav ul {
-  display: flex;
+  display: flex; /* Desktop: franjas verticales */
   list-style: none;
+  flex-direction: row;
 }
 .overlay-navigation nav ul li {
   flex-basis: calc(100% / var(--cols));
@@ -193,8 +206,6 @@
   display: inline-block;
   text-align: center;
   padding: 0.4rem 0.8rem;
-
-  /* Elevación suave */
   transition: transform 160ms ease, filter 160ms ease;
 }
 .overlayLink::before {
@@ -282,6 +293,27 @@
   }
   to {
     transform: translateY(-100%);
+  }
+}
+
+/* ====================================
+  MODO MÓVIL: franjas horizontales
+  (apilado vertical, ancho completo)
+==================================== */
+@media (max-width: 720px) {
+  .overlay-navigation nav ul {
+    flex-direction: column; /* Ahora son filas horizontales */
+  }
+  .overlay-navigation nav ul li {
+    flex-basis: calc(100% / 7); /* 7 filas */
+    height: calc(100% / 7);
+    transform: translateY(-100%); /* mismo slide-in vertical, ahora por filas */
+  }
+  .overlayLink {
+    font-size: clamp(12px, 4.4vw, 16px);
+    letter-spacing: 2px; /* hace sitio para palabras largas */
+    padding: 0.6rem 1rem;
+    width: 100%;
   }
 }
 
@@ -373,7 +405,7 @@
   }
 }
 
-/* Responsive */
+/* Responsive fino extra-pequeño */
 @media (max-width: 640px) {
   .open-overlay {
     right: 1rem;

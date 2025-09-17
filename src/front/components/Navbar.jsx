@@ -6,7 +6,7 @@ import LogoGS from "../assets/img/logo-color.svg";
 
 /**
  * Paleta interna para el overlay de la hamburguesa.
- * Replica los valores de PageTransition.COLORS.
+ * (Independiente del resto de paletas del proyecto)
  */
 const NAV_COLORS = [
   "#3E78D1", // azul
@@ -98,6 +98,8 @@ export default function Navbar() {
             loading="lazy"
             decoding="async"
           />
+          {/* Texto de marca visible: GS FACTORY */}
+          <span className="brand__text">GS FACTORY</span>
         </Link>
 
         <div className="navRight">
@@ -132,8 +134,7 @@ export default function Navbar() {
 
           {/* Burger */}
           <div
-            className={`open-overlay menuToggle navbar__toggle ${open ? "is-open" : ""
-              } ${closing ? "is-closing" : ""}`}
+            className={`open-overlay menuToggle navbar__toggle ${open ? "is-open" : ""} ${closing ? "is-closing" : ""}`}
             onClick={toggle}
             role="button"
             aria-label={t("aria.openMenu")}
@@ -147,7 +148,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* OVERLAY FULLSCREEN — 7 columnas con colores NAV_COLORS */}
+      {/* OVERLAY FULLSCREEN — 7 bloques coloreados */}
       {(open || closing) && (
         <div
           className={overlayClass}
