@@ -99,7 +99,8 @@ export default function Navbar() {
             decoding="async"
           />
           {/* Texto de marca visible: GS FACTORY */}
-          <span className="brand__text">GS FACTORY</span>
+          <span className="brand__text">GS <br></br>FACTORY</span>
+
         </Link>
 
         <div className="navRight">
