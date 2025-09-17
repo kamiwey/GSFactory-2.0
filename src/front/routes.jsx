@@ -5,11 +5,13 @@ import { Layout } from "./pages/Layout";
 // Páginas (todas son exports con nombre, NO default)
 import { Home } from "./pages/Home";
 import { Projects } from "./pages/navBarPages/Projects";
-import { PrimatePlanet } from "./pages/navBarPages/PrimatePlanet";
+import { ArtToys } from "./pages/navBarPages/ArtToys";
 import { NFC } from "./pages/navBarPages/NFC";
-import { Catalogo } from "./pages/navBarPages/Catalogo";
-import { AboutUs } from "./pages/navBarPages/AboutUs";
+import { Tufting } from "./pages/navBarPages/Tufting";
+import { Merchandising } from "./pages/navBarPages/Merchandising";
 import { Colaboraciones } from "./pages/navBarPages/Colaboraciones";
+import { AboutUs } from "./pages/navBarPages/AboutUs";
+
 
 /**
  * Gate de transición:
@@ -40,11 +42,14 @@ export default function AppRoutes() {
       <Route element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="/projects" element={<Projects />} />
-        <Route path="/primate-planet" element={<PrimatePlanet />} />
+        <Route path="/art-toys" element={<ArtToys />} />
         <Route path="/nfc" element={<NFC />} />
-        <Route path="/catalogo" element={<Catalogo />} />
-        <Route path="/about-us" element={<AboutUs />} />
+        <Route path="/tufting" element={<Tufting />} />
+        <Route path="/merchandising" element={<Merchandising />} />
         <Route path="/colaboraciones" element={<Colaboraciones />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/about-us" element={<AboutUs />} />
+
         {/* 404 opcional */}
         <Route path="*" element={<Home />} />
       </Route>

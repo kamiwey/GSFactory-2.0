@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-export const Catalogo = () => {
+export const Merchandising = () => {
     useEffect(() => {
         document.documentElement.style.setProperty("--nav-fg", "#ffffff"); // navbar blanca
     }, []);
@@ -14,7 +14,7 @@ export const Catalogo = () => {
                 color: "#000000ff"
             }}
         >
-            <h1 className="display-3 m-0">Catalogo</h1>
+            <h1 className="display-3 m-0">MERCHANDISING</h1>
         </section>
     );
 };

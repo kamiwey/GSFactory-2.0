@@ -1,11 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import "./../stylesGlobal/navbar.css";
 import LogoGS from "../assets/img/logo-color.svg";
 
+/**
+ * Paleta interna para el overlay de la hamburguesa.
+ * Replica los valores de PageTransition.COLORS.
+ */
+const NAV_COLORS = [
+  "#3E78D1", // azul
+  "#2DA57F", // verde
+  "#5342D9", // violeta
+  "#B5823E", // ocre
+  "#D24545", // rojo
+  "#A3A31E", // oliva
+  "#111111" // casi negro
+];
+
 export default function Navbar() {
-  const { t, i18n } = useTranslation('common');
+  const { t, i18n } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [armed, setArmed] = useState(false);
@@ -13,6 +27,20 @@ export default function Navbar() {
 
   const CLOSE_MS = 800;
   const CLOSE_BUFFER = 20;
+
+  // Orden y rutas exactamente como en Home
+  const navItems = useMemo(
+    () => [
+      { key: "artToys", to: "/art-toys" },
+      { key: "nfc", to: "/nfc" },
+      { key: "tufting", to: "/tufting" },
+      { key: "merchandising", to: "/merchandising" },
+      { key: "collaborations", to: "/colaboraciones" },
+      { key: "home", to: "/home" },
+      { key: "about", to: "/about-us" }
+    ],
+    []
+  );
 
   useEffect(() => {
     const onEsc = (e) => e.key === "Escape" && startClose();
@@ -61,95 +89,88 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="gsNav" role="navigation" aria-label={t('aria.navbar')}>
+      <nav className="gsNav" role="navigation" aria-label={t("aria.navbar")}>
         <Link className="brand" to="/">
-          <img className="brand__logo" src={LogoGS} alt="GS" loading="lazy" decoding="async" />
-          <span className="brand__txt">GS FACTORY</span>
+          <img
+            className="brand__logo"
+            src={LogoGS}
+            alt="GS"
+            loading="lazy"
+            decoding="async"
+          />
         </Link>
 
-        {/* Selector de idioma discreto */}
         <div className="navRight">
-        <div role="group" className="langSwitch" aria-label={t('aria.changeLanguage')}>
-          <button
-            type="button"
-            onClick={() => { i18n.changeLanguage('es'); localStorage.setItem('lang', 'es'); }}
-            aria-pressed={i18n.resolvedLanguage === 'es'}
+          {/* Idiomas */}
+          <div
+            role="group"
+            className="langSwitch"
+            aria-label={t("aria.changeLanguage")}
           >
-            ES
-          </button>
-          <span aria-hidden="true">/</span>
-          <button
-            type="button"
-            onClick={() => { i18n.changeLanguage('en'); localStorage.setItem('lang', 'en'); }}
-            aria-pressed={i18n.resolvedLanguage === 'en'}
-          >
-            EN
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => {
+                i18n.changeLanguage("es");
+                localStorage.setItem("lang", "es");
+              }}
+              aria-pressed={i18n.resolvedLanguage === "es"}
+            >
+              ES
+            </button>
+            <span aria-hidden="true">/</span>
+            <button
+              type="button"
+              onClick={() => {
+                i18n.changeLanguage("en");
+                localStorage.setItem("lang", "en");
+              }}
+              aria-pressed={i18n.resolvedLanguage === "en"}
+            >
+              EN
+            </button>
+          </div>
 
-        {/* Botón burger (3 barras) */}
-        <div
-          className={`open-overlay menuToggle navbar__toggle ${open ? "is-open" : ""} ${closing ? "is-closing" : ""}`}
-          onClick={toggle}
-          role="button"
-          aria-label={t('aria.openMenu')}
-          aria-expanded={open}
-          tabIndex={0}
-        >
-          <span className="bar-top"></span>
-          <span className="bar-middle"></span>
-          <span className="bar-bottom"></span>
-        </div>
+          {/* Burger */}
+          <div
+            className={`open-overlay menuToggle navbar__toggle ${open ? "is-open" : ""
+              } ${closing ? "is-closing" : ""}`}
+            onClick={toggle}
+            role="button"
+            aria-label={t("aria.openMenu")}
+            aria-expanded={open}
+            tabIndex={0}
+          >
+            <span className="bar-top"></span>
+            <span className="bar-middle"></span>
+            <span className="bar-bottom"></span>
+          </div>
         </div>
       </nav>
 
-      {/* OVERLAY FULLSCREEN (4 columnas) */}
+      {/* OVERLAY FULLSCREEN — 7 columnas con colores NAV_COLORS */}
       {(open || closing) && (
         <div
           className={overlayClass}
           onClick={(e) => {
-            // cerrar si clicas en el fondo oscuro
             if (e.target.classList.contains("overlay-navigation")) startClose();
           }}
         >
           <nav role="navigation">
-            <ul>
-              <li>
-                <Link
-                  to="/projects"
-                  className="overlayLink"
-                  onClick={(e) => navAfterClose(e, "/projects")}
+            <ul style={{ ["--cols"]: 7 }}>
+              {navItems.map((item, i) => (
+                <li
+                  key={item.key}
+                  style={{ background: NAV_COLORS[i % NAV_COLORS.length] }}
                 >
-                  {t('nav.projects')}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/colaboraciones"
-                  className="overlayLink"
-                  onClick={(e) => navAfterClose(e, "/colaboraciones")}
-                >
-                  {t('nav.collaborations')}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/nfc"
-                  className="overlayLink"
-                  onClick={(e) => navAfterClose(e, "/nfc")}
-                >
-                  {t('nav.nfc')}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about-us"
-                  className="overlayLink"
-                  onClick={(e) => navAfterClose(e, "/about-us")}
-                >
-                  {t('nav.about')}
-                </Link>
-              </li>
+                  <Link
+                    to={item.to}
+                    className="overlayLink"
+                    onClick={(e) => navAfterClose(e, item.to)}
+                  >
+                    {t(`nav.${item.key}`)}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </nav>
         </div>
@@ -159,6 +180,3 @@ export default function Navbar() {
 }
 
 export { Navbar };
-
-
-

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-export const PrimatePlanet = () => {
+export const Home = () => {
     useEffect(() => {
         document.documentElement.style.setProperty("--nav-fg", "#ffffff"); // navbar blanca
     }, []);
@@ -14,7 +14,7 @@ export const PrimatePlanet = () => {
                 color: "#000000ff"
             }}
         >
-            <h1 className="display-3 m-0">Primate Planets</h1>
+            <h1 className="display-3 m-0">HOME</h1>
         </section>
     );
 };
