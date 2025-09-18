@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import "../styles/art-toys.css";
 
-/* Asset hero (mismo que en home) */
+/* Ruta del mono (corregida por ti) */
 import toyMono from "../../assets/img/gsf_monkey_transparent.png";
 
 const TOYS = [
@@ -17,12 +17,12 @@ export const ArtToys = () => {
     const stepsRef = useRef(null);
 
     useEffect(() => {
-        // Navbar en blanco encima del azul
+        // Navbar legible sobre el azul
         document.documentElement.style.setProperty("--nav-fg", "#ffffff");
     }, []);
 
     useEffect(() => {
-        // Reveal de los pasos al entrar en viewport
+        // Reveal de pasos
         const root = stepsRef.current;
         if (!root) return;
         const items = root.querySelectorAll(".at-step");
@@ -74,7 +74,7 @@ export const ArtToys = () => {
                 </div>
             </section>
 
-            {/* 2) CARRUSEL (scroll-snap x mandatory) */}
+            {/* 2) CARRUSEL */}
             <section className="at-carousel">
                 <header className="at-secHead">
                     <h2 className="at-secTitle">Colección</h2>
@@ -102,9 +102,25 @@ export const ArtToys = () => {
                         </article>
                     ))}
                 </div>
+
+                {/* Nav flotante para móvil */}
+                <div className="at-carousel__overNav" aria-hidden="false">
+                    <button
+                        className="at-arrow at-arrow--circle at-arrow--left"
+                        onClick={() => scrollByCard(-1)}
+                        aria-label="Anterior"
+                        type="button"
+                    >‹</button>
+                    <button
+                        className="at-arrow at-arrow--circle at-arrow--right"
+                        onClick={() => scrollByCard(1)}
+                        aria-label="Siguiente"
+                        type="button"
+                    >›</button>
+                </div>
             </section>
 
-            {/* 3) PROCESO (4 pasos) */}
+            {/* 3) PROCESO */}
             <section className="at-process" ref={stepsRef}>
                 <header className="at-secHead">
                     <h2 className="at-secTitle">Proceso</h2>
@@ -113,7 +129,6 @@ export const ArtToys = () => {
                 <ol className="at-steps">
                     <li className="at-step">
                         <div className="at-step__icon" aria-hidden="true">
-                            {/* idea */}
                             <svg viewBox="0 0 24 24"><path d="M9 21h6v-2a5 5 0 1 0-6 0v2zM12 2a7 7 0 0 1 7 7c0 2.5-1.3 4.1-3 5.3V16H8v-1.7C6.3 13.1 5 11.5 5 9a7 7 0 0 1 7-7z" /></svg>
                         </div>
                         <h3 className="at-step__title">Idea</h3>
@@ -122,7 +137,6 @@ export const ArtToys = () => {
 
                     <li className="at-step">
                         <div className="at-step__icon" aria-hidden="true">
-                            {/* modelado */}
                             <svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4zm0 5l9 4 9-4M3 17l9 4 9-4" /></svg>
                         </div>
                         <h3 className="at-step__title">Modelado</h3>
@@ -131,7 +145,6 @@ export const ArtToys = () => {
 
                     <li className="at-step">
                         <div className="at-step__icon" aria-hidden="true">
-                            {/* prototipo */}
                             <svg viewBox="0 0 24 24"><path d="M7 3h10v4H7zM5 7h14v14H5z" /></svg>
                         </div>
                         <h3 className="at-step__title">Prototipo</h3>
@@ -140,7 +153,6 @@ export const ArtToys = () => {
 
                     <li className="at-step">
                         <div className="at-step__icon" aria-hidden="true">
-                            {/* pintura */}
                             <svg viewBox="0 0 24 24"><path d="M7 16c0-3 4-5 5-8 1-3-2-5-4-3-2 2-1 6 2 7M4 20h8l8-8-4-4-8 8v4z" /></svg>
                         </div>
                         <h3 className="at-step__title">Pintura</h3>
