@@ -1,5 +1,4 @@
 @import url("https://fonts.googleapis.com/css2?family=Saira:wght@700;800&display=swap");
-/* Fuente para los rótulos gigantes de paneles (no afecta al resto) */
 @import url("https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap");
 @import "./tokens.css";
 
@@ -178,12 +177,12 @@
   padding: 0 2rem;
   max-width: 64rem;
 }
-.vpanel__title {
+.vstack .vpanel__title {
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 800;
   margin-bottom: 0.4em;
 }
-.vpanel__text {
+.vstack .vpanel__text {
   opacity: 0.8;
 }
 
@@ -328,12 +327,17 @@
   cursor: pointer;
   transform-origin: bottom center;
   transition: transform 220ms ease;
-  text-decoration: none; /* por si es <a> */
+  text-decoration: none;
+  /* --- Blindaje contra reglas globales tipo a:hover { opacity:.7 } --- */
+  opacity: 1 !important;
+  filter: none !important;
 }
 .panelHero__cta:hover,
 .panelHero__cta:focus-visible {
   transform: scale(1.1);
   outline: none;
+  opacity: 1 !important; /* mantiene opacidad total */
+  filter: none !important; /* evita filtros heredados en el CTA */
 }
 .panelHero__img {
   width: auto;
@@ -343,6 +347,14 @@
   display: block;
   user-select: none;
   pointer-events: none;
+  opacity: 1;
+  filter: none;
+}
+/* redundancia intencional por si hay estilos muy agresivos */
+.panelHero__cta:hover .panelHero__img,
+.panelHero__cta:focus-visible .panelHero__img {
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 /* Mobile tweaks */
