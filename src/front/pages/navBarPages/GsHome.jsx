@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-export const Home = () => {
+export const GsHome = () => {
     useEffect(() => {
         document.documentElement.style.setProperty("--nav-fg", "#ffffff"); // navbar blanca
     }, []);

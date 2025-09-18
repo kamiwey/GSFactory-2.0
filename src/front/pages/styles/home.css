@@ -8,8 +8,6 @@
   min-height: 100dvh;
   background: #000;
   scroll-behavior: smooth;
-
-  /* distancia de salto con la flecha */
   --arrow-jump: 670px;
 }
 
@@ -17,12 +15,11 @@
 .hero {
   min-height: calc(100dvh - var(--nav-h, 52px));
   position: relative;
-  isolation: isolate; /* nuevo stacking context */
-  z-index: 5; /* SIEMPRE por delante del fondo de ColorStage */
+  isolation: isolate;
+  z-index: 5;
   --parY: 0px;
   --p: 0;
 }
-
 .hero__bg {
   position: absolute;
   inset: 0;
@@ -30,7 +27,6 @@
   overflow: hidden;
   background: #000;
 }
-
 .hero__video {
   position: absolute;
   inset: 0;
@@ -41,27 +37,15 @@
   will-change: transform;
   transform: translate3d(0, calc(var(--parY) * -0.15), 0);
 }
-
-/* Fade inferior del vídeo con mask-image (cuando hay soporte) */
 @supports (mask-image: linear-gradient(#fff, #fff)) {
   .hero__video {
-    -webkit-mask-image: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 1) 82%,
-      rgba(255, 255, 255, 0) 96%
-    );
-    mask-image: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 1) 82%,
-      rgba(255, 255, 255, 0) 96%
-    );
+    -webkit-mask-image: linear-gradient(180deg, #fff 82%, transparent 96%);
+    mask-image: linear-gradient(180deg, #fff 82%, transparent 96%);
   }
   .hero__fadeBottom {
     display: none;
   }
 }
-
-/* Fallback breve del fade si no hay mask-image (sin “velos” largos) */
 @supports not (mask-image: linear-gradient(#fff, #fff)) {
   .hero__fadeBottom {
     position: absolute;
@@ -74,15 +58,14 @@
       180deg,
       rgba(0, 0, 0, 0) 0%,
       rgba(0, 0, 0, 0.75) 90%,
-      rgba(0, 0, 0, 1) 100%
+      #000 100%
     );
     pointer-events: none;
   }
 }
-
 .hero__content {
   position: relative;
-  z-index: 6; /* por encima del fade y del fondo */
+  z-index: 6;
   display: grid;
   place-items: center;
   text-align: center;
@@ -90,7 +73,6 @@
   padding-left: var(--gap);
   padding-right: var(--gap);
 }
-
 .hero__title {
   font-family: "Saira", sans-serif;
   text-transform: uppercase;
@@ -101,7 +83,6 @@
   transform: translate3d(0, calc(var(--parY) * 0.42), 0);
   will-change: transform;
 }
-
 .hero__subtitle {
   font-family: "Saira", sans-serif;
   text-transform: uppercase;
@@ -114,7 +95,6 @@
   transition: opacity 120ms linear;
   will-change: transform, opacity;
 }
-
 .hero__arrow {
   display: inline-grid;
   place-items: center;
@@ -138,7 +118,6 @@
 .section {
   padding: 12vh var(--gap);
 }
-
 .section--spacer {
   --pinBottom: 10vh;
   --pinHeight: 0px;
@@ -152,8 +131,6 @@
   width: min(1200px, 100% - calc(var(--gap) * 2));
   margin-inline: auto;
 }
-
-/* estados del pin */
 .section--spacer.pinning .section__pin {
   position: fixed;
   left: 0;
@@ -166,7 +143,6 @@
   margin-top: calc(100vh - var(--pinBottom) - var(--pinHeight));
 }
 
-/* Accesibilidad */
 @media (prefers-reduced-motion: reduce) {
   .hero__video,
   .hero__title,
@@ -184,7 +160,7 @@
   }
 }
 
-/* ---------- PANEL VERTICAL (después del tramo horizontal) ---------- */
+/* ---------- VERTICAL 7–8 ---------- */
 .vstack {
   padding: 0;
 }
@@ -197,7 +173,7 @@
 .vpanel--last {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.vpanel__inner {
+.vstack .vpanel__inner {
   text-align: center;
   padding: 0 2rem;
   max-width: 64rem;
@@ -240,7 +216,6 @@
   stroke-width: 3.2;
   fill: none;
 }
-
 @media (max-width: 900px) {
   .homeTopBtn {
     width: 52px;
@@ -261,8 +236,7 @@
 .colorStage {
   position: relative;
   z-index: 0;
-} /* detrás del hero */
-
+}
 .colorStage__bg {
   position: sticky;
   top: 0;
@@ -275,7 +249,7 @@
       rgba(255, 255, 255, 0.06),
       transparent 70%
     ),
-    linear-gradient(180deg, var(--bgStart, #000000), var(--bgEnd, #000000));
+    linear-gradient(180deg, var(--bgStart, #000), var(--bgEnd, #000));
   transition: background 120ms linear;
 }
 @supports (height: 100dvh) {
@@ -297,13 +271,12 @@
   background: linear-gradient(180deg, var(--bgStart), var(--bgEnd)) !important;
 }
 
-/* ========== PANEL HERO (panel 1) ========== */
+/* ========== PANEL HERO (genérico para todos) ========== */
 .panel--hero {
   display: grid;
   place-items: center;
   position: relative;
 }
-
 .panelHero {
   position: relative;
   width: min(92vw, 1600px);
@@ -311,16 +284,10 @@
   display: grid;
   place-items: center;
   z-index: 1;
-
-  /* evita que se "corte" el rótulo al subir */
   overflow: visible;
-
-  /* Variables animadas desde JS (Home.jsx) */
-  --wordVis: 1; /* 1 visible, 0 oculto */
-  --wordOut: 0; /* 1 - vis (comodín para cálculos) */
+  --wordVis: 1;
+  --wordOut: 0;
 }
-
-/* Rótulo por detrás del mono */
 .panelHero__word {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
     sans-serif;
@@ -329,29 +296,25 @@
   margin: 0;
   color: #fff;
   text-align: center;
-
   font-size: clamp(72px, 11vw, 240px);
   position: absolute;
-  inset: 0; /* ocupa el contenedor para centrar fácil */
+  inset: 0;
   display: grid;
   place-items: center;
   z-index: 1;
   pointer-events: none;
-
-  /* Posición base (subido) + animación por scroll */
   opacity: var(--wordVis);
   transform: translateY(
       calc(
-        var(--heroWordY, clamp(-12rem, -19vh, -26rem)) /* base (subido) */ -
-          (var(--wordOut) * 10vh) /* al salir sube */
+        var(--heroWordY, clamp(-12rem, -19vh, -26rem)) - (var(--wordOut) * 10vh)
       )
     )
-    scale(calc(1 + var(--wordOut) * 0.16)); /* y hace zoom */
+    scale(calc(1 + var(--wordOut) * 0.16));
   transition: transform 120ms linear, opacity 120ms linear;
   will-change: transform, opacity;
 }
 
-/* Botón con el mono delante */
+/* CTA (aplica igual a <a> o <button>) */
 .panelHero__cta {
   -webkit-tap-highlight-color: transparent;
   background: transparent;
@@ -365,6 +328,7 @@
   cursor: pointer;
   transform-origin: bottom center;
   transition: transform 220ms ease;
+  text-decoration: none; /* por si es <a> */
 }
 .panelHero__cta:hover,
 .panelHero__cta:focus-visible {

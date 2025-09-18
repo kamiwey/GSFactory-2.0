@@ -36,7 +36,7 @@ export default function Navbar() {
       { key: "tufting", to: "/tufting" },
       { key: "merchandising", to: "/merchandising" },
       { key: "collaborations", to: "/colaboraciones" },
-      { key: "home", to: "/home" },
+      { key: "home", to: "/gs-home" },
       { key: "about", to: "/about-us" }
     ],
     []

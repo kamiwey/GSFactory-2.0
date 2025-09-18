@@ -1,9 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import "./styles/home.css";
 import heroVideo from "../assets/video/hero-video.mp4";
-import monoImg from "../assets/img/gsf_monkey_transparent.png";
+
+/* IMÁGENES PANELS */
+import artToysImg from "../assets/img/gsf_monkey_transparent.png";
+import nfcImg from "../assets/img/nfc.png";
+import tuftingImg from "../assets/img/tufting.png";
+import merchandisingImg from "../assets/img/merchandising.png";
+import colaboracionesImg from "../assets/img/colaboraciones.png";
+import homeDecorImg from "../assets/img/home.png";
 
 import HorizontalStrip from "../components/HorizontalStrip";
 import ColorStage from "../components/ColorStage";
@@ -16,14 +24,12 @@ export const Home = () => {
   const heroRef = useRef(null);
   const homeRef = useRef(null);
 
-  // === Ajuste fino de la altura del rótulo (más arriba que antes) ===
-  // Sube/baja cambiando estos clamps (más negativo = más arriba).
+  // === Altura del rótulo ===
   const DESKTOP_Y = "clamp(-16rem, -24vh, -30rem)";
   const MOBILE_Y = "clamp(-10rem, -17vh, -23rem)";
-
   const [heroWordY, setHeroWordY] = useState(DESKTOP_Y);
 
-  // Ping opcional al backend de ejemplo (si no hay backend, ignora el error)
+  // Ping opcional backend (silencioso)
   useEffect(() => {
     const f = async () => {
       try {
@@ -32,9 +38,7 @@ export const Home = () => {
         const r = await fetch(url + "/api/hello");
         const d = await r.json();
         if (r.ok) dispatch({ type: "set_hello", payload: d.message });
-      } catch {
-        // sin backend => sin bloqueos
-      }
+      } catch { }
     };
     f();
   }, [dispatch]);
@@ -95,7 +99,7 @@ export const Home = () => {
     };
   }, []);
 
-  // Responsivo: Y del título en móviles/desktop
+  // Responsivo: Y del título
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 900px)");
     const apply = () => setHeroWordY(mq.matches ? MOBILE_Y : DESKTOP_Y);
@@ -104,28 +108,16 @@ export const Home = () => {
     return () => mq.removeEventListener?.("change", apply);
   }, []); // eslint-disable-line
 
-  // === Aparición / desaparición del rótulo por foco de panel (IO) ===
-  // Nuevo: histeresis en los umbrales para anticipar el fade-out sin romper el feel del fade-in.
+  // Aparición / desaparición del rótulo (IO con histeresis)
   useEffect(() => {
     const panels = Array.from(document.querySelectorAll(".panelHero"));
     if (!panels.length) return;
 
-    // Umbrales densos para suavidad
     const thresholds = Array.from({ length: 21 }, (_, i) => i / 20);
-
-    // Mapa de últimos ratios para detectar dirección (entrando vs saliendo)
     const lastRatio = new WeakMap();
 
-    // Umbrales diferenciados
-    // ENTRANDO (querías este "look" tal cual): 0%→0 a 68%→100%
-    const ENTER_R0 = 0.22;
-    const ENTER_R1 = 0.68;
-
-    // SALIENDO (antes se iba tarde): empieza a caer mucho antes
-    // 0.88 fuerza que con un 88% visible ya empiece a perder fuerza.
-    const LEAVE_R0 = 0.58;
-    const LEAVE_R1 = 1;
-
+    const ENTER_R0 = 0.22, ENTER_R1 = 0.68;
+    const LEAVE_R0 = 0.58, LEAVE_R1 = 1;
     const clamp01 = (x) => Math.max(0, Math.min(1, x));
 
     const io = new IntersectionObserver(
@@ -133,15 +125,12 @@ export const Home = () => {
         entries.forEach((e) => {
           const r = e.intersectionRatio;
           const prev = lastRatio.get(e.target) ?? r;
-          const leaving = r < prev - 0.0005; // tolerancia anti-ruido
-
+          const leaving = r < prev - 0.0005;
           const r0 = leaving ? LEAVE_R0 : ENTER_R0;
           const r1 = leaving ? LEAVE_R1 : ENTER_R1;
-
           const vis = clamp01((r - r0) / (r1 - r0));
           e.target.style.setProperty("--wordVis", vis.toFixed(3));
           e.target.style.setProperty("--wordOut", (1 - vis).toFixed(3));
-
           lastRatio.set(e.target, r);
         });
       },
@@ -160,12 +149,10 @@ export const Home = () => {
     e.preventDefault();
     const heroEl = heroRef.current;
     if (!heroEl) return;
-
     const navH =
       parseFloat(
         getComputedStyle(document.documentElement).getPropertyValue("--nav-h")
       ) || 72;
-
     const target =
       heroEl.getBoundingClientRect().bottom + window.scrollY - (navH + 8);
     window.scrollTo({
@@ -225,85 +212,148 @@ export const Home = () => {
       {/* COLOR + HORIZONTAL + VERTICAL */}
       <ColorStage colors={PALETTE_HOME}>
         <HorizontalStrip panels={6} navbarHeight={72}>
-          {/* PANEL 1 */}
+          {/* PANEL 1 — ART TOYS */}
           <div className="hstrip__panel" key="p1">
             <section className="panel panel--hero" aria-label="ART TOYS">
               <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
-                {/* Rótulo gigante detrás */}
                 <h2 className="panelHero__word" aria-hidden="true">
                   {t("hero.artToys")}
                 </h2>
 
-                {/* Imagen botón (modal más adelante) */}
-                <button
-                  type="button"
+                <Link
+                  to="/art-toys"
                   className="panelHero__cta"
-                  aria-label="Abrir ART TOYS"
+                  aria-label="Ir a ART TOYS"
                 >
                   <img
                     className="panelHero__img"
-                    src={monoImg}
-                    alt="Figura mono astronauta — GS Factory"
+                    src={artToysImg}
+                    alt="Art toy mono — GS Factory"
                     loading="eager"
                     decoding="async"
                   />
-                </button>
+                </Link>
               </div>
             </section>
           </div>
 
-          {/* PANEL 2 */}
+          {/* PANEL 2 — NFC */}
           <div className="hstrip__panel" key="p2">
             <section className="panel panel--hero" aria-label="NFC">
               <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
-                {/* TODO i18n: t('hero.nfc') */}
                 <h2 className="panelHero__word" aria-hidden="true">NFC</h2>
+
+                <Link
+                  to="/nfc"
+                  className="panelHero__cta"
+                  aria-label="Ir a NFC"
+                >
+                  <img
+                    className="panelHero__img"
+                    src={nfcImg}
+                    alt="Token NFC — GS Factory"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </Link>
               </div>
             </section>
           </div>
 
-          {/* PANEL 3 */}
+          {/* PANEL 3 — TUFTING */}
           <div className="hstrip__panel" key="p3">
             <section className="panel panel--hero" aria-label="TUFTING">
               <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
-                {/* TODO i18n: t('hero.tufting') */}
                 <h2 className="panelHero__word" aria-hidden="true">TUFTING</h2>
+
+                <Link
+                  to="/tufting"
+                  className="panelHero__cta"
+                  aria-label="Ir a TUFTING"
+                >
+                  <img
+                    className="panelHero__img"
+                    src={tuftingImg}
+                    alt="Alfombra tufting — GS Factory"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </Link>
               </div>
             </section>
           </div>
 
-          {/* PANEL 4 */}
+          {/* PANEL 4 — MERCHANDISING */}
           <div className="hstrip__panel" key="p4">
             <section className="panel panel--hero" aria-label="MERCHANDISING">
               <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
-                {/* TODO i18n: t('hero.merchandising') */}
                 <h2 className="panelHero__word" aria-hidden="true">MERCHANDISING</h2>
+
+                <Link
+                  to="/merchandising"
+                  className="panelHero__cta"
+                  aria-label="Ir a MERCHANDISING"
+                >
+                  <img
+                    className="panelHero__img"
+                    src={merchandisingImg}
+                    alt="Caja GS Merch + objetos — GS Factory"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </Link>
               </div>
             </section>
           </div>
 
-          {/* PANEL 5 */}
+          {/* PANEL 5 — COLABORACIONES */}
           <div className="hstrip__panel" key="p5">
             <section className="panel panel--hero" aria-label="COLABORACIONES">
               <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
-                {/* TODO i18n: t('hero.colaboraciones') */}
                 <h2 className="panelHero__word" aria-hidden="true">COLABORACIONES</h2>
+
+                <Link
+                  to="/colaboraciones"
+                  className="panelHero__cta"
+                  aria-label="Ir a COLABORACIONES"
+                >
+                  <img
+                    className="panelHero__img"
+                    src={colaboracionesImg}
+                    alt="Pack colaboraciones — GS Factory"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </Link>
               </div>
             </section>
           </div>
 
-          {/* PANEL 6 */}
+          {/* PANEL 6 — HOME */}
           <div className="hstrip__panel" key="p6">
-            <section className="panel panel--hero" aria-label="VELAS Y LED">
+            <section className="panel panel--hero" aria-label="HOME">
               <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
-                {/* TODO i18n: t('hero.velasYLed') */}
                 <h2 className="panelHero__word" aria-hidden="true">HOME</h2>
+
+                <Link
+                  to="/gs-home"
+                  className="panelHero__cta"
+                  aria-label="Ir a GS HOME"
+                >
+                  <img
+                    className="panelHero__img"
+                    src={homeDecorImg}
+                    alt="Decoración hogar GS — GS Factory"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </Link>
               </div>
             </section>
           </div>
         </HorizontalStrip>
 
-        {/* 7 y 8 en vertical */}
+        {/* Bloque vertical 7–8 (igual que antes) */}
         <section className="vstack" aria-label="Bloque vertical tras horizontal">
           <div className="vpanel">
             <div className="vpanel__inner">

@@ -11,7 +11,7 @@ import { Tufting } from "./pages/navBarPages/Tufting";
 import { Merchandising } from "./pages/navBarPages/Merchandising";
 import { Colaboraciones } from "./pages/navBarPages/Colaboraciones";
 import { AboutUs } from "./pages/navBarPages/AboutUs";
-
+import { GsHome } from "./pages/navBarPages/GsHome";
 
 /**
  * Gate de transición:
@@ -47,7 +47,7 @@ export default function AppRoutes() {
         <Route path="/tufting" element={<Tufting />} />
         <Route path="/merchandising" element={<Merchandising />} />
         <Route path="/colaboraciones" element={<Colaboraciones />} />
-        <Route path="/home" element={<Home />} />
+        <Route path="/gs-home" element={<GsHome />} />
         <Route path="/about-us" element={<AboutUs />} />
 
         {/* 404 opcional */}
