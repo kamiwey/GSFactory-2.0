@@ -10,7 +10,7 @@ export const Colaboraciones = () => {
                 minHeight: "100dvh",
                 display: "grid",
                 placeItems: "center",
-                backgroundColor: "#ea495f", // Sky
+                backgroundColor: "#bb8d43", // Sky
                 color: "#ffffffff"
             }}
         >

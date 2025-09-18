@@ -9,12 +9,12 @@ import LogoGS from "../assets/img/logo-color.svg";
  * (Independiente del resto de paletas del proyecto)
  */
 const NAV_COLORS = [
-  "#3E78D1", // azul
-  "#2DA57F", // verde
-  "#5342D9", // violeta
-  "#B5823E", // ocre
-  "#D24545", // rojo
-  "#A3A31E", // oliva
+  "#4a86d9", // azul
+  "#2aa0a0", // verde
+  "#39a84e", // violeta
+  "#5240c9", // ocre
+  "#bb8d43", // rojo
+  "#cf4e50", // oliva
   "#111111" // casi negro
 ];
 

@@ -10,7 +10,7 @@ export const NFC = () => {
                 minHeight: "100dvh",
                 display: "grid",
                 placeItems: "center",
-                backgroundColor: "#f4837d", // Sky
+                backgroundColor: "#2aa0a0", // Sky
                 color: "#ffffffff"
             }}
         >
