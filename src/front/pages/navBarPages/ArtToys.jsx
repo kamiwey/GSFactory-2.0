@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import "../styles/art-toys.css";
+import ModelViewer from "../../components/ModelViewer";
 
-/* Ruta del mono (corregida por ti) */
 import toyMono from "../../assets/img/gsf_monkey_transparent.png";
+import prototipoGlb from "../../assets/models/prototipo.glb?url";
 
 const TOYS = [
     { id: 1, title: "Explorer", img: toyMono, tags: ["Resina", "20 cm"] },
@@ -17,21 +18,15 @@ export const ArtToys = () => {
     const stepsRef = useRef(null);
 
     useEffect(() => {
-        // Navbar legible sobre el azul
         document.documentElement.style.setProperty("--nav-fg", "#ffffff");
     }, []);
 
     useEffect(() => {
-        // Reveal de pasos
         const root = stepsRef.current;
         if (!root) return;
         const items = root.querySelectorAll(".at-step");
         const io = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((e) => {
-                    if (e.isIntersecting) e.target.classList.add("is-visible");
-                });
-            },
+            (entries) => entries.forEach((e) => e.isIntersecting && e.target.classList.add("is-visible")),
             { threshold: 0.2 }
         );
         items.forEach((el) => io.observe(el));
@@ -42,13 +37,13 @@ export const ArtToys = () => {
         const scroller = document.querySelector(".at-carousel__track");
         if (!scroller) return;
         const card = scroller.querySelector(".at-card");
-        const delta = (card?.getBoundingClientRect().width || 320) + 16; // gap
+        const delta = (card?.getBoundingClientRect().width || 320) + 16;
         scroller.scrollBy({ left: dir * delta, behavior: "smooth" });
     };
 
     return (
         <main className="at">
-            {/* 1) HERO ASIMÉTRICO */}
+            {/* HERO */}
             <section className="at-hero">
                 <div className="at-hero__col at-hero__col--text">
                     <h1 className="at-hero__title">Art Toys</h1>
@@ -74,7 +69,29 @@ export const ArtToys = () => {
                 </div>
             </section>
 
-            {/* 2) CARRUSEL */}
+            {/* VISOR 3D */}
+            <section className="at-view3d">
+                <h2 className="at-secTitle">Prototipo 3D</h2>
+                <ModelViewer
+                    url={prototipoGlb}
+                    type="glb"
+                    color="#d9d9d9"
+                    autorotate={true}
+                    rotateSpeed={0.045}
+                    rotateAxis="y"
+                    up="z"
+                    /* ► Frente a cámara */
+                    pitch={-Math.PI / 2}
+                    yaw={0}         // ← antes Math.PI; ahora 0 para mirar al frente
+                    roll={0}
+                    env="city"
+                    height="58vh"
+                    target={[0, 0, 0]}
+                    dracoPath="https://www.gstatic.com/draco/versioned/decoders/1.5.7/"
+                />
+            </section>
+
+            {/* COLECCIÓN */}
             <section className="at-carousel">
                 <header className="at-secHead">
                     <h2 className="at-secTitle">Colección</h2>
@@ -103,7 +120,7 @@ export const ArtToys = () => {
                     ))}
                 </div>
 
-                {/* Nav flotante para móvil */}
+                {/* Nav flotante móvil */}
                 <div className="at-carousel__overNav" aria-hidden="false">
                     <button
                         className="at-arrow at-arrow--circle at-arrow--left"
@@ -120,7 +137,7 @@ export const ArtToys = () => {
                 </div>
             </section>
 
-            {/* 3) PROCESO */}
+            {/* PROCESO */}
             <section className="at-process" ref={stepsRef}>
                 <header className="at-secHead">
                     <h2 className="at-secTitle">Proceso</h2>
@@ -134,7 +151,6 @@ export const ArtToys = () => {
                         <h3 className="at-step__title">Idea</h3>
                         <p className="at-step__txt">Concepto y estilo del personaje.</p>
                     </li>
-
                     <li className="at-step">
                         <div className="at-step__icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4zm0 5l9 4 9-4M3 17l9 4 9-4" /></svg>
@@ -142,7 +158,6 @@ export const ArtToys = () => {
                         <h3 className="at-step__title">Modelado</h3>
                         <p className="at-step__txt">Sculpt & optimización para impresión.</p>
                     </li>
-
                     <li className="at-step">
                         <div className="at-step__icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><path d="M7 3h10v4H7zM5 7h14v14H5z" /></svg>
@@ -150,7 +165,6 @@ export const ArtToys = () => {
                         <h3 className="at-step__title">Prototipo</h3>
                         <p className="at-step__txt">Impresión, lijado y ensamblaje.</p>
                     </li>
-
                     <li className="at-step">
                         <div className="at-step__icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24"><path d="M7 16c0-3 4-5 5-8 1-3-2-5-4-3-2 2-1 6 2 7M4 20h8l8-8-4-4-8 8v4z" /></svg>
@@ -160,7 +174,7 @@ export const ArtToys = () => {
                     </li>
                 </ol>
 
-                <div className="at-ctaLine">
+                <div className="at-ctaLine" style={{ padding: "0 clamp(20px, 5vw, 64px)" }}>
                     <Link to="/projects" className="at-link at-link--strong">
                         Solicitar prototipo
                     </Link>

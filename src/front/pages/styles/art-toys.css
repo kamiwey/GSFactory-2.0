@@ -341,8 +341,6 @@
     width: 28px;
   }
 }
-
-/* En móvil: nav flotante visible, flechas del header ocultas */
 @media (max-width: 560px) {
   .at-hero__title {
     font-size: clamp(32px, 9.5vw, 48px);
@@ -362,5 +360,23 @@
   .at-carousel__track {
     grid-auto-columns: min(88vw, 460px);
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ================== VISOR 3D ================== */
+.at-view3d {
+  padding: 12px clamp(20px, 5vw, 64px) 40px;
+}
+.at-view3d > .at-secTitle {
+  margin-bottom: 12px;
+}
+.at-view3d > div {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(2px);
+}
+@media (max-width: 560px) {
+  .at-view3d {
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
   }
 }
