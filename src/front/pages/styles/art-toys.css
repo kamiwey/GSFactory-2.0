@@ -85,8 +85,8 @@
 
 /* ► Contenedor del visor 3D con el mismo “peso visual” que la imagen */
 .at-hero__viewer {
-  width: min(520px, 46vw);
-  height: min(560px, 60vh);
+  width: min(560px, 46vw); /* ↑ ligeramente mayor para empatar con el astro */
+  height: min(600px, 60vh); /* ↑ */
   display: block;
   animation: at-levitate 3.2s ease-in-out infinite alternate;
 }
