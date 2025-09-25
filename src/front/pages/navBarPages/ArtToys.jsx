@@ -43,7 +43,7 @@ export const ArtToys = () => {
 
     return (
         <main className="at">
-            {/* HERO */}
+            {/* HERO (texto izq, imagen der) */}
             <section className="at-hero">
                 <div className="at-hero__col at-hero__col--text">
                     <h1 className="at-hero__title">Art Toys</h1>
@@ -69,26 +69,40 @@ export const ArtToys = () => {
                 </div>
             </section>
 
-            {/* VISOR 3D */}
-            <section className="at-view3d">
-                <h2 className="at-secTitle">Prototipo 3D</h2>
-                <ModelViewer
-                    url={prototipoGlb}
-                    type="glb"
-                    color="#d9d9d9"
-                    autorotate={true}
-                    rotateSpeed={0.045}
-                    rotateAxis="y"
-                    up="z"
-                    /* ► Frente a cámara */
-                    pitch={-Math.PI / 2}
-                    yaw={0}         // ← antes Math.PI; ahora 0 para mirar al frente
-                    roll={0}
-                    env="city"
-                    height="58vh"
-                    target={[0, 0, 0]}
-                    dracoPath="https://www.gstatic.com/draco/versioned/decoders/1.5.7/"
-                />
+            {/* HERO MIRROR (modelo 3D izq, texto der) */}
+            <section className="at-hero at-hero--mirror">
+                <div className="at-hero__col at-hero__col--media at-hero__viewer">
+                    <ModelViewer
+                        url={prototipoGlb}
+                        type="glb"
+                        color="#d9d9d9"
+                        autorotate={true}
+                        rotateSpeed={0.045}
+                        rotateAxis="y"
+                        up="z"
+                        /* ► Frente a cámara */
+                        pitch={-Math.PI / 2}
+                        yaw={0}
+                        roll={0}
+                        env="city"
+                        height="100%"   /* el contenedor fija el alto */
+                        target={[0, 0, 0]}
+                        dracoPath="https://www.gstatic.com/draco/versioned/decoders/1.5.7/"
+                    />
+                </div>
+
+                <div className="at-hero__col at-hero__col--text">
+                    <h2 className="at-hero__title">Prototipo 3D</h2>
+                    <p className="at-hero__lead">
+                        Mostramos el modelo crudo en tiempo real: rotación suave,
+                        materiales neutros y rendimiento optimizado para web.
+                    </p>
+                    <div className="at-hero__cta">
+                        <Link to="/projects" className="at-btn" aria-label="Solicitar prototipo">
+                            Solicitar prototipo
+                        </Link>
+                    </div>
+                </div>
             </section>
 
             {/* COLECCIÓN */}

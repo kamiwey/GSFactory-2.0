@@ -32,6 +32,11 @@
     calc(16px + env(safe-area-inset-bottom))
   );
 }
+.at-hero--mirror {
+  /* ligera separación visual respecto al héroe superior */
+  margin-top: clamp(8px, 2vh, 28px);
+  /* misma estructura; el “mirror” lo da el orden del markup */
+}
 .at-hero__title {
   font-family: "Saira", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   font-size: clamp(40px, 6vw, 86px);
@@ -77,6 +82,19 @@
   pointer-events: none;
   animation: at-levitate 3.2s ease-in-out infinite alternate;
 }
+
+/* ► Contenedor del visor 3D con el mismo “peso visual” que la imagen */
+.at-hero__viewer {
+  width: min(520px, 46vw);
+  height: min(560px, 60vh);
+  display: block;
+  animation: at-levitate 3.2s ease-in-out infinite alternate;
+}
+.at-hero__viewer > * {
+  /* El componente ocupa todo el alto del contenedor */
+  height: 100%;
+}
+
 @keyframes at-levitate {
   from {
     transform: translateY(0);
@@ -86,7 +104,8 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .at-hero__img {
+  .at-hero__img,
+  .at-hero__viewer {
     animation: none;
   }
 }
@@ -116,10 +135,10 @@
   border-radius: 10px;
   display: grid;
   place-items: center;
+  cursor: pointer;
   border: 1px solid rgba(255, 255, 255, 0.22);
   background: rgba(0, 0, 0, 0.24);
   color: #fff;
-  cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease,
     background 160ms ease;
   backdrop-filter: blur(2px);
@@ -183,10 +202,10 @@
   width: 52px;
   height: 52px;
   border-radius: 999px;
+  pointer-events: auto;
   border: 1px solid rgba(255, 255, 255, 0.25);
   background: rgba(0, 0, 0, 0.35);
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-  pointer-events: auto;
 }
 .at-arrow--left {
   position: absolute;
@@ -256,16 +275,13 @@
   text-transform: uppercase;
   text-decoration: none;
   color: #fff;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
   padding-bottom: 2px;
   transition: transform 160ms ease, border-color 160ms ease;
 }
 .at-link:hover {
   transform: translateY(-1px);
   border-color: rgba(255, 255, 255, 0.6);
-}
-.at-link--strong {
-  border-width: 2px;
 }
 
 /* ================== PROCESO ================== */
@@ -330,6 +346,11 @@
     justify-self: center;
     animation-duration: 4s;
   }
+  .at-hero__viewer {
+    width: min(560px, 78vw);
+    height: min(520px, 58vh);
+    justify-self: center;
+  }
   .at-steps {
     grid-template-columns: 1fr 1fr;
   }
@@ -360,23 +381,5 @@
   .at-carousel__track {
     grid-auto-columns: min(88vw, 460px);
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
-  }
-}
-
-/* ================== VISOR 3D ================== */
-.at-view3d {
-  padding: 12px clamp(20px, 5vw, 64px) 40px;
-}
-.at-view3d > .at-secTitle {
-  margin-bottom: 12px;
-}
-.at-view3d > div {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(2px);
-}
-@media (max-width: 560px) {
-  .at-view3d {
-    padding-bottom: calc(40px + env(safe-area-inset-bottom));
   }
 }
