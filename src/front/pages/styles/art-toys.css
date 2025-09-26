@@ -32,11 +32,12 @@
     calc(16px + env(safe-area-inset-bottom))
   );
 }
+
+/* ligera separación visual respecto al héroe superior */
 .at-hero--mirror {
-  /* ligera separación visual respecto al héroe superior */
   margin-top: clamp(8px, 2vh, 28px);
-  /* misma estructura; el “mirror” lo da el orden del markup */
 }
+
 .at-hero__title {
   font-family: "Saira", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   font-size: clamp(40px, 6vw, 86px);
@@ -85,8 +86,8 @@
 
 /* ► Contenedor del visor 3D con el mismo “peso visual” que la imagen */
 .at-hero__viewer {
-  width: min(560px, 46vw); /* ↑ ligeramente mayor para empatar con el astro */
-  height: min(600px, 60vh); /* ↑ */
+  width: min(520px, 46vw);
+  height: min(560px, 60vh);
   display: block;
   animation: at-levitate 3.2s ease-in-out infinite alternate;
 }
@@ -335,12 +336,36 @@
   font-size: clamp(12px, 1.3vw, 14px);
 }
 
-/* ================== RESPONSIVE ================== */
+/* ================== ► SECCIÓN 3D + ALTO EXTRA (SIN SALTO) ================== */
+/* Alias: si tu JSX usa .at-hero--3d, hereda lo mismo que .at-hero--tall */
+.at-hero--tall,
+.at-hero--3d {
+  /* Más alto para que el 3D no se corte, sin meter hueco extra arriba */
+  min-height: clamp(720px, 110vh, 1200px);
+}
+/* Si además va en “mirror”, no queremos un margen extra */
+.at-hero--tall.at-hero--mirror,
+.at-hero--3d.at-hero--mirror {
+  margin-top: 0;
+}
+/* El visor 3D crece respecto al valor base */
+.at-hero--tall .at-hero__viewer,
+.at-hero--3d .at-hero__viewer {
+  height: min(68vh, 740px);
+  width: min(640px, 50vw);
+}
+/* Si en la tercera sección usas imagen espejo, igualamos “peso visual” */
+.at-hero--tall .at-hero__img,
+.at-hero--3d .at-hero__img {
+  width: min(640px, 50vw);
+}
+
 @media (max-width: 980px) {
   .at-hero {
     grid-template-columns: 1fr;
     text-align: left;
   }
+
   .at-hero__img {
     width: min(560px, 78vw);
     justify-self: center;
@@ -351,6 +376,7 @@
     height: min(520px, 58vh);
     justify-self: center;
   }
+
   .at-steps {
     grid-template-columns: 1fr 1fr;
   }
@@ -361,7 +387,19 @@
   .at-carousel::after {
     width: 28px;
   }
+
+  /* Altura “tall/3d” también en móvil, pero más contenida */
+  .at-hero--tall,
+  .at-hero--3d {
+    min-height: clamp(620px, 105vh, 900px);
+  }
+  .at-hero--tall .at-hero__viewer,
+  .at-hero--3d .at-hero__viewer {
+    height: min(56vh, 560px);
+    width: min(560px, 78vw);
+  }
 }
+
 @media (max-width: 560px) {
   .at-hero__title {
     font-size: clamp(32px, 9.5vw, 48px);
@@ -381,5 +419,51 @@
   .at-carousel__track {
     grid-auto-columns: min(88vw, 460px);
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+}
+/* === OVERRIDES ESPECÍFICOS PARA LA SECCIÓN 3D === */
+/* Variables para controlar el alto en una sola línea */
+:root {
+  --at3d-media-w: min(680px, 48vw); /* ancho visual del visor 3D */
+  --at3d-media-h: clamp(600px, 78vh, 860px); /* alto del visor 3D */
+  --at3d-minH: clamp(720px, 115vh, 1100px); /* alto mínimo de la sección */
+}
+
+/* No cambiamos el padding-top, así que la “distancia” con la sección anterior no varía */
+.at-hero--3d {
+  min-height: var(--at3d-minH);
+}
+
+/* Forzamos ancho/alto del contenedor del visor (lado izquierdo del grid). */
+.at-hero--3d .at-hero__viewer {
+  width: var(--at3d-media-w);
+  height: var(--at3d-media-h);
+  align-self: center; /* centra verticalmente dentro del grid */
+  justify-self: start; /* pegado a la izquierda */
+  position: relative;
+  overflow: visible; /* por si el modelo sobresale suavemente */
+  height: clamp(560px, 78vh, 860px);
+}
+
+/* Asegura que el canvas rellene el contenedor (algunas versiones de drei no lo aplican) */
+.at-hero--3d .at-hero__viewer canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Si usas un div “media” envolviendo el viewer, lo igualamos en altura para que no corte */
+.at-hero--3d .at-hero__media {
+  width: var(--at3d-media-w);
+  height: var(--at3d-media-h);
+  align-self: stretch;
+}
+
+/* En móvil mantenemos proporción pero damos un poco más de alto para evitar cortes */
+@media (max-width: 980px) {
+  :root {
+    --at3d-media-w: min(560px, 78vw);
+    --at3d-media-h: clamp(520px, 68vh, 720px);
+    --at3d-minH: clamp(620px, 105vh, 980px);
   }
 }

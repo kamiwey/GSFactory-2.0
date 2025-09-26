@@ -1,160 +1,85 @@
-import { Suspense, useEffect, useRef, useState } from "react";
-import { Canvas, useLoader, useFrame } from "@react-three/fiber";
-import {
-    OrbitControls,
-    Bounds,
-    ContactShadows,
-    Environment,
-    Center,
-    Html,
-    useProgress,
-    AdaptiveDpr,
-    AdaptiveEvents,
-} from "@react-three/drei";
-import { STLLoader, OBJLoader, GLTFLoader, DRACOLoader } from "three-stdlib";
+import { useRef, useEffect } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { useGLTF, Environment } from "@react-three/drei";
 import * as THREE from "three";
 
-/* ---------- Loader overlay ---------- */
-function CanvasLoader() {
-    const { progress } = useProgress();
-    return (
-        <Html center>
-            <div
-                style={{
-                    padding: "10px 14px",
-                    borderRadius: 12,
-                    background: "rgba(0,0,0,.45)",
-                    border: "1px solid rgba(255,255,255,.25)",
-                    color: "#fff",
-                    fontWeight: 800,
-                    letterSpacing: ".06em",
-                    backdropFilter: "blur(4px)",
-                    fontSize: 14,
-                    minWidth: 160,
-                    textAlign: "center",
-                }}
-            >
-                Cargando {progress.toFixed(0)}%
-            </div>
-        </Html>
-    );
-}
+const MODEL_URL = new URL("../assets/models/prototipo.glb", import.meta.url).href;
 
-/* ---------- Rotación global (no local) ---------- */
-function AutoRotate({ speed = 0.045, axis = "y", children }) {
-    const ref = useRef();
-    const axisVec = useRef(
-        axis === "x" ? new THREE.Vector3(1, 0, 0)
-            : axis === "z" ? new THREE.Vector3(0, 0, 1)
-                : new THREE.Vector3(0, 1, 0)
-    );
-    useFrame((_, dt) => ref.current?.rotateOnWorldAxis(axisVec.current, speed * dt));
-    return <group ref={ref}>{children}</group>;
-}
-
-/* ---------- Modelo: STL / OBJ / GLB (con Draco) ---------- */
 function Model({
-    url,
-    type = "glb",
-    color = "#dddddd",
-    dracoPath = "https://www.gstatic.com/draco/versioned/decoders/1.5.7/",
+    scale = 1,
+    offsetX = 0,
+    offsetY = 0,
+    rotate = true,
+    color = 0xd9d9d9,
 }) {
-    if (type === "stl") {
-        const geom = useLoader(STLLoader, url);
-        geom.computeVertexNormals?.();
-        return (
-            <mesh geometry={geom} castShadow receiveShadow>
-                <meshStandardMaterial color={color} metalness={0.1} roughness={0.6} />
-            </mesh>
-        );
-    }
-    if (type === "obj") {
-        const obj = useLoader(OBJLoader, url);
-        return <primitive object={obj} />;
-    }
-    // GLB/GLTF con soporte Draco
-    const gltf = useLoader(
-        GLTFLoader,
-        url,
-        (loader) => {
-            const draco = new DRACOLoader();
-            draco.setDecoderPath(dracoPath);
-            draco.setCrossOrigin("anonymous");
-            loader.setDRACOLoader(draco);
-        }
-    );
-    return <primitive object={gltf.scene} />;
+    const group = useRef();
+    const { scene } = useGLTF(MODEL_URL);
+
+    useEffect(() => {
+        if (!scene || !group.current) return;
+
+        const cloned = scene.clone(true);
+
+        const box = new THREE.Box3().setFromObject(cloned);
+        const center = box.getCenter(new THREE.Vector3());
+        cloned.position.sub(center);
+
+        const size = box.getSize(new THREE.Vector3());
+        const targetHeight = 2.0; // <<--- AJUSTE: antes 2.2
+        const baseFactor = targetHeight / (size.y || 1);
+
+        cloned.traverse((obj) => {
+            if (obj.isMesh) {
+                obj.castShadow = false;
+                obj.receiveShadow = false;
+                obj.material = new THREE.MeshStandardMaterial({
+                    color,
+                    roughness: 0.9,
+                    metalness: 0.0,
+                });
+            }
+        });
+
+        group.current.clear();
+        group.current.add(cloned);
+        group.current.scale.setScalar(baseFactor * scale);
+        group.current.position.set(offsetX, offsetY, 0);
+    }, [scene, scale, offsetX, offsetY, color]);
+
+    useFrame((_, dt) => {
+        if (rotate && group.current) group.current.rotation.y += dt * 0.25;
+    });
+
+    return <group ref={group} />;
 }
 
 export default function ModelViewer({
-    url,
-    type = "glb",
-    color = "#dddddd",
-    autorotate = true,
-    rotateSpeed = 0.045,
-    rotateAxis = "y",
-    up = "z",                 // Blender Z-up
-    yaw = Math.PI,            // se sobreescribe desde el caller
-    pitch = 0,
-    roll = Math.PI,
-    env = "city",
-    height = "58vh",
-    target = [0, 0, 0],
-    dracoPath = "https://www.gstatic.com/draco/versioned/decoders/1.5.7/",
+    scale = 1.0,
+    offsetX = 0,
+    offsetY = 0,
+    rotate = true,
 }) {
-    const upRotX = up === "z" ? Math.PI / 2 : 0;
-
-    // Lazy-mount del canvas
-    const wrapRef = useRef(null);
-    const [visible, setVisible] = useState(false);
-    useEffect(() => {
-        const el = wrapRef.current; if (!el) return;
-        const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { threshold: 0.15 });
-        io.observe(el);
-        return () => io.disconnect();
-    }, []);
-
     return (
-        <div ref={wrapRef} style={{ width: "100%", height, borderRadius: 20, overflow: "hidden" }}>
-            {visible && (
-                <Canvas
-                    dpr={[1, 1.5]}
-                    frameloop={autorotate ? "always" : "demand"}
-                    shadows
-                    camera={{ position: [2.5, 1.5, 3], fov: 45 }}
-                    gl={{ antialias: true, alpha: true }}
-                    onCreated={({ gl }) => gl.setClearColor(0x000000, 0)}
-                    style={{ background: "transparent" }}
-                >
-                    <AdaptiveDpr pixelated />
-                    <AdaptiveEvents />
+        <div style={{ width: "100%", height: "100%", background: "transparent" }}>
+            <Canvas
+                gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
+                camera={{ position: [0, 0, 4.3], fov: 33, near: 0.1, far: 100 }}
+            >
+                <ambientLight intensity={0.8} />
+                <directionalLight position={[2, 3, 4]} intensity={1.0} />
+                <directionalLight position={[-3, 2, 2]} intensity={0.6} />
+                <Environment preset="city" blur={0.6} />
 
-                    <Suspense fallback={<CanvasLoader />}>
-                        {env && <Environment preset={env} />}
-                        <ambientLight intensity={0.4} />
-                        <directionalLight position={[5, 8, 5]} intensity={0.7} castShadow />
-
-                        <Bounds fit clip observe margin={1.2}>
-                            <Center>
-                                {autorotate ? (
-                                    <AutoRotate speed={rotateSpeed} axis={rotateAxis}>
-                                        <group rotation={[upRotX + pitch, yaw, roll]}>
-                                            <Model url={url} type={type} color={color} dracoPath={dracoPath} />
-                                        </group>
-                                    </AutoRotate>
-                                ) : (
-                                    <group rotation={[upRotX + pitch, yaw, roll]}>
-                                        <Model url={url} type={type} color={color} dracoPath={dracoPath} />
-                                    </group>
-                                )}
-                            </Center>
-                        </Bounds>
-
-                        <ContactShadows opacity={0.22} scale={8} blur={1.1} far={8} />
-                        <OrbitControls makeDefault enableDamping dampingFactor={0.08} target={target} />
-                    </Suspense>
-                </Canvas>
-            )}
+                <Model
+                    scale={scale}
+                    offsetX={offsetX}
+                    offsetY={offsetY}
+                    rotate={rotate}
+                    color={0xd9d9d9}
+                />
+            </Canvas>
         </div>
     );
 }
+
+useGLTF.preload(MODEL_URL);
