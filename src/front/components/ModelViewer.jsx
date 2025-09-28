@@ -20,7 +20,7 @@ function Model({
     useEffect(() => {
         if (!scene || !group.current) return;
 
-        // Clon + centrado + normalización de altura (no toca tu escala visible final)
+        // Clon + centrado + normalización de altura (sin alterar tu escala visible final)
         const cloned = scene.clone(true);
         const box = new THREE.Box3().setFromObject(cloned);
         const center = box.getCenter(new THREE.Vector3());
@@ -48,7 +48,7 @@ function Model({
         group.current.position.set(offsetX, offsetY, 0);
     }, [scene, scale, offsetX, offsetY, color]);
 
-    // Auto-rotación suave sólo cuando procede
+    // Auto-rotación suave cuando no se está interactuando
     useFrame((_, dt) => {
         if (rotate && !pauseRotate && group.current) {
             group.current.rotation.y += dt * 0.25;
@@ -65,21 +65,29 @@ export default function ModelViewer({
     rotate = true,
 }) {
     const [interacting, setInteracting] = useState(false);
+    const [hover, setHover] = useState(false);
 
-    // Distancia/cámara que ya estabas usando
+    // Misma cámara que venías usando
     const CAMERA_POS = [0, 0, 4.3];
     const CAMERA_FOV = 33;
 
-    // Para “girar sólo sobre su eje”, fijamos el ángulo polar a la altura del horizonte.
-    // Dejamos un epsilon para que OrbitControls no se queje.
+    // “Giro sobre su eje” (horizontal): bloqueamos el ángulo polar al ecuador
     const POLAR_EPS = 0.0001;
     const POLAR = Math.PI / 2;
+
+    // Cursor dinámico: default → grab → grabbing
+    const cursorStyle = interacting ? "grabbing" : hover ? "grab" : "default";
 
     return (
         <div style={{ width: "100%", height: "100%", background: "transparent" }}>
             <Canvas
                 gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping }}
                 camera={{ position: CAMERA_POS, fov: CAMERA_FOV, near: 0.1, far: 100 }}
+                // Cursor visual sin tocar nada más
+                style={{ width: "100%", height: "100%", cursor: cursorStyle }}
+                // Hover para mostrar “grab”
+                onPointerEnter={() => setHover(true)}
+                onPointerLeave={() => setHover(false)}
             >
                 {/* Luces y ambiente neutros */}
                 <ambientLight intensity={0.8} />
@@ -87,7 +95,7 @@ export default function ModelViewer({
                 <directionalLight position={[-3, 2, 2]} intensity={0.6} />
                 <Environment preset="city" blur={0.6} />
 
-                {/* Modelo: la auto-rotación se pausa mientras el usuario arrastra */}
+                {/* Modelo (pausa la auto-rotación mientras arrastras) */}
                 <Model
                     scale={scale}
                     offsetX={offsetX}
@@ -97,23 +105,21 @@ export default function ModelViewer({
                     pauseRotate={interacting}
                 />
 
-                {/* Controles: sin zoom, sin pan, girando alrededor del offset del modelo */}
+                {/* Controles: sin zoom, sin pan. Rotación alrededor del offset actual. */}
                 <OrbitControls
                     makeDefault
                     enableZoom={false}
                     enablePan={false}
-                    // bloqueamos la distancia para evitar zoom con rueda/touch
                     minDistance={CAMERA_POS[2]}
                     maxDistance={CAMERA_POS[2]}
                     target={[offsetX, offsetY, 0]}
-                    // “sólo eje Y”: fijamos el polar en el ecuador
                     minPolarAngle={POLAR - POLAR_EPS}
                     maxPolarAngle={POLAR + POLAR_EPS}
                     rotateSpeed={0.8}
                     enableDamping
                     dampingFactor={0.08}
-                    onStart={() => setInteracting(true)}
-                    onEnd={() => setInteracting(false)}
+                    onStart={() => setInteracting(true)}  // cursor → grabbing + pausa auto-rot
+                    onEnd={() => setInteracting(false)}   // cursor vuelve a grab y se reanuda
                 />
             </Canvas>
         </div>
