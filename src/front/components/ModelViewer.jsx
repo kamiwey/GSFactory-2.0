@@ -3,6 +3,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useGLTF, Environment } from "@react-three/drei";
 import * as THREE from "three";
 
+// respeta tu estructura: src/front/assets/models/prototipo.glb
 const MODEL_URL = new URL("../assets/models/prototipo.glb", import.meta.url).href;
 
 function Model({
@@ -18,6 +19,7 @@ function Model({
     useEffect(() => {
         if (!scene || !group.current) return;
 
+        // Clon + centrado + normalización de altura
         const cloned = scene.clone(true);
 
         const box = new THREE.Box3().setFromObject(cloned);
@@ -25,7 +27,7 @@ function Model({
         cloned.position.sub(center);
 
         const size = box.getSize(new THREE.Vector3());
-        const targetHeight = 2.0; // <<--- AJUSTE: antes 2.2
+        const targetHeight = 2.0; // altura base normalizada (no tocar tamaño visual final)
         const baseFactor = targetHeight / (size.y || 1);
 
         cloned.traverse((obj) => {
