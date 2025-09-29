@@ -1,3 +1,6 @@
+/* ================== FUENTE ================== */
+@import url("https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap");
+
 /* ================== BASE + FONDO ================== */
 .at {
   --bg1: #4a86d9;
@@ -38,45 +41,40 @@
   margin-top: clamp(8px, 2vh, 28px);
 }
 
-/* Títulos y textos */
-.at-hero__title {
-  font-family: "Saira", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  font-size: clamp(40px, 6vw, 86px);
-  margin: 0 0 0.25em;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
+/* ================== TÍTULOS Y TEXTOS ================== */
+.at-hero__title,
 .at-hero__lead {
-  max-width: 52ch;
-  opacity: 0.95;
-  font-size: clamp(16px, 1.6vw, 19px);
-  line-height: 1.45;
-}
-.at-hero__cta {
-  margin-top: 1.2rem;
-}
-.at-btn {
-  display: inline-block;
-  padding: 0.9rem 1.25rem;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  font-family: "Luckiest Guy", cursive;
   color: #fff;
-  text-decoration: none;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  transition: transform 180ms ease, border-color 180ms ease,
-    background 180ms ease;
-  backdrop-filter: blur(4px) saturate(120%);
-  -webkit-tap-highlight-color: transparent;
-}
-.at-btn:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(0, 0, 0, 0.35);
 }
 
-/* Media base (imagen) */
+/* Título (char-by-char) */
+.at-hero__title {
+  font-size: clamp(40px, 6vw, 86px);
+  line-height: 1.05;
+  margin: 0 0 0.25em;
+  text-transform: uppercase;
+  text-align: left;
+  filter: none; /* sin sombra negra */
+  letter-spacing: 0.01em;
+}
+
+/* Descripción (bloque más “ligero”) */
+.at-hero__lead {
+  max-width: 52ch;
+  font-size: clamp(16px, 1.6vw, 19px);
+  line-height: 1.45;
+  margin: 0;
+  opacity: 0; /* invisible hasta que el panel entra */
+  letter-spacing: 0.02em;
+}
+
+/* Sin botones en estos héroes */
+.at-hero__cta {
+  display: none;
+}
+
+/* ================== MEDIA BASE ================== */
 .at-hero__img {
   width: min(520px, 46vw);
   height: auto;
@@ -85,8 +83,6 @@
   pointer-events: none;
   animation: at-levitate 3.2s ease-in-out infinite alternate;
 }
-
-/* Media base (visor 3D) — tamaño por defecto, luego la sección 3D lo sobreescribe */
 .at-hero__viewer {
   width: min(520px, 46vw);
   height: min(560px, 60vh);
@@ -113,7 +109,7 @@
   }
 }
 
-/* ================== CARRUSEL ================== */
+/* ================== CARRUSEL / CARDS / PROCESO (igual que antes) ================== */
 .at-secHead {
   display: flex;
   align-items: center;
@@ -173,7 +169,6 @@
 .at-carousel::before {
   left: 0;
 }
-
 .at-carousel__track {
   display: grid;
   grid-auto-flow: column;
@@ -191,8 +186,6 @@
 .at-carousel__track::-webkit-scrollbar {
   display: none;
 }
-
-/* Nav flotante en móvil */
 .at-carousel__overNav {
   position: absolute;
   inset: 0;
@@ -222,7 +215,6 @@
   transform: translateY(-50%);
 }
 
-/* ================== CARDS ================== */
 .at-card {
   scroll-snap-align: center;
   border-radius: 22px;
@@ -286,7 +278,6 @@
   border-color: rgba(255, 255, 255, 0.6);
 }
 
-/* ================== PROCESO ================== */
 .at-process {
   padding: 32px 0 80px;
 }
@@ -340,21 +331,15 @@
 /* =========================================================
    SECCIÓN 3D — ventana más grande SIN tocar distancia arriba
    ========================================================= */
-
-/* Variables específicas para la sección 3D */
 :root {
-  --at3d-media-w: min(680px, 50vw); /* ancho del viewer */
-  --at3d-media-h: clamp(940px, 82vh, 900px); /* alto del viewer */
-  --at3d-min-h: clamp(720px, 110vh, 1200px); /* alto mínimo de la sección */
+  --at3d-media-w: min(680px, 50vw);
+  --at3d-media-h: clamp(940px, 82vh, 900px);
+  --at3d-min-h: clamp(720px, 110vh, 1200px);
 }
-
-/* Altura de la sección 3D sin modificar padding-top */
 .at-hero--3d {
   min-height: var(--at3d-min-h);
-  margin-top: 0; /* si además es --mirror, no añadimos hueco extra */
+  margin-top: 0;
 }
-
-/* Ventana del 3D más grande (columna izquierda) */
 .at-hero--3d .at-hero__viewer {
   width: var(--at3d-media-w);
   height: var(--at3d-media-h);
@@ -363,15 +348,11 @@
   position: relative;
   overflow: visible;
 }
-
-/* El canvas RELLENA el contenedor (evita cortes por tamaño de lienzo) */
 .at-hero--3d .at-hero__viewer canvas {
   width: 100% !important;
   height: 100% !important;
   display: block;
 }
-
-/* Si hay un contenedor media (wrapper), igualamos su altura para que no recorte */
 .at-hero--3d .at-hero__media {
   width: var(--at3d-media-w);
   height: var(--at3d-media-h);
@@ -384,7 +365,6 @@
     grid-template-columns: 1fr;
     text-align: left;
   }
-
   .at-hero__img {
     width: min(560px, 78vw);
     justify-self: center;
@@ -395,7 +375,6 @@
     height: min(520px, 58vh);
     justify-self: center;
   }
-
   .at-steps {
     grid-template-columns: 1fr 1fr;
   }
@@ -406,15 +385,12 @@
   .at-carousel::after {
     width: 28px;
   }
-
-  /* Ajustes 3D en tablet */
   :root {
     --at3d-media-w: min(560px, 78vw);
     --at3d-media-h: clamp(560px, 68vh, 760px);
     --at3d-min-h: clamp(620px, 105vh, 980px);
   }
 }
-
 @media (max-width: 560px) {
   .at-hero__title {
     font-size: clamp(32px, 9.5vw, 48px);
@@ -434,5 +410,95 @@
   .at-carousel__track {
     grid-auto-columns: min(88vw, 460px);
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ================== ANIMACIONES ================== */
+/* Split base */
+.at-split {
+  display: inline-block;
+  white-space: pre-wrap;
+}
+.at-split .char {
+  display: inline-block;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* — TÍTULO: por defecto entra desde la IZQUIERDA — */
+.at-hero__title.at-split.is-in .char {
+  animation: at-slide-in-left 0.75s cubic-bezier(0.5, 0, 0.5, 1) both;
+  animation-delay: calc(0.15s + (120ms * var(--char-index)));
+}
+
+/* — TÍTULO del panel a la derecha: entra desde la DERECHA — */
+.at-hero__title.at-fromRight.at-split.is-in .char {
+  animation-name: at-slide-in-right;
+}
+
+/* — DESCRIPCIÓN en bloque — */
+.at-hero__lead.is-in {
+  animation: at-lead-in 0.6s ease-out both;
+  animation-delay: 0.35s;
+}
+
+/* — DESCRIPCIÓN del panel a la derecha: desde la DERECHA — */
+.at-hero__lead.at-fromRight.is-in {
+  animation-name: at-lead-in-right;
+}
+
+/* Keyframes */
+@keyframes at-slide-in-left {
+  from {
+    transform: translateX(-3em) translateY(-1.5em) rotate(-135deg) scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes at-slide-in-right {
+  from {
+    transform: translateX(3em) translateY(-1.5em) rotate(135deg) scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@keyframes at-lead-in {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 0.9;
+  }
+}
+@keyframes at-lead-in-right {
+  from {
+    transform: translateX(14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .at-split .char {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+  .at-hero__lead {
+    opacity: 0.9;
+  }
+  .at-hero__lead.is-in {
+    animation: none;
   }
 }
