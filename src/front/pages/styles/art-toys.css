@@ -1,7 +1,6 @@
-/* ================== FUENTE ================== */
 @import url("https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap");
 
-/* ================== BASE + FONDO ================== */
+/* ===== BASE ===== */
 .at {
   --bg1: #4a86d9;
   --bg2: #2f62c2;
@@ -19,7 +18,7 @@
   overflow-x: hidden;
 }
 
-/* ================== HERO ================== */
+/* ===== HEROES ===== */
 .at-hero {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -39,7 +38,6 @@
   margin-top: clamp(8px, 2vh, 28px);
 }
 
-/* ================== TIPOGRAFÍA ================== */
 .at-hero__title,
 .at-hero__lead {
   font-family: "Luckiest Guy", cursive;
@@ -50,8 +48,6 @@
   line-height: 1.05;
   margin: 0 0 0.25em;
   text-transform: uppercase;
-  text-align: left;
-  filter: none; /* sin sombra */
   letter-spacing: 0.01em;
 }
 .at-hero__lead {
@@ -59,14 +55,13 @@
   font-size: clamp(16px, 1.6vw, 19px);
   line-height: 1.45;
   margin: 0;
-  opacity: 0; /* invisible hasta entrar */
+  opacity: 0;
   letter-spacing: 0.02em;
 }
 .at-hero__cta {
   display: none;
-} /* no usamos CTA */
+}
 
-/* ================== MEDIA (IMAGEN / 3D) ================== */
 .at-hero__img {
   width: min(520px, 46vw);
   height: auto;
@@ -85,7 +80,6 @@
   height: 100%;
 }
 
-/* Levitar sutil */
 @keyframes at-levitate {
   from {
     transform: translateY(0);
@@ -101,7 +95,7 @@
   }
 }
 
-/* ================== SECCIÓN 3D (TAMAÑOS) ================== */
+/* 3D sizes */
 :root {
   --at3d-media-w: min(680px, 50vw);
   --at3d-media-h: clamp(940px, 82vh, 900px);
@@ -130,7 +124,6 @@
   align-self: stretch;
 }
 
-/* ================== RESPONSIVE BÁSICO ================== */
 @media (max-width: 980px) {
   .at-hero {
     grid-template-columns: 1fr;
@@ -161,8 +154,7 @@
   }
 }
 
-/* ================== ANIMACIONES (TÍTULO Y LEAD) ================== */
-/* Split base (JS genera <span class="char" style="--char-index:n">) */
+/* ===== Animación letras ===== */
 .at-split {
   display: inline-block;
   white-space: pre-wrap;
@@ -172,30 +164,21 @@
   opacity: 0;
   will-change: transform, opacity;
 }
-
-/* — TÍTULO: por defecto entra desde la IZQUIERDA — */
 .at-hero__title.at-split.is-in .char {
   animation: at-slide-in-left 0.75s cubic-bezier(0.5, 0, 0.5, 1) both;
   animation-delay: calc(0.15s + (120ms * var(--char-index)));
 }
-
-/* — TÍTULO del panel a la derecha: entra desde la DERECHA — */
 .at-hero__title.at-fromRight.at-split.is-in .char {
   animation-name: at-slide-in-right;
 }
-
-/* — DESCRIPCIÓN en bloque — */
 .at-hero__lead.is-in {
   animation: at-lead-in 0.6s ease-out both;
-  animation-delay: 0.95s; /* después del título */
+  animation-delay: 0.95s;
 }
-
-/* — DESCRIPCIÓN del panel a la derecha: desde la DERECHA — */
 .at-hero__lead.at-fromRight.is-in {
   animation-name: at-lead-in-right;
 }
 
-/* Keyframes */
 @keyframes at-slide-in-left {
   from {
     transform: translateX(-3em) translateY(-1.5em) rotate(-135deg) scale(0.5);
@@ -237,16 +220,113 @@
   }
 }
 
+/* ===== FINAL PINNED (FIXED real) ===== */
+.at-cardsStage {
+  position: relative;
+  min-height: 360vh; /* la altura real se recalcula en JS */
+  overflow: visible;
+}
+/* cuando entra el rango, fijamos la capa a pantalla completa */
+.at-cardsStage.is-pinned .at-cardsSticky {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  z-index: 50;
+}
+/* fallback layout */
+.at-cardsSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  pointer-events: none;
+  perspective: 1100px; /* perspectiva en la capa fijada */
+  perspective-origin: 50% 50%;
+}
+
+/* Astronauta centrado; parallax desde abajo antes del pin */
+.at-astro {
+  position: absolute;
+  left: 50%;
+  top: var(--astroY, 58%);
+  transform: translate(-50%, -50%) translateY(var(--astroShift, 30vh))
+    translateZ(0);
+  width: min(460px, 40vw);
+  height: auto;
+  filter: drop-shadow(0 22px 48px rgba(0, 0, 0, 0.35));
+  z-index: 5;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Cards orbitando — legibles y responsive */
+.at-card3d {
+  --xvw: 40;
+  --yvh: 0;
+  --z: -260px;
+  --s: 1;
+  --o: 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-style: preserve-3d;
+  transform: translate3d(
+      calc(var(--xvw) * 1vw),
+      calc(var(--yvh) * 1vh),
+      var(--z)
+    )
+    scale(var(--s));
+  translate: -50% -50%;
+  opacity: var(--o);
+  will-change: transform, opacity, filter;
+  z-index: 10;
+
+  min-width: clamp(220px, 32vw, 520px);
+  padding: clamp(16px, 2.6vw, 34px) clamp(18px, 3.2vw, 40px);
+
+  border-radius: 22px;
+  background: var(--c, #fff);
+  color: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  backface-visibility: hidden;
+}
+.at-card3d span {
+  display: block;
+  font-family: "Luckiest Guy", cursive;
+  font-size: clamp(20px, 2.8vw, 36px);
+  letter-spacing: 0.02em;
+}
+
+/* Mobile tuning */
+@media (max-width: 860px) {
+  .at-astro {
+    width: min(420px, 52vw);
+    top: var(--astroY, 60%);
+  }
+  .at-card3d {
+    min-width: clamp(200px, 62vw, 520px);
+  }
+}
+@media (max-width: 560px) {
+  .at-astro {
+    width: min(360px, 64vw);
+  }
+  .at-card3d {
+    min-width: clamp(200px, 78vw, 520px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .at-split .char {
+  .at-cardsStage {
+    min-height: 120vh;
+  }
+  .at-cardsStage.is-pinned .at-cardsSticky {
+    position: fixed;
+  }
+  .at-card3d {
+    transform: translate3d(0, 0, 0) scale(1);
     opacity: 1;
-    animation: none;
-    transform: none;
-  }
-  .at-hero__lead {
-    opacity: 0.9;
-  }
-  .at-hero__lead.is-in {
-    animation: none;
+    filter: none !important;
   }
 }
