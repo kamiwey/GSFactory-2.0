@@ -19,7 +19,7 @@
   overflow-x: hidden;
 }
 
-/* ================== HERO GENÉRICO ================== */
+/* ================== HERO ================== */
 .at-hero {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -35,46 +35,38 @@
     calc(16px + env(safe-area-inset-bottom))
   );
 }
-
-/* Ligera separación visual si va “espejo” respecto al héroe anterior */
 .at-hero--mirror {
   margin-top: clamp(8px, 2vh, 28px);
 }
 
-/* ================== TÍTULOS Y TEXTOS ================== */
+/* ================== TIPOGRAFÍA ================== */
 .at-hero__title,
 .at-hero__lead {
   font-family: "Luckiest Guy", cursive;
   color: #fff;
 }
-
-/* Título (char-by-char) */
 .at-hero__title {
   font-size: clamp(40px, 6vw, 86px);
   line-height: 1.05;
   margin: 0 0 0.25em;
   text-transform: uppercase;
   text-align: left;
-  filter: none; /* sin sombra negra */
+  filter: none; /* sin sombra */
   letter-spacing: 0.01em;
 }
-
-/* Descripción (bloque más “ligero”) */
 .at-hero__lead {
   max-width: 52ch;
   font-size: clamp(16px, 1.6vw, 19px);
   line-height: 1.45;
   margin: 0;
-  opacity: 0; /* invisible hasta que el panel entra */
+  opacity: 0; /* invisible hasta entrar */
   letter-spacing: 0.02em;
 }
-
-/* Sin botones en estos héroes */
 .at-hero__cta {
   display: none;
-}
+} /* no usamos CTA */
 
-/* ================== MEDIA BASE ================== */
+/* ================== MEDIA (IMAGEN / 3D) ================== */
 .at-hero__img {
   width: min(520px, 46vw);
   height: auto;
@@ -109,228 +101,7 @@
   }
 }
 
-/* ================== CARRUSEL / CARDS / PROCESO (igual que antes) ================== */
-.at-secHead {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 0 clamp(20px, 5vw, 64px);
-  margin-top: 2rem;
-}
-.at-secTitle {
-  font-size: clamp(24px, 3.6vw, 42px);
-  margin: 0;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-.at-arrows {
-  display: flex;
-  gap: 8px;
-}
-.at-arrow {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(0, 0, 0, 0.24);
-  color: #fff;
-  transition: transform 160ms ease, border-color 160ms ease,
-    background 160ms ease;
-  backdrop-filter: blur(2px);
-}
-.at-arrow:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(0, 0, 0, 0.3);
-}
-.at-carousel {
-  padding: clamp(8px, 2vw, 16px) 0 0;
-  position: relative;
-}
-.at-carousel::before,
-.at-carousel::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 32px;
-  pointer-events: none;
-  z-index: 2;
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.28), transparent);
-}
-.at-carousel::after {
-  right: 0;
-  transform: scaleX(-1);
-}
-.at-carousel::before {
-  left: 0;
-}
-.at-carousel__track {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: clamp(260px, 36vw, 360px);
-  gap: 16px;
-  overflow-x: auto;
-  padding: 12px clamp(20px, 5vw, 64px) 28px;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: clamp(20px, 5vw, 64px);
-  scroll-behavior: smooth;
-  overscroll-behavior-inline: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.at-carousel__track::-webkit-scrollbar {
-  display: none;
-}
-.at-carousel__overNav {
-  position: absolute;
-  inset: 0;
-  display: none;
-  z-index: 5;
-  pointer-events: none;
-}
-.at-arrow--circle {
-  width: 52px;
-  height: 52px;
-  border-radius: 999px;
-  pointer-events: auto;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(0, 0, 0, 0.35);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
-}
-.at-arrow--left {
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.at-arrow--right {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.at-card {
-  scroll-snap-align: center;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  display: flex;
-  flex-direction: column;
-  min-height: 360px;
-  backdrop-filter: blur(2px);
-}
-.at-card__media {
-  display: grid;
-  place-items: center;
-  padding: 10px 10px 0;
-}
-.at-card__media img {
-  width: 100%;
-  height: clamp(200px, 26vh, 280px);
-  object-fit: contain;
-  pointer-events: none;
-}
-.at-card__body {
-  padding: 10px 14px 16px;
-  display: grid;
-  gap: 8px;
-}
-.at-card__title {
-  margin: 0;
-  font-size: clamp(18px, 2vw, 20px);
-  letter-spacing: 0.04em;
-}
-.at-card__tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.at-tag {
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  padding: 0.28rem 0.5rem;
-  border-radius: 999px;
-}
-.at-link {
-  justify-self: start;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-decoration: none;
-  color: #fff;
-  border-bottom: 2px solid rgba(255, 255, 255, 0.35);
-  padding-bottom: 2px;
-  transition: transform 160ms ease, border-color 160ms ease;
-}
-.at-link:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.6);
-}
-
-.at-process {
-  padding: 32px 0 80px;
-}
-.at-steps {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(12px, 2vw, 24px);
-  padding: 0 clamp(20px, 5vw, 64px);
-  list-style: none;
-  margin: 12px 0 0;
-}
-.at-step {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 20px;
-  padding: clamp(14px, 2.2vw, 22px);
-  opacity: 0;
-  transform: translateY(6px);
-  transition: transform 320ms ease, opacity 320ms ease;
-}
-.at-step.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-.at-step__icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  margin-bottom: 10px;
-}
-.at-step__icon svg {
-  width: 22px;
-  height: 22px;
-  fill: #fff;
-  opacity: 0.9;
-}
-.at-step__title {
-  margin: 0.1rem 0 0.2rem;
-  font-size: clamp(14px, 1.6vw, 18px);
-}
-.at-step__txt {
-  margin: 0;
-  opacity: 0.9;
-  font-size: clamp(12px, 1.3vw, 14px);
-}
-
-/* =========================================================
-   SECCIÓN 3D — ventana más grande SIN tocar distancia arriba
-   ========================================================= */
+/* ================== SECCIÓN 3D (TAMAÑOS) ================== */
 :root {
   --at3d-media-w: min(680px, 50vw);
   --at3d-media-h: clamp(940px, 82vh, 900px);
@@ -359,7 +130,7 @@
   align-self: stretch;
 }
 
-/* ================== RESPONSIVE ================== */
+/* ================== RESPONSIVE BÁSICO ================== */
 @media (max-width: 980px) {
   .at-hero {
     grid-template-columns: 1fr;
@@ -375,16 +146,6 @@
     height: min(520px, 58vh);
     justify-self: center;
   }
-  .at-steps {
-    grid-template-columns: 1fr 1fr;
-  }
-  .at-carousel__track {
-    grid-auto-columns: min(84vw, 420px);
-  }
-  .at-carousel::before,
-  .at-carousel::after {
-    width: 28px;
-  }
   :root {
     --at3d-media-w: min(560px, 78vw);
     --at3d-media-h: clamp(560px, 68vh, 760px);
@@ -395,26 +156,13 @@
   .at-hero__title {
     font-size: clamp(32px, 9.5vw, 48px);
   }
-  .at-steps {
-    grid-template-columns: 1fr;
-  }
-  .at-arrows {
-    display: none;
-  }
-  .at-carousel__overNav {
-    display: block;
-  }
   .at-hero {
-    padding-bottom: calc(20px + env(safe-area-inset-bottom));
-  }
-  .at-carousel__track {
-    grid-auto-columns: min(88vw, 460px);
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
   }
 }
 
-/* ================== ANIMACIONES ================== */
-/* Split base */
+/* ================== ANIMACIONES (TÍTULO Y LEAD) ================== */
+/* Split base (JS genera <span class="char" style="--char-index:n">) */
 .at-split {
   display: inline-block;
   white-space: pre-wrap;
@@ -439,7 +187,7 @@
 /* — DESCRIPCIÓN en bloque — */
 .at-hero__lead.is-in {
   animation: at-lead-in 0.6s ease-out both;
-  animation-delay: 0.35s;
+  animation-delay: 0.95s; /* después del título */
 }
 
 /* — DESCRIPCIÓN del panel a la derecha: desde la DERECHA — */

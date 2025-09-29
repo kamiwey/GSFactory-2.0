@@ -68,7 +68,7 @@ function setupScrollActivator() {
     const check = () => {
         sections.forEach((s) => {
             if (s.dataset.in === "1") return;
-            if (sectionCenterIsInViewport(s, 0.35)) markIn(s);
+            if (sectionCenterIsInViewport(s, 0.45)) markIn(s);
         });
         ticking = false;
     };
