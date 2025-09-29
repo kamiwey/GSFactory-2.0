@@ -29,6 +29,30 @@ export const Home = () => {
   const MOBILE_Y = "clamp(-10rem, -17vh, -23rem)";
   const [heroWordY, setHeroWordY] = useState(DESKTOP_Y);
 
+  /* === FORZAR TOP AL RECARGAR ===
+     - Desactiva la restauración de scroll del navegador.
+     - Fuerza scrollTop:0 al montar y tras 'load' (por si el browser insiste).
+  */
+  useEffect(() => {
+    const hasSR = "scrollRestoration" in window.history;
+    const prevSR = hasSR ? window.history.scrollRestoration : undefined;
+    if (hasSR) window.history.scrollRestoration = "manual";
+
+    const toTop = () =>
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+    // disparos redundantes para ganar a la restauración nativa
+    toTop();
+    window.addEventListener("load", toTop, { once: true });
+    const t = setTimeout(toTop, 0);
+
+    return () => {
+      window.removeEventListener("load", toTop);
+      clearTimeout(t);
+      if (hasSR) window.history.scrollRestoration = prevSR ?? "auto";
+    };
+  }, []);
+
   // Ping opcional backend (silencioso)
   useEffect(() => {
     const f = async () => {
