@@ -144,6 +144,10 @@ function setupCardsStage(stageEl) {
     let raf = 0;
     let lastScrollY = -1;
 
+    // --- Parámetros del “no-blur window” (nuevo) ---
+    const DEAD_ZONE = 0.10; // +/- 0.10 alrededor del centro sin blur (ligeramente más largo)
+    const RAMP = 0.18;      // rampa suave después de la dead-zone
+
     const update = () => {
         // Early exit si no es visible
         if (!visible) {
@@ -184,7 +188,7 @@ function setupCardsStage(stageEl) {
 
         const s = p * totalSpan;
 
-        // Foco gauss (más barato y más nítido)
+        // Foco gauss (más nítido cerca del centro)
         const sigma = 0.12;
         const focusGauss = (t) =>
             Math.exp(-Math.pow(t - 0.5, 2) / (2 * sigma * sigma));
@@ -210,10 +214,22 @@ function setupCardsStage(stageEl) {
             const zBase = Z_BACK + (Z_FRONT - Z_BACK) * (0.5 - 0.5 * cos(et * PI));
 
             const focus = focusGauss(et);
-            // Blur dinámico: si estamos en scroll, aún menos blur para aliviar GPU
             const scrolling = document.body.classList.contains("is-scrolling");
-            const blurMax = scrolling ? 3.2 : 4.2; // antes 6
-            const blur = (1 - focus) * blurMax;
+            const blurMax = scrolling ? 3.2 : 4.2;
+
+            // ====== BLOQUE CLAVE: prolongar “no blur” sin tocar lo demás ======
+            // Base de blur
+            const baseBlur = (1 - focus) * blurMax;
+            // Distancia al centro del recorrido (0 en centro, 0.5 max a extremos)
+            const dist = Math.abs(et - 0.5);
+            // Factor 0 en la “dead-zone”, sube linealmente en la rampa y se satura a 1
+            let k;
+            if (dist <= DEAD_ZONE) k = 0;
+            else k = Math.min(1, (dist - DEAD_ZONE) / RAMP);
+
+            const blur = baseBlur * k;
+            // ================================================================
+
             const scale = 1 + 0.22 * focus;
 
             let o;
@@ -238,7 +254,6 @@ function setupCardsStage(stageEl) {
             card.style.transform =
                 `translate(-50%, -50%) translate3d(${xvw.toFixed(2)}vw, ${yvh.toFixed(2)}vh, ${zBase.toFixed(1)}px) scale(${scale.toFixed(3)})`;
             inner.style.opacity = o.toFixed(3);
-            // Solo aplica blur si aporta; debajo de 0.25 píxeles no merece la pena
             if (blur < 0.25) {
                 inner.style.filter = "none";
             } else {
