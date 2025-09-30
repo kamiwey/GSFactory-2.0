@@ -1,10 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import "../styles/art-toys.css";
+import useLenis from "../../hooks/useLenis";
 
 import astronauta from "../../assets/img/gsf_monkey_transparent.png";
 import ModelViewer from "../../components/ModelViewer";
 
-/* ============== Split muy simple (chars) ============== */
+/* ===== Split chars ===== */
 function splitTitleChars(sel = ".at-hero__title[data-split='chars']") {
     const els = document.querySelectorAll(sel);
     els.forEach((el) => {
@@ -12,7 +13,6 @@ function splitTitleChars(sel = ".at-hero__title[data-split='chars']") {
         const nodes = Array.from(el.childNodes);
         const frag = document.createDocumentFragment();
         let i = 0;
-
         const pushChar = (ch) => {
             const span = document.createElement("span");
             span.className = "char";
@@ -20,7 +20,6 @@ function splitTitleChars(sel = ".at-hero__title[data-split='chars']") {
             span.textContent = ch;
             frag.appendChild(span);
         };
-
         nodes.forEach((n) => {
             if (n.nodeType === 3) {
                 for (const ch of n.textContent) pushChar(ch);
@@ -30,7 +29,6 @@ function splitTitleChars(sel = ".at-hero__title[data-split='chars']") {
                 frag.appendChild(n.cloneNode(true));
             }
         });
-
         el.setAttribute("aria-label", el.textContent);
         el.textContent = "";
         el.appendChild(frag);
@@ -39,7 +37,7 @@ function splitTitleChars(sel = ".at-hero__title[data-split='chars']") {
     });
 }
 
-/* ============== Activador “is-in” por centro de panel ============== */
+/* ===== Activación por scroll (centro del panel) ===== */
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
 function sectionCenterIsInViewport(sec, marginPct = 0.35) {
     const r = sec.getBoundingClientRect();
@@ -52,14 +50,12 @@ function sectionCenterIsInViewport(sec, marginPct = 0.35) {
 function setupScrollActivator() {
     const sections = Array.from(document.querySelectorAll(".at-hero"));
     let ticking = false;
-
     const markIn = (s) => {
         s.dataset.in = "1";
         s.querySelectorAll(".at-hero__title, .at-hero__lead").forEach((el) => {
             el.classList.add("is-in");
         });
     };
-
     const check = () => {
         sections.forEach((s) => {
             if (s.dataset.in === "1") return;
@@ -67,14 +63,12 @@ function setupScrollActivator() {
         });
         ticking = false;
     };
-
     const onScroll = () => {
         if (!ticking) {
             ticking = true;
             requestAnimationFrame(check);
         }
     };
-
     check();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
@@ -84,43 +78,41 @@ function setupScrollActivator() {
     };
 }
 
-/* ============== Utilidades órbita ============== */
+/* ===== Utils ===== */
 const lerp = (a, b, t) => a + (b - a) * t;
 const ease = (t) => t * t * (3 - 2 * t);
 const pageTop = (el) =>
     el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset);
 
-/* ============== Escena de cards final (sticky + 3D) ============== */
+/* ===== Stage final optimizado ===== */
 function setupCardsStage(stageEl) {
     if (!stageEl) return () => { };
     const sticky = stageEl.querySelector(".at-cardsSticky");
     const cards = Array.from(stageEl.querySelectorAll(".at-card3d"));
     if (!sticky || cards.length === 0) return () => { };
 
-    // Envoltorio visual (blur/opacity) sin tocar Z
-    cards.forEach((card) => {
-        if (!card.querySelector(".at-card3d__inner")) {
-            const inner = document.createElement("div");
+    // Cache inner refs SOLO una vez
+    const entries = cards.map((card) => {
+        let inner = card.querySelector(".at-card3d__inner");
+        if (!inner) {
+            inner = document.createElement("div");
             inner.className = "at-card3d__inner";
             while (card.firstChild) inner.appendChild(card.firstChild);
             card.appendChild(inner);
         }
+        return { card, inner };
     });
 
-    // ======= Ajuste pedido: desplazar el centro de la órbita a la DERECHA =======
-    // Cantidad del desplazamiento horizontal del centro, en vw.
-    // Sube/baja este valor para más/menos espacio con el astronauta.
-    const ORBIT_OFFSET_X_VW = 16; // <- cambia aquí si quieres más hueco
-
-    // Geometría de la órbita
+    // Órbita: mantenemos parámetros (con offset a la derecha si lo pusiste)
     const RADIUS_X_VW = 38;
     const RADIUS_Y_VH = 10;
+    const ORBIT_OFFSET_X_VW = 16; // tu offset actual a la derecha
     const ANG_START = (-40 * Math.PI) / 180;
     const ANG_END = (220 * Math.PI) / 180;
 
     // Profundidad
     const Z_BACK = -260;
-    const Z_FRONT = 480; // delante del astro (20px) con margen
+    const Z_FRONT = 480;
 
     // Timings
     const STAG = 0.14;
@@ -136,40 +128,63 @@ function setupCardsStage(stageEl) {
     }
     setSectionHeight();
 
-    // Astronauta anclado un poco en Z
     sticky.style.setProperty("--astroZ", "20px");
 
+    // IO para arrancar/parar RAF
+    let visible = false;
+    const io = new IntersectionObserver(
+        (obs) => {
+            visible = obs.some((e) => e.isIntersecting);
+            if (visible && !raf) raf = requestAnimationFrame(update);
+        },
+        { root: null, threshold: 0.01 }
+    );
+    io.observe(stageEl);
+
     let raf = 0;
+    let lastScrollY = -1;
 
     const update = () => {
-        const y = window.scrollY || window.pageYOffset;
-        const _vh = vh();
+        // Early exit si no es visible
+        if (!visible) {
+            raf = 0;
+            return;
+        }
 
+        const y = window.scrollY || window.pageYOffset;
+        if (y === lastScrollY) {
+            // No avances si no hay cambio real de scroll
+            raf = requestAnimationFrame(update);
+            return;
+        }
+        lastScrollY = y;
+
+        const _vh = vh();
         const pinStart = pageTop(stageEl);
         const pinEnd = pinStart + stageEl.scrollHeight - _vh;
 
-        // Entrada suave previa
+        // Pre-entrada del astro (ligera)
         const preWindow = _vh * 0.65;
         const preStart = pinStart - preWindow;
         const preT = clamp01((y - preStart) / Math.max(1, pinStart - preStart));
         sticky.style.setProperty("--astroShift", `${(1 - preT) * 30}vh`);
 
-        // Sticky activo
+        // Estado "pinned"
         const PIN_HOLD = _vh * 0.55;
-        if (y > pinStart && y < pinEnd + PIN_HOLD) stageEl.classList.add("is-pinned");
+        const pinned = y > pinStart && y < pinEnd + PIN_HOLD;
+        if (pinned) stageEl.classList.add("is-pinned");
         else stageEl.classList.remove("is-pinned");
 
-        // Progreso en pin
+        // Progreso dentro del pin
         let p;
         if (y <= pinStart) p = 0;
         else if (y >= pinEnd + PIN_HOLD) p = 1;
         else p = (y - pinStart) / Math.max(1, pinEnd - pinStart);
         p = clamp01(p);
 
-        // Tiempo “local” por card
         const s = p * totalSpan;
 
-        // Gauss de foco en centro
+        // Foco gauss (más barato y más nítido)
         const sigma = 0.12;
         const focusGauss = (t) =>
             Math.exp(-Math.pow(t - 0.5, 2) / (2 * sigma * sigma));
@@ -178,23 +193,28 @@ function setupCardsStage(stageEl) {
         const FADE_OUT_START = 0.7;
         const FADE_OUT_LEN = 0.28;
 
-        // 1) Calculamos estado
-        const state = cards.map((card, i) => {
-            const inner = card.querySelector(".at-card3d__inner");
+        // Precalcular una vez
+        const cos = Math.cos;
+        const sin = Math.sin;
+        const PI = Math.PI;
+
+        const state = entries.map(({ card, inner }, i) => {
             const t0 = i * STAG;
             const lt = clamp01((s - t0) / DUR);
-            const et = ease(lt);
+            const et = lt * lt * (3 - 2 * lt); // ease inline (evita closure)
 
-            const ang = lerp(ANG_START, ANG_END, et);
-            const xvw = Math.cos(ang) * RADIUS_X_VW + ORBIT_OFFSET_X_VW; // <- offset a la derecha
-            const yvh = Math.sin(ang) * RADIUS_Y_VH;
+            const ang = ANG_START + (ANG_END - ANG_START) * et;
+            const xvw = ORBIT_OFFSET_X_VW + cos(ang) * RADIUS_X_VW;
+            const yvh = sin(ang) * RADIUS_Y_VH;
 
-            const zBase = lerp(Z_BACK, Z_FRONT, 0.5 - 0.5 * Math.cos(et * Math.PI));
+            const zBase = Z_BACK + (Z_FRONT - Z_BACK) * (0.5 - 0.5 * cos(et * PI));
 
             const focus = focusGauss(et);
-            const blurMax = 6;
+            // Blur dinámico: si estamos en scroll, aún menos blur para aliviar GPU
+            const scrolling = document.body.classList.contains("is-scrolling");
+            const blurMax = scrolling ? 3.2 : 4.2; // antes 6
             const blur = (1 - focus) * blurMax;
-            const sCard = 1 + 0.22 * focus;
+            const scale = 1 + 0.22 * focus;
 
             let o;
             if (lt <= 0) o = 0;
@@ -203,62 +223,59 @@ function setupCardsStage(stageEl) {
                 o = 1 - clamp01((lt - FADE_OUT_START) / FADE_OUT_LEN);
             else o = 1;
 
-            return { i, card, inner, xvw, yvh, zBase, sCard, blur, o, et };
+            return { card, inner, xvw, yvh, zBase, scale, blur, o };
         });
 
-        // 2) Encadenado de Z para que nunca se “cuelen”
+        // Encadenado Z (i detrás de i-1)
         const DELTA_Z = 8;
-        const zAdj = [];
-        for (let i = 0; i < state.length; i++) {
-            if (i === 0) zAdj[i] = state[i].zBase;
-            else zAdj[i] = Math.min(state[i].zBase, zAdj[i - 1] - DELTA_Z);
+        for (let i = 1; i < state.length; i++) {
+            state[i].zBase = Math.min(state[i].zBase, state[i - 1].zBase - DELTA_Z);
         }
 
-        // 3) Pintamos (JS fija el transform)
-        state.forEach((st, i) => {
-            const { card, inner, xvw, yvh, sCard, blur, o } = st;
-
-            const transform = `translate(-50%, -50%) translate3d(${xvw.toFixed(
-                3
-            )}vw, ${yvh.toFixed(3)}vh, ${zAdj[i].toFixed(1)}px) scale(${sCard.toFixed(
-                3
-            )})`;
-            card.style.transform = transform;
-
-            inner.style.filter = `blur(${blur.toFixed(2)}px)`;
+        // Pintar (un único transform)
+        for (let i = 0; i < state.length; i++) {
+            const { card, inner, xvw, yvh, zBase, scale, blur, o } = state[i];
+            card.style.transform =
+                `translate(-50%, -50%) translate3d(${xvw.toFixed(2)}vw, ${yvh.toFixed(2)}vh, ${zBase.toFixed(1)}px) scale(${scale.toFixed(3)})`;
             inner.style.opacity = o.toFixed(3);
-        });
+            // Solo aplica blur si aporta; debajo de 0.25 píxeles no merece la pena
+            if (blur < 0.25) {
+                inner.style.filter = "none";
+            } else {
+                inner.style.filter = `blur(${blur.toFixed(2)}px)`;
+            }
+        }
 
         raf = requestAnimationFrame(update);
     };
-
-    raf = requestAnimationFrame(update);
 
     const onResize = () => {
         setSectionHeight();
-        cancelAnimationFrame(raf);
-        raf = requestAnimationFrame(update);
+        // Forzamos un frame posterior
+        if (!raf && visible) raf = requestAnimationFrame(update);
     };
 
-    window.addEventListener("scroll", update, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
 
+    // Arranque condicional
+    if (!raf) raf = requestAnimationFrame(update);
+
     return () => {
-        cancelAnimationFrame(raf);
-        window.removeEventListener("scroll", update);
+        if (raf) cancelAnimationFrame(raf);
         window.removeEventListener("resize", onResize);
+        io.disconnect();
     };
 }
 
 const ArtToys = () => {
+    useLenis({ lerp: 0.16, wheelMultiplier: 1.1, enableOnTouch: false });
+
     const cardsStageRef = useRef(null);
 
     useEffect(() => {
         window.scrollTo(0, 0);
-
         splitTitleChars();
 
-        // Disparo inicial del primer héroe
         const first = document.querySelector(".at-hero");
         if (first) {
             first
@@ -269,7 +286,6 @@ const ArtToys = () => {
 
         const cleanupHeroes = setupScrollActivator();
         const cleanupCards = setupCardsStage(cardsStageRef.current);
-
         return () => {
             cleanupHeroes && cleanupHeroes();
             cleanupCards && cleanupCards();
@@ -328,22 +344,11 @@ const ArtToys = () => {
             >
                 <div className="at-cardsSticky">
                     <img className="at-astro" src={astronauta} alt="" aria-hidden="true" />
-
-                    <div className="at-card3d" style={{ "--c": "#FDF7E7" }}>
-                        <span>Modelado</span>
-                    </div>
-                    <div className="at-card3d" style={{ "--c": "#EAF3FF" }}>
-                        <span>Impresión</span>
-                    </div>
-                    <div className="at-card3d" style={{ "--c": "#E9FFE9" }}>
-                        <span>Pintura</span>
-                    </div>
-                    <div className="at-card3d" style={{ "--c": "#FBE9FF" }}>
-                        <span>Acabado</span>
-                    </div>
-                    <div className="at-card3d" style={{ "--c": "#FFF0F0" }}>
-                        <span>Packaging</span>
-                    </div>
+                    <div className="at-card3d" style={{ "--c": "#FDF7E7" }}><span>Modelado</span></div>
+                    <div className="at-card3d" style={{ "--c": "#EAF3FF" }}><span>Impresión</span></div>
+                    <div className="at-card3d" style={{ "--c": "#E9FFE9" }}><span>Pintura</span></div>
+                    <div className="at-card3d" style={{ "--c": "#FBE9FF" }}><span>Acabado</span></div>
+                    <div className="at-card3d" style={{ "--c": "#FFF0F0" }}><span>Packaging</span></div>
                 </div>
             </section>
         </main>

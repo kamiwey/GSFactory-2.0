@@ -1,5 +1,31 @@
 @import url("https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap");
 
+/* No pelear con Lenis */
+html {
+  scroll-behavior: auto;
+}
+
+/* Mientras hay scroll: sombras y blur más baratos */
+body.is-scrolling .at-card3d__inner {
+  filter: blur(calc(var(--blur, 6px) * 0.6));
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+/* Pistas al compositor (no lo pongas en todo el mundo, solo lo que anima) */
+.at-card3d,
+.at-card3d__inner,
+.at-astro {
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+}
+
+/* Offscreen = cero coste de layout/pintura */
+.at-hero:not(:in-viewport) {
+  content-visibility: auto;
+  contain-intrinsic-size: 1000px 800px;
+}
+
 /* ============== BASE ============== */
 .at {
   --bg1: #4a86d9;
