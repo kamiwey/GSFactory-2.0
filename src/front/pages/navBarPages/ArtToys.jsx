@@ -110,7 +110,7 @@ function setupCardsStage(stageEl) {
     const RADIUS_Y_VH = 10;
     const ORBIT_OFFSET_X_VW = 16;
     const ANG_START = (-40 * Math.PI) / 180; // entrada derecha
-    const ANG_END = (220 * Math.PI) / 180;  // salida izquierda (más abierta)
+    const ANG_END = (220 * Math.PI) / 180; // salida izquierda (más abierta)
 
     const Z_BACK = -260;
     const Z_FRONT = 480;
@@ -143,7 +143,7 @@ function setupCardsStage(stageEl) {
     let raf = 0;
     let lastScrollY = -1;
 
-    const DEAD_ZONE = 0.10;
+    const DEAD_ZONE = 0.1;
     const RAMP = 0.18;
 
     const update = () => {
@@ -237,7 +237,9 @@ function setupCardsStage(stageEl) {
         for (let i = 0; i < state.length; i++) {
             const { card, inner, xvw, yvh, zBase, scale, blur, o } = state[i];
             card.style.transform =
-                `translate(-50%, -50%) translate3d(${xvw.toFixed(2)}vw, ${yvh.toFixed(2)}vh, ${zBase.toFixed(1)}px) scale(${scale.toFixed(3)})`;
+                `translate(-50%, -50%) translate3d(${xvw.toFixed(2)}vw, ${yvh.toFixed(
+                    2
+                )}vh, ${zBase.toFixed(1)}px) scale(${scale.toFixed(3)})`;
             inner.style.opacity = o.toFixed(3);
             if (blur < 0.25) inner.style.filter = "none";
             else inner.style.filter = `blur(${blur.toFixed(2)}px)`;
@@ -399,7 +401,6 @@ const ArtToys = () => {
                             </div>
                         </div>
                     </div>
-
                 </div>
             </section>
         </main>

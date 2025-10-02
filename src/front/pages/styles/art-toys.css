@@ -12,7 +12,7 @@ body.is-scrolling .at-card3d__inner {
     inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
-/* Pistas al compositor (no lo pongas en todo el mundo, solo lo que anima) */
+/* Pistas al compositor */
 .at-card3d,
 .at-card3d__inner,
 .at-astro {
@@ -20,13 +20,13 @@ body.is-scrolling .at-card3d__inner {
   backface-visibility: hidden;
 }
 
-/* Offscreen = cero coste de layout/pintura */
+/* Offscreen = ahorro de render */
 .at-hero:not(:in-viewport) {
   content-visibility: auto;
   contain-intrinsic-size: 1000px 800px;
 }
 
-/* ============== BASE ============== */
+/* ===== BASE ===== */
 .at {
   --bg1: #4a86d9;
   --bg2: #2f62c2;
@@ -44,7 +44,7 @@ body.is-scrolling .at-card3d__inner {
   overflow-x: hidden;
 }
 
-/* ============== HERO ============== */
+/* ===== HERO ===== */
 .at-hero {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -180,7 +180,7 @@ body.is-scrolling .at-card3d__inner {
   }
 }
 
-/* ============== Split / letras (ajustado más rápido) ============== */
+/* ===== Split letras (más rápido) ===== */
 .at-split {
   display: inline-block;
   white-space: pre-wrap;
@@ -191,25 +191,18 @@ body.is-scrolling .at-card3d__inner {
   will-change: transform, opacity;
 }
 
-/* Título: acelera duración + reduce stagger + menor retardo de arranque */
 .at-hero__title.at-split.is-in .char {
-  /* antes: 0.75s y 120ms de stagger con 0.15s de retardo base */
   animation: at-slide-in-left 0.62s cubic-bezier(0.5, 0, 0.5, 1) both;
   animation-delay: calc(0.08s + (90ms * var(--char-index)));
 }
-
-/* Título que entra desde la derecha — hereda la duración/retardo de arriba */
 .at-hero__title.at-fromRight.at-split.is-in .char {
   animation-name: at-slide-in-right;
 }
 
-/* Descripción: entra un poco antes para que no se quede atrás */
 .at-hero__lead.is-in {
-  /* antes: 0.6s de duración y 0.95s de delay */
   animation: at-lead-in 0.5s ease-out both;
   animation-delay: 0.55s;
 }
-/* Descripción del panel derecho: mantiene dirección horizontal */
 .at-hero__lead.at-fromRight.is-in {
   animation-name: at-lead-in-right;
 }
@@ -255,7 +248,7 @@ body.is-scrolling .at-card3d__inner {
   }
 }
 
-/* ============== ESCENA FINAL (PIN + 3D) ============== */
+/* ===== ESCENA FINAL (PIN + 3D) ===== */
 .at-cardsStage {
   position: relative;
   min-height: 360vh;
@@ -268,7 +261,6 @@ body.is-scrolling .at-card3d__inner {
   z-index: 50;
 }
 
-/* Mundo 3D */
 .at-cardsSticky {
   position: sticky;
   top: 0;
@@ -288,20 +280,19 @@ body.is-scrolling .at-card3d__inner {
   height: auto;
   transform: translate(-50%, -50%) translateY(var(--astroShift, 30vh))
     translateZ(var(--astroZ, 20px));
-  filter: none; /* importante: no romper capa 3D */
+  filter: none;
   z-index: 0;
   user-select: none;
   pointer-events: none;
 }
 
-/* Cards 3D (JS setea transform en runtime) */
+/* Cards 3D (JS aplica transform) */
 .at-card3d {
   position: absolute;
   left: 50%;
   top: 50%;
   transform-style: preserve-3d;
-  will-change: transform;
-  z-index: 10; /* la profundidad real la da translateZ */
+  z-index: 10;
 }
 
 /* Parte visual (blur/opacity) */
@@ -326,47 +317,10 @@ body.is-scrolling .at-card3d__inner {
   letter-spacing: 0.02em;
 }
 
-@media (max-width: 860px) {
-  .at-astro {
-    width: min(420px, 52vw);
-    top: var(--astroY, 60%);
-  }
-  .at-card3d__inner {
-    min-width: clamp(200px, 62vw, 520px);
-  }
-}
-@media (max-width: 560px) {
-  .at-astro {
-    width: min(360px, 64vw);
-  }
-  .at-card3d__inner {
-    min-width: clamp(200px, 78vw, 520px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .at-cardsStage {
-    min-height: 120vh;
-  }
-  .at-cardsStage.is-pinned .at-cardsSticky {
-    position: fixed;
-  }
-  .at-card3d {
-    transform: translate(-50%, -50%);
-  }
-  .at-card3d__inner {
-    opacity: 1;
-    filter: none !important;
-  }
-}
-
-/* ==== CARDS estilo “Clash” adaptado (70/30, color sólido arriba) ==== */
-
-/* Tamaño base de la card cuando está a escala 1 (la orbita ya escala) */
+/* ==== CARDS estilo Clash adaptado (70/30) ==== */
 .at-card3d__inner {
   --card-w: clamp(280px, 40vw, 560px);
   --card-r: 22px;
-
   width: var(--card-w);
   border-radius: var(--card-r);
   overflow: hidden;
@@ -374,7 +328,6 @@ body.is-scrolling .at-card3d__inner {
   display: flex;
   flex-direction: column;
   box-shadow: 0 24px 50px rgba(0, 0, 0, 0.25);
-  will-change: transform, opacity, filter;
   transform-style: preserve-3d;
 }
 
@@ -382,13 +335,11 @@ body.is-scrolling .at-card3d__inner {
 .at-card3d__top {
   position: relative;
   height: 70%;
-  min-height: 0; /* para que el contenedor flex permita reducir */
+  min-height: 0;
   background: var(--c, #f2f2f2);
   display: grid;
   place-items: center;
 }
-
-/* imagen centrada dentro del top; no recorta al estilo “clash”: aquí es más limpio */
 .at-card3d__top img {
   width: 78%;
   height: auto;
@@ -399,7 +350,6 @@ body.is-scrolling .at-card3d__inner {
   pointer-events: none;
 }
 
-/* Parte inferior (30%) con texto breve */
 .at-card3d__body {
   height: 30%;
   padding: clamp(12px, 2.2vw, 18px);
@@ -408,7 +358,6 @@ body.is-scrolling .at-card3d__inner {
   align-content: center;
   gap: 6px;
 }
-
 .at-card3d__title {
   margin: 0;
   font-family: "Luckiest Guy", cursive;
@@ -417,7 +366,6 @@ body.is-scrolling .at-card3d__inner {
   font-size: clamp(18px, 2.6vw, 28px);
   color: #111;
 }
-
 .at-card3d__desc {
   margin: 0;
   font-size: clamp(12px, 1.6vw, 14.5px);
@@ -426,74 +374,32 @@ body.is-scrolling .at-card3d__inner {
   opacity: 0.9;
 }
 
-/* Contenedor que pinnea el astronauta + cards (ya lo tenías) */
-.at-cardsStage .at-cardsSticky {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  perspective: 1600px;
-  transform-style: preserve-3d;
-}
-
-/* El astro (igual que antes; por si faltaba) */
-.at-cardsSticky .at-astro {
-  position: absolute;
-  left: 50%;
-  top: var(--astroY, 60%);
-  transform: translate(-50%, calc(-50% + var(--astroShift, 0)))
-    translateZ(var(--astroZ, 0));
-  width: clamp(320px, 24vw, 520px);
-  height: auto;
-  user-select: none;
-  pointer-events: none;
-  filter: drop-shadow(0 28px 60px rgba(0, 0, 0, 0.35));
-}
-
-/* Cada card en la orbita (posición absoluta + transform 3D aplicado por JS) */
-.at-card3d {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform-style: preserve-3d;
-  /* el JS se encarga del transform y la opacidad/filtro en .at-card3d__inner */
-}
-
-/* =========================
-   Ultra-wide: más “aire” a la izquierda
-   — Sin mover lo de la derecha ni tamaños/efectos
-   ========================= */
+/* ===== Ultra-wide: empuje del contenido izquierdo ===== */
 :root {
-  /* por defecto no añadimos margen extra */
   --at-left-gutter: 0vw;
 }
 
-/* A partir de pantallas anchas con relación ≥ 16:9 */
 @media (min-aspect-ratio: 16/9) and (min-width: 1600px) {
   :root {
     --at-left-gutter: 8vw;
-  } /* empuja un poco */
+  }
 }
-
-/* Ultra-wide (21:9 y muy anchas) – un poco más */
 @media (min-aspect-ratio: 21/9) and (min-width: 2000px) {
   :root {
     --at-left-gutter: 20vw;
   }
 }
 
-/* Secciones donde el contenido “de la izquierda” es el header
-   (HERO 1 y HERO 3: el <header> es el primer hijo) */
+/* En hero 1 y 3 el <header> es el bloque izquierdo */
 .at-hero > header:first-child {
   padding-left: var(--at-left-gutter);
 }
-
-/* HERO 2: a la izquierda está el media/viewer; lo empujamos igual */
+/* En hero 2 el bloque izquierdo es el media/viewer */
 .at-hero--3d .at-hero__media {
   padding-left: var(--at-left-gutter);
 }
 
-/* ============== TIPOGRAFÍA — ULTRA-WIDE TUNE ============== */
-/* Base (por si quieres un pequeño boost global, muy sutil) */
+/* ===== Tipografía – Ultra-wide tune ===== */
 .at-hero__title {
   letter-spacing: 0.012em;
 }
@@ -501,24 +407,19 @@ body.is-scrolling .at-card3d__inner {
   max-width: 56ch;
 }
 
-/* 16:9+ (ancho) — subimos un punto la escala en títulos y lead */
 @media (min-aspect-ratio: 16/9) and (min-width: 1600px) {
   .at-hero__title {
-    /* antes: clamp(40px, 6vw, 86px) */
     font-size: clamp(44px, 6.8vw, 104px);
     line-height: 1.03;
     margin-bottom: 0.3em;
   }
   .at-hero__lead {
-    /* antes: clamp(16px, 1.6vw, 19px) */
     font-size: clamp(18px, 1.45vw, 22px);
     max-width: 60ch;
     line-height: 1.5;
     letter-spacing: 0.015em;
   }
 }
-
-/* 21:9+ (ultra-wide) — un empujón extra, sin pasarnos */
 @media (min-aspect-ratio: 21/9) and (min-width: 2000px) {
   .at-hero__title {
     font-size: clamp(48px, 7.6vw, 120px);
@@ -528,10 +429,8 @@ body.is-scrolling .at-card3d__inner {
     max-width: 64ch;
   }
 }
-
-/* Micro-ajuste de separación para que “respire” mejor */
 @media (min-aspect-ratio: 16/9) and (min-width: 1600px) {
   .at-hero > header:first-child {
-    gap: 0.35em; /* si usas grid/flex con gap; si no, ignóralo */
+    gap: 0.35em;
   }
 }
