@@ -457,3 +457,81 @@ body.is-scrolling .at-card3d__inner {
   transform-style: preserve-3d;
   /* el JS se encarga del transform y la opacidad/filtro en .at-card3d__inner */
 }
+
+/* =========================
+   Ultra-wide: más “aire” a la izquierda
+   — Sin mover lo de la derecha ni tamaños/efectos
+   ========================= */
+:root {
+  /* por defecto no añadimos margen extra */
+  --at-left-gutter: 0vw;
+}
+
+/* A partir de pantallas anchas con relación ≥ 16:9 */
+@media (min-aspect-ratio: 16/9) and (min-width: 1600px) {
+  :root {
+    --at-left-gutter: 8vw;
+  } /* empuja un poco */
+}
+
+/* Ultra-wide (21:9 y muy anchas) – un poco más */
+@media (min-aspect-ratio: 21/9) and (min-width: 2000px) {
+  :root {
+    --at-left-gutter: 20vw;
+  }
+}
+
+/* Secciones donde el contenido “de la izquierda” es el header
+   (HERO 1 y HERO 3: el <header> es el primer hijo) */
+.at-hero > header:first-child {
+  padding-left: var(--at-left-gutter);
+}
+
+/* HERO 2: a la izquierda está el media/viewer; lo empujamos igual */
+.at-hero--3d .at-hero__media {
+  padding-left: var(--at-left-gutter);
+}
+
+/* ============== TIPOGRAFÍA — ULTRA-WIDE TUNE ============== */
+/* Base (por si quieres un pequeño boost global, muy sutil) */
+.at-hero__title {
+  letter-spacing: 0.012em;
+}
+.at-hero__lead {
+  max-width: 56ch;
+}
+
+/* 16:9+ (ancho) — subimos un punto la escala en títulos y lead */
+@media (min-aspect-ratio: 16/9) and (min-width: 1600px) {
+  .at-hero__title {
+    /* antes: clamp(40px, 6vw, 86px) */
+    font-size: clamp(44px, 6.8vw, 104px);
+    line-height: 1.03;
+    margin-bottom: 0.3em;
+  }
+  .at-hero__lead {
+    /* antes: clamp(16px, 1.6vw, 19px) */
+    font-size: clamp(18px, 1.45vw, 22px);
+    max-width: 60ch;
+    line-height: 1.5;
+    letter-spacing: 0.015em;
+  }
+}
+
+/* 21:9+ (ultra-wide) — un empujón extra, sin pasarnos */
+@media (min-aspect-ratio: 21/9) and (min-width: 2000px) {
+  .at-hero__title {
+    font-size: clamp(48px, 7.6vw, 120px);
+  }
+  .at-hero__lead {
+    font-size: clamp(19px, 1.25vw, 24px);
+    max-width: 64ch;
+  }
+}
+
+/* Micro-ajuste de separación para que “respire” mejor */
+@media (min-aspect-ratio: 16/9) and (min-width: 1600px) {
+  .at-hero > header:first-child {
+    gap: 0.35em; /* si usas grid/flex con gap; si no, ignóralo */
+  }
+}
