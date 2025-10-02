@@ -180,7 +180,7 @@ body.is-scrolling .at-card3d__inner {
   }
 }
 
-/* ============== Split / letras ============== */
+/* ============== Split / letras (ajustado más rápido) ============== */
 .at-split {
   display: inline-block;
   white-space: pre-wrap;
@@ -190,17 +190,26 @@ body.is-scrolling .at-card3d__inner {
   opacity: 0;
   will-change: transform, opacity;
 }
+
+/* Título: acelera duración + reduce stagger + menor retardo de arranque */
 .at-hero__title.at-split.is-in .char {
-  animation: at-slide-in-left 0.75s cubic-bezier(0.5, 0, 0.5, 1) both;
-  animation-delay: calc(0.15s + (120ms * var(--char-index)));
+  /* antes: 0.75s y 120ms de stagger con 0.15s de retardo base */
+  animation: at-slide-in-left 0.62s cubic-bezier(0.5, 0, 0.5, 1) both;
+  animation-delay: calc(0.08s + (90ms * var(--char-index)));
 }
+
+/* Título que entra desde la derecha — hereda la duración/retardo de arriba */
 .at-hero__title.at-fromRight.at-split.is-in .char {
   animation-name: at-slide-in-right;
 }
+
+/* Descripción: entra un poco antes para que no se quede atrás */
 .at-hero__lead.is-in {
-  animation: at-lead-in 0.6s ease-out both;
-  animation-delay: 0.95s;
+  /* antes: 0.6s de duración y 0.95s de delay */
+  animation: at-lead-in 0.5s ease-out both;
+  animation-delay: 0.55s;
 }
+/* Descripción del panel derecho: mantiene dirección horizontal */
 .at-hero__lead.at-fromRight.is-in {
   animation-name: at-lead-in-right;
 }
