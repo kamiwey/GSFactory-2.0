@@ -359,3 +359,101 @@ body.is-scrolling .at-card3d__inner {
     filter: none !important;
   }
 }
+
+/* ==== CARDS estilo “Clash” adaptado (70/30, color sólido arriba) ==== */
+
+/* Tamaño base de la card cuando está a escala 1 (la orbita ya escala) */
+.at-card3d__inner {
+  --card-w: clamp(280px, 40vw, 560px);
+  --card-r: 22px;
+
+  width: var(--card-w);
+  border-radius: var(--card-r);
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.25);
+  will-change: transform, opacity, filter;
+  transform-style: preserve-3d;
+}
+
+/* 70% arriba (color sólido) + 30% abajo (texto) */
+.at-card3d__top {
+  position: relative;
+  height: 70%;
+  min-height: 0; /* para que el contenedor flex permita reducir */
+  background: var(--c, #f2f2f2);
+  display: grid;
+  place-items: center;
+}
+
+/* imagen centrada dentro del top; no recorta al estilo “clash”: aquí es más limpio */
+.at-card3d__top img {
+  width: 78%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.18));
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Parte inferior (30%) con texto breve */
+.at-card3d__body {
+  height: 30%;
+  padding: clamp(12px, 2.2vw, 18px);
+  background: #fff;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+}
+
+.at-card3d__title {
+  margin: 0;
+  font-family: "Luckiest Guy", cursive;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  font-size: clamp(18px, 2.6vw, 28px);
+  color: #111;
+}
+
+.at-card3d__desc {
+  margin: 0;
+  font-size: clamp(12px, 1.6vw, 14.5px);
+  line-height: 1.35;
+  color: #27323b;
+  opacity: 0.9;
+}
+
+/* Contenedor que pinnea el astronauta + cards (ya lo tenías) */
+.at-cardsStage .at-cardsSticky {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  perspective: 1600px;
+  transform-style: preserve-3d;
+}
+
+/* El astro (igual que antes; por si faltaba) */
+.at-cardsSticky .at-astro {
+  position: absolute;
+  left: 50%;
+  top: var(--astroY, 60%);
+  transform: translate(-50%, calc(-50% + var(--astroShift, 0)))
+    translateZ(var(--astroZ, 0));
+  width: clamp(320px, 24vw, 520px);
+  height: auto;
+  user-select: none;
+  pointer-events: none;
+  filter: drop-shadow(0 28px 60px rgba(0, 0, 0, 0.35));
+}
+
+/* Cada card en la orbita (posición absoluta + transform 3D aplicado por JS) */
+.at-card3d {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-style: preserve-3d;
+  /* el JS se encarga del transform y la opacidad/filtro en .at-card3d__inner */
+}

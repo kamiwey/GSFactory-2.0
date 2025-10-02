@@ -38,12 +38,11 @@ function splitTitleChars(sel = ".at-hero__title[data-split='chars']") {
 }
 
 /* ===== Activación por scroll (disparo más temprano) ===== */
-/** Activa cuando el panel entra en ~80% superior y aún no ha salido del 20% inferior */
 function sectionIsNearViewport(sec, topKeepFrac = 0.2, bottomKeepFrac = 0.2) {
     const r = sec.getBoundingClientRect();
     const vh = window.innerHeight || document.documentElement.clientHeight;
-    const topLimit = vh * (1 - topKeepFrac);     // 80% de alto -> entra pronto
-    const bottomLimit = vh * bottomKeepFrac;     // 20% de alto -> mientras no haya salido por abajo
+    const topLimit = vh * (1 - topKeepFrac);
+    const bottomLimit = vh * bottomKeepFrac;
     return r.top < topLimit && r.bottom > bottomLimit;
 }
 
@@ -62,7 +61,6 @@ function setupScrollActivator() {
     const check = () => {
         sections.forEach((s) => {
             if (s.dataset.in === "1") return;
-            // margen generoso para disparar antes
             if (sectionIsNearViewport(s, 0.2, 0.2)) markIn(s);
         });
         ticking = false;
@@ -89,7 +87,7 @@ const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const pageTop = (el) =>
     el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset);
 
-/* ===== Stage final optimizado (igual que lo tienes) ===== */
+/* ===== Escena final (igual que la tenías; solo render de cards cambia) ===== */
 function setupCardsStage(stageEl) {
     if (!stageEl) return () => { };
     const sticky = stageEl.querySelector(".at-cardsSticky");
@@ -107,12 +105,12 @@ function setupCardsStage(stageEl) {
         return { card, inner };
     });
 
-    // Órbita y offsets (como lo dejamos)
+    // Órbita (como la dejasteis)
     const RADIUS_X_VW = 38;
     const RADIUS_Y_VH = 10;
     const ORBIT_OFFSET_X_VW = 16;
-    const ANG_START = (-40 * Math.PI) / 180;
-    const ANG_END = (220 * Math.PI) / 180;
+    const ANG_START = (-40 * Math.PI) / 180; // entrada derecha
+    const ANG_END = (220 * Math.PI) / 180;  // salida izquierda (más abierta)
 
     const Z_BACK = -260;
     const Z_FRONT = 480;
@@ -185,11 +183,10 @@ function setupCardsStage(stageEl) {
         const s = p * totalSpan;
 
         const sigma = 0.12;
-        const focusGauss = (t) =>
-            Math.exp(-Math.pow(t - 0.5, 2) / (2 * sigma * sigma));
+        const focusGauss = (t) => Math.exp(-Math.pow(t - 0.5, 2) / (2 * sigma * sigma));
 
         const FADE_IN = 0.08;
-        const FADE_OUT_START = 0.64; // <- ajustado en la iteración previa
+        const FADE_OUT_START = 0.64;
         const FADE_OUT_LEN = 0.24;
 
         const cos = Math.cos;
@@ -198,7 +195,7 @@ function setupCardsStage(stageEl) {
 
         const state = entries.map(({ card, inner }, i) => {
             const t0 = i * STAG;
-            const lt = clamp01((s - t0) / DUR);
+            const lt = Math.max(0, Math.min(1, (s - t0) / DUR));
             const et = lt * lt * (3 - 2 * lt);
 
             const ang = ANG_START + (ANG_END - ANG_START) * et;
@@ -224,17 +221,19 @@ function setupCardsStage(stageEl) {
             if (lt <= 0) o = 0;
             else if (lt < FADE_IN) o = lt / FADE_IN;
             else if (lt > FADE_OUT_START)
-                o = 1 - clamp01((lt - FADE_OUT_START) / FADE_OUT_LEN);
+                o = 1 - Math.max(0, Math.min(1, (lt - FADE_OUT_START) / FADE_OUT_LEN));
             else o = 1;
 
             return { card, inner, xvw, yvh, zBase, scale, blur, o };
         });
 
+        // z-order estable (cada una por detrás de la previa)
         const DELTA_Z = 8;
         for (let i = 1; i < state.length; i++) {
             state[i].zBase = Math.min(state[i].zBase, state[i - 1].zBase - DELTA_Z);
         }
 
+        // aplicar
         for (let i = 0; i < state.length; i++) {
             const { card, inner, xvw, yvh, zBase, scale, blur, o } = state[i];
             card.style.transform =
@@ -330,7 +329,7 @@ const ArtToys = () => {
                 </div>
             </section>
 
-            {/* ESCENA FINAL */}
+            {/* ESCENA FINAL – CARDS NUEVAS */}
             <section
                 className="at-cardsStage"
                 ref={cardsStageRef}
@@ -339,11 +338,68 @@ const ArtToys = () => {
             >
                 <div className="at-cardsSticky">
                     <img className="at-astro" src={astronauta} alt="" aria-hidden="true" />
-                    <div className="at-card3d" style={{ "--c": "#FDF7E7" }}><span>Modelado</span></div>
-                    <div className="at-card3d" style={{ "--c": "#EAF3FF" }}><span>Impresión</span></div>
-                    <div className="at-card3d" style={{ "--c": "#E9FFE9" }}><span>Pintura</span></div>
-                    <div className="at-card3d" style={{ "--c": "#FBE9FF" }}><span>Acabado</span></div>
-                    <div className="at-card3d" style={{ "--c": "#FFF0F0" }}><span>Packaging</span></div>
+
+                    {/* Cada card usa --c como color sólido del panel superior */}
+                    <div className="at-card3d" style={{ "--c": "#FDF7E7" }}>
+                        <div className="at-card3d__inner">
+                            <div className="at-card3d__top">
+                                <img src={astronauta} alt="" loading="lazy" />
+                            </div>
+                            <div className="at-card3d__body">
+                                <h3 className="at-card3d__title">Modelado</h3>
+                                <p className="at-card3d__desc">Limpio, paramétrico y listo para imprimir.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="at-card3d" style={{ "--c": "#EAF3FF" }}>
+                        <div className="at-card3d__inner">
+                            <div className="at-card3d__top">
+                                <img src={astronauta} alt="" loading="lazy" />
+                            </div>
+                            <div className="at-card3d__body">
+                                <h3 className="at-card3d__title">Impresión</h3>
+                                <p className="at-card3d__desc">Resolución fina y soportes optimizados.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="at-card3d" style={{ "--c": "#E9FFE9" }}>
+                        <div className="at-card3d__inner">
+                            <div className="at-card3d__top">
+                                <img src={astronauta} alt="" loading="lazy" />
+                            </div>
+                            <div className="at-card3d__body">
+                                <h3 className="at-card3d__title">Pintura</h3>
+                                <p className="at-card3d__desc">Paleta toon y barnices duraderos.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="at-card3d" style={{ "--c": "#FBE9FF" }}>
+                        <div className="at-card3d__inner">
+                            <div className="at-card3d__top">
+                                <img src={astronauta} alt="" loading="lazy" />
+                            </div>
+                            <div className="at-card3d__body">
+                                <h3 className="at-card3d__title">Acabado</h3>
+                                <p className="at-card3d__desc">Montaje, lijas finas y pulidos.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="at-card3d" style={{ "--c": "#FFF0F0" }}>
+                        <div className="at-card3d__inner">
+                            <div className="at-card3d__top">
+                                <img src={astronauta} alt="" loading="lazy" />
+                            </div>
+                            <div className="at-card3d__body">
+                                <h3 className="at-card3d__title">Packaging</h3>
+                                <p className="at-card3d__desc">Cajas a medida y protección premium.</p>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </section>
         </main>
