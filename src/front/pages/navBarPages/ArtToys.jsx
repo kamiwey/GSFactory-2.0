@@ -103,10 +103,10 @@ function setupCardsStage(stageEl) {
         return { card, inner };
     });
 
-    // Órbita: mantenemos parámetros (con offset a la derecha si lo pusiste)
+    // Órbita
     const RADIUS_X_VW = 38;
     const RADIUS_Y_VH = 10;
-    const ORBIT_OFFSET_X_VW = 16; // tu offset actual a la derecha
+    const ORBIT_OFFSET_X_VW = 16; // offset a la derecha
     const ANG_START = (-40 * Math.PI) / 180;
     const ANG_END = (220 * Math.PI) / 180;
 
@@ -144,12 +144,11 @@ function setupCardsStage(stageEl) {
     let raf = 0;
     let lastScrollY = -1;
 
-    // --- Parámetros del “no-blur window” (nuevo) ---
-    const DEAD_ZONE = 0.10; // +/- 0.10 alrededor del centro sin blur (ligeramente más largo)
-    const RAMP = 0.18;      // rampa suave después de la dead-zone
+    // Ventana “no blur” (sin cambios aquí)
+    const DEAD_ZONE = 0.10;
+    const RAMP = 0.18;
 
     const update = () => {
-        // Early exit si no es visible
         if (!visible) {
             raf = 0;
             return;
@@ -157,7 +156,6 @@ function setupCardsStage(stageEl) {
 
         const y = window.scrollY || window.pageYOffset;
         if (y === lastScrollY) {
-            // No avances si no hay cambio real de scroll
             raf = requestAnimationFrame(update);
             return;
         }
@@ -167,7 +165,7 @@ function setupCardsStage(stageEl) {
         const pinStart = pageTop(stageEl);
         const pinEnd = pinStart + stageEl.scrollHeight - _vh;
 
-        // Pre-entrada del astro (ligera)
+        // Pre-entrada del astro
         const preWindow = _vh * 0.65;
         const preStart = pinStart - preWindow;
         const preT = clamp01((y - preStart) / Math.max(1, pinStart - preStart));
@@ -193,11 +191,12 @@ function setupCardsStage(stageEl) {
         const focusGauss = (t) =>
             Math.exp(-Math.pow(t - 0.5, 2) / (2 * sigma * sigma));
 
+        // >>> Ajuste: empezamos a desvanecer antes y lo hacemos un pelín más corto
         const FADE_IN = 0.08;
-        const FADE_OUT_START = 0.7;
-        const FADE_OUT_LEN = 0.28;
+        const FADE_OUT_START = 0.64; // antes 0.70
+        const FADE_OUT_LEN = 0.24;   // antes 0.28
 
-        // Precalcular una vez
+        // Precalcular
         const cos = Math.cos;
         const sin = Math.sin;
         const PI = Math.PI;
@@ -205,7 +204,7 @@ function setupCardsStage(stageEl) {
         const state = entries.map(({ card, inner }, i) => {
             const t0 = i * STAG;
             const lt = clamp01((s - t0) / DUR);
-            const et = lt * lt * (3 - 2 * lt); // ease inline (evita closure)
+            const et = lt * lt * (3 - 2 * lt);
 
             const ang = ANG_START + (ANG_END - ANG_START) * et;
             const xvw = ORBIT_OFFSET_X_VW + cos(ang) * RADIUS_X_VW;
@@ -217,18 +216,13 @@ function setupCardsStage(stageEl) {
             const scrolling = document.body.classList.contains("is-scrolling");
             const blurMax = scrolling ? 3.2 : 4.2;
 
-            // ====== BLOQUE CLAVE: prolongar “no blur” sin tocar lo demás ======
-            // Base de blur
+            // Blur con ventana “no blur” prolongada
             const baseBlur = (1 - focus) * blurMax;
-            // Distancia al centro del recorrido (0 en centro, 0.5 max a extremos)
             const dist = Math.abs(et - 0.5);
-            // Factor 0 en la “dead-zone”, sube linealmente en la rampa y se satura a 1
             let k;
             if (dist <= DEAD_ZONE) k = 0;
             else k = Math.min(1, (dist - DEAD_ZONE) / RAMP);
-
             const blur = baseBlur * k;
-            // ================================================================
 
             const scale = 1 + 0.22 * focus;
 
@@ -248,17 +242,14 @@ function setupCardsStage(stageEl) {
             state[i].zBase = Math.min(state[i].zBase, state[i - 1].zBase - DELTA_Z);
         }
 
-        // Pintar (un único transform)
+        // Pintar
         for (let i = 0; i < state.length; i++) {
             const { card, inner, xvw, yvh, zBase, scale, blur, o } = state[i];
             card.style.transform =
                 `translate(-50%, -50%) translate3d(${xvw.toFixed(2)}vw, ${yvh.toFixed(2)}vh, ${zBase.toFixed(1)}px) scale(${scale.toFixed(3)})`;
             inner.style.opacity = o.toFixed(3);
-            if (blur < 0.25) {
-                inner.style.filter = "none";
-            } else {
-                inner.style.filter = `blur(${blur.toFixed(2)}px)`;
-            }
+            if (blur < 0.25) inner.style.filter = "none";
+            else inner.style.filter = `blur(${blur.toFixed(2)}px)`;
         }
 
         raf = requestAnimationFrame(update);
@@ -266,13 +257,11 @@ function setupCardsStage(stageEl) {
 
     const onResize = () => {
         setSectionHeight();
-        // Forzamos un frame posterior
         if (!raf && visible) raf = requestAnimationFrame(update);
     };
 
     window.addEventListener("resize", onResize, { passive: true });
 
-    // Arranque condicional
     if (!raf) raf = requestAnimationFrame(update);
 
     return () => {
