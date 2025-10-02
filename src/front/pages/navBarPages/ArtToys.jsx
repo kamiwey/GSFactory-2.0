@@ -37,38 +37,44 @@ function splitTitleChars(sel = ".at-hero__title[data-split='chars']") {
     });
 }
 
-/* ===== Activación por scroll (centro del panel) ===== */
-const clamp01 = (x) => Math.max(0, Math.min(1, x));
-function sectionCenterIsInViewport(sec, marginPct = 0.35) {
+/* ===== Activación por scroll (disparo más temprano) ===== */
+/** Activa cuando el panel entra en ~80% superior y aún no ha salido del 20% inferior */
+function sectionIsNearViewport(sec, topKeepFrac = 0.2, bottomKeepFrac = 0.2) {
     const r = sec.getBoundingClientRect();
     const vh = window.innerHeight || document.documentElement.clientHeight;
-    const topBand = vh * marginPct;
-    const bottomBand = vh * (1 - marginPct);
-    const secCenter = r.top + r.height / 2;
-    return secCenter >= topBand && secCenter <= bottomBand;
+    const topLimit = vh * (1 - topKeepFrac);     // 80% de alto -> entra pronto
+    const bottomLimit = vh * bottomKeepFrac;     // 20% de alto -> mientras no haya salido por abajo
+    return r.top < topLimit && r.bottom > bottomLimit;
 }
+
 function setupScrollActivator() {
     const sections = Array.from(document.querySelectorAll(".at-hero"));
     let ticking = false;
+
     const markIn = (s) => {
+        if (s.dataset.in === "1") return;
         s.dataset.in = "1";
         s.querySelectorAll(".at-hero__title, .at-hero__lead").forEach((el) => {
             el.classList.add("is-in");
         });
     };
+
     const check = () => {
         sections.forEach((s) => {
             if (s.dataset.in === "1") return;
-            if (sectionCenterIsInViewport(s, 0.35)) markIn(s);
+            // margen generoso para disparar antes
+            if (sectionIsNearViewport(s, 0.2, 0.2)) markIn(s);
         });
         ticking = false;
     };
+
     const onScroll = () => {
         if (!ticking) {
             ticking = true;
             requestAnimationFrame(check);
         }
     };
+
     check();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll, { passive: true });
@@ -79,19 +85,17 @@ function setupScrollActivator() {
 }
 
 /* ===== Utils ===== */
-const lerp = (a, b, t) => a + (b - a) * t;
-const ease = (t) => t * t * (3 - 2 * t);
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const pageTop = (el) =>
     el.getBoundingClientRect().top + (window.scrollY || window.pageYOffset);
 
-/* ===== Stage final optimizado ===== */
+/* ===== Stage final optimizado (igual que lo tienes) ===== */
 function setupCardsStage(stageEl) {
     if (!stageEl) return () => { };
     const sticky = stageEl.querySelector(".at-cardsSticky");
     const cards = Array.from(stageEl.querySelectorAll(".at-card3d"));
     if (!sticky || cards.length === 0) return () => { };
 
-    // Cache inner refs SOLO una vez
     const entries = cards.map((card) => {
         let inner = card.querySelector(".at-card3d__inner");
         if (!inner) {
@@ -103,18 +107,16 @@ function setupCardsStage(stageEl) {
         return { card, inner };
     });
 
-    // Órbita
+    // Órbita y offsets (como lo dejamos)
     const RADIUS_X_VW = 38;
     const RADIUS_Y_VH = 10;
-    const ORBIT_OFFSET_X_VW = 16; // offset a la derecha
+    const ORBIT_OFFSET_X_VW = 16;
     const ANG_START = (-40 * Math.PI) / 180;
     const ANG_END = (220 * Math.PI) / 180;
 
-    // Profundidad
     const Z_BACK = -260;
     const Z_FRONT = 480;
 
-    // Timings
     const STAG = 0.14;
     const DUR = 0.68;
     const totalSpan = (cards.length - 1) * STAG + DUR;
@@ -130,7 +132,6 @@ function setupCardsStage(stageEl) {
 
     sticky.style.setProperty("--astroZ", "20px");
 
-    // IO para arrancar/parar RAF
     let visible = false;
     const io = new IntersectionObserver(
         (obs) => {
@@ -144,7 +145,6 @@ function setupCardsStage(stageEl) {
     let raf = 0;
     let lastScrollY = -1;
 
-    // Ventana “no blur” (sin cambios aquí)
     const DEAD_ZONE = 0.10;
     const RAMP = 0.18;
 
@@ -165,19 +165,17 @@ function setupCardsStage(stageEl) {
         const pinStart = pageTop(stageEl);
         const pinEnd = pinStart + stageEl.scrollHeight - _vh;
 
-        // Pre-entrada del astro
+        // pre-entrada del astro
         const preWindow = _vh * 0.65;
         const preStart = pinStart - preWindow;
         const preT = clamp01((y - preStart) / Math.max(1, pinStart - preStart));
         sticky.style.setProperty("--astroShift", `${(1 - preT) * 30}vh`);
 
-        // Estado "pinned"
         const PIN_HOLD = _vh * 0.55;
         const pinned = y > pinStart && y < pinEnd + PIN_HOLD;
         if (pinned) stageEl.classList.add("is-pinned");
         else stageEl.classList.remove("is-pinned");
 
-        // Progreso dentro del pin
         let p;
         if (y <= pinStart) p = 0;
         else if (y >= pinEnd + PIN_HOLD) p = 1;
@@ -186,17 +184,14 @@ function setupCardsStage(stageEl) {
 
         const s = p * totalSpan;
 
-        // Foco gauss (más nítido cerca del centro)
         const sigma = 0.12;
         const focusGauss = (t) =>
             Math.exp(-Math.pow(t - 0.5, 2) / (2 * sigma * sigma));
 
-        // >>> Ajuste: empezamos a desvanecer antes y lo hacemos un pelín más corto
         const FADE_IN = 0.08;
-        const FADE_OUT_START = 0.64; // antes 0.70
-        const FADE_OUT_LEN = 0.24;   // antes 0.28
+        const FADE_OUT_START = 0.64; // <- ajustado en la iteración previa
+        const FADE_OUT_LEN = 0.24;
 
-        // Precalcular
         const cos = Math.cos;
         const sin = Math.sin;
         const PI = Math.PI;
@@ -210,13 +205,12 @@ function setupCardsStage(stageEl) {
             const xvw = ORBIT_OFFSET_X_VW + cos(ang) * RADIUS_X_VW;
             const yvh = sin(ang) * RADIUS_Y_VH;
 
-            const zBase = Z_BACK + (Z_FRONT - Z_BACK) * (0.5 - 0.5 * cos(et * PI));
+            const zBase = -260 + (Z_FRONT - Z_BACK) * (0.5 - 0.5 * cos(et * PI));
 
             const focus = focusGauss(et);
             const scrolling = document.body.classList.contains("is-scrolling");
             const blurMax = scrolling ? 3.2 : 4.2;
 
-            // Blur con ventana “no blur” prolongada
             const baseBlur = (1 - focus) * blurMax;
             const dist = Math.abs(et - 0.5);
             let k;
@@ -236,13 +230,11 @@ function setupCardsStage(stageEl) {
             return { card, inner, xvw, yvh, zBase, scale, blur, o };
         });
 
-        // Encadenado Z (i detrás de i-1)
         const DELTA_Z = 8;
         for (let i = 1; i < state.length; i++) {
             state[i].zBase = Math.min(state[i].zBase, state[i - 1].zBase - DELTA_Z);
         }
 
-        // Pintar
         for (let i = 0; i < state.length; i++) {
             const { card, inner, xvw, yvh, zBase, scale, blur, o } = state[i];
             card.style.transform =
@@ -261,7 +253,6 @@ function setupCardsStage(stageEl) {
     };
 
     window.addEventListener("resize", onResize, { passive: true });
-
     if (!raf) raf = requestAnimationFrame(update);
 
     return () => {
