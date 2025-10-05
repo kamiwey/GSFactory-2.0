@@ -12,12 +12,14 @@ export default function NFC() {
     const HOLD_MS = 1000;
     const ROTATE_MS = 1400;
 
-    // Paso 3 — ajustes solicitados
+    const deg = d => (d * Math.PI) / 180;
+
     const STEP3 = {
-        scaleFactor: 0.62,     // antes 0.85 → ahora más pequeño
-        tiltX: -0.42,          // más inclinación (pitch, rad)
-        yawDelta: +0.06,       // leve giro en Y para “pose”
-        moveLeftK: -0.95,      // multiplicador de radio para desplazar a la izq (igual que teníamos)
+        scaleFactor: 0.62,     // zoom-out (más pequeño)
+        tiltX: deg(-45),       // pitch mundial
+        yawDelta: deg(-30),     // yaw mundial
+        rollZ: deg(-35),       // NUEVO: roll mundial (sentido horario = negativo)
+        moveLeftK: -0.95,      // desplazar a la izquierda (× radio)
         duration: 900,
     };
     // ===============================================
@@ -26,20 +28,20 @@ export default function NFC() {
     const easeInOutCubic = (t) =>
         t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
+    // Zoom-in inicial
     function zoomInOnLoad(object3D, { from = 0.05, to = 1.15, duration = 900 } = {}) {
         if (!object3D) return;
         object3D.scale.setScalar(from);
         const start = performance.now();
         function tick(now) {
             const t = Math.min(1, (now - start) / duration);
-            const s = from + (to - from) * easeOutCubic(t);
-            object3D.scale.setScalar(s);
+            object3D.scale.setScalar(from + (to - from) * easeOutCubic(t));
             if (t < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
     }
 
-    // Giro 180° sobre Y GLOBAL
+    // Giro 180° sobre Y global
     function rotateWorldY(object3D, radians, duration, THREE) {
         if (!object3D || !THREE) return;
         const startQ = object3D.quaternion.clone();
@@ -57,7 +59,7 @@ export default function NFC() {
         requestAnimationFrame(tick);
     }
 
-    // Helpers paso 3
+    // Paso 3 — helpers
     function animateScaleTo(object3D, toScalar, duration = 800) {
         if (!object3D) return;
         const from = object3D.scale.x;
@@ -71,14 +73,23 @@ export default function NFC() {
         requestAnimationFrame(tick);
     }
 
-    function animateQuaternionTo(object3D, targetEuler, duration, THREE) {
+    // NUEVO: tilt (X) + yaw (Y) + roll (Z) sobre ejes del MUNDO
+    function animateWorldTiltYawRoll(object3D, tiltX, yawY, rollZ, duration, THREE) {
         if (!object3D || !THREE) return;
         const startQ = object3D.quaternion.clone();
-        const targetQ = new THREE.Quaternion().setFromEuler(targetEuler);
+
+        const qPitch = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), tiltX);
+        const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yawY);
+        const qRoll = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), rollZ);
+
+        // Orden de pose final (mundo): roll • yaw • pitch • start
+        const targetQ = qRoll.clone().multiply(qYaw).multiply(qPitch).multiply(startQ);
+
         const start = performance.now();
         function tick(now) {
             const t = Math.min(1, (now - start) / duration);
-            THREE.Quaternion.slerp(startQ, targetQ, object3D.quaternion, easeInOutCubic(t));
+            const k = easeInOutCubic(t);
+            object3D.quaternion.slerpQuaternions(startQ, targetQ, k);
             if (t < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
@@ -187,8 +198,10 @@ export default function NFC() {
                 model.position.y -= sphere.radius * 0.18;
                 scene.add(model);
 
-                zoomInOnLoad(model, { from: 0.05, to: 1.15, duration: ZOOM_MS });
+                // Zoom-in inicial
+                zoomInOnLoad(model, { from: 0.05, to: 1.05, duration: ZOOM_MS });
 
+                // Cámara
                 const radius = Math.max(sphere.radius, 1e-3);
                 const fov = (camera.fov * Math.PI) / 180;
                 const distance = (radius / Math.tan(fov / 2)) * 1.10;
@@ -204,18 +217,18 @@ export default function NFC() {
                 setTimeout(() => {
                     rotateWorldY(model, Math.PI, ROTATE_MS, THREE);
 
-                    // Paso 3: pausa + zoom-out (más pequeño) + más inclinación + mover a la izquierda
+                    // Paso 3: pausa + zoom-out + tilt/yaw/roll mundial + mover a la izquierda
                     setTimeout(() => {
-                        const targetScale = model.scale.x * STEP3.scaleFactor;
-                        animateScaleTo(model, targetScale, STEP3.duration);
+                        animateScaleTo(model, model.scale.x * STEP3.scaleFactor, STEP3.duration);
 
-                        const targetEuler = new THREE.Euler(
-                            model.rotation.x + STEP3.tiltX,         // más inclinación
-                            model.rotation.y + STEP3.yawDelta,      // micro yaw
-                            0,
-                            "XYZ"
+                        animateWorldTiltYawRoll(
+                            model,
+                            STEP3.tiltX,
+                            STEP3.yawDelta,
+                            STEP3.rollZ,
+                            STEP3.duration,
+                            THREE
                         );
-                        animateQuaternionTo(model, targetEuler, STEP3.duration, THREE);
 
                         const leftOffset = sphere.radius * STEP3.moveLeftK;
                         const toPos = new THREE.Vector3(model.position.x + leftOffset, model.position.y, model.position.z);
