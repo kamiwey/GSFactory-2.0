@@ -1,37 +1,35 @@
 :root {
+  /* color de fondo de NFC (tu valor actual) */
   --nfc-bg: #2aa0a0;
 }
 
-.nfc-hero {
-  background: var(--nfc-bg);
-  min-height: 100svh;
-  width: 100%;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-
-.nfc-canvas-wrap {
-  width: 100%;
-  height: 100%;
-  max-width: 1600px;
-  max-height: 100svh;
+/* Sección NFC ocupa pantalla completa y pinta el color base */
+.nfc {
   position: relative;
+  background: var(--nfc-bg);
+  min-height: 100svh; /* estable en móvil/desktop */
+  width: 100%;
+  isolation: isolate; /* asegura z-index dentro */
+  overflow: hidden; /* sin scroll fantasma hasta animaciones */
 }
 
-.nfc-canvas-wrap > canvas {
+/* Canvas a pantalla completa dentro de la sección (hereda el fondo) */
+.nfc__viewer {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  display: block;
+  z-index: 0;
+  pointer-events: none; /* no bloquea la UI */
+  background: transparent; /* nada de negro aquí */
 }
 
-.nfc-error {
-  position: absolute;
-  left: 16px;
-  top: 16px;
-  padding: 8px 10px;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
-  border-radius: 6px;
-  font-size: 14px;
+/* Aparece sólo cuando el modelo está listo */
+.nfc--loading .nfc__viewer {
+  opacity: 0;
+}
+
+.nfc--ready .nfc__viewer {
+  opacity: 1;
+  transition: opacity 220ms ease-out;
 }
