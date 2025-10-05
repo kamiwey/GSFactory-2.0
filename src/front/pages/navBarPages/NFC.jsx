@@ -28,11 +28,11 @@ export default function NFC() {
 
     // Luces
     const LIGHTS = {
-        ambient: 0.20,
-        hemiSky: 0x9fc7ff, hemiGround: 0x6b5e51, hemiIntensity: 0.35,
-        key: { intensity: 1.00, pos: [1.8, 1.0, 2.6] },
-        fill: { intensity: 0.50, pos: [-1.6, 0.6, 1.0] },
-        rim: { intensity: 0.45, pos: [-2.2, 1.4, -2.1] }
+        ambient: 0.08,
+        hemiSky: 0x9fc7ff, hemiGround: 0x6b5e51, hemiIntensity: 0.18,
+        key: { intensity: 1.5, pos: [-1.2, 0.80, 0.30] },
+        fill: { intensity: 0.28, pos: [-1.2, 0.80, 0.30] },
+        rim: { intensity: 0.55, pos: [-1.4, 1.30, -1.30] }
     };
 
     // --- LOOK KNOBS (todo lo visual aquí) ---
