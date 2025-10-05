@@ -7,30 +7,32 @@ export default function NFC() {
 
     const glbUrl = useMemo(() => "/assets/model/llavero-completo.glb", []);
 
-    // ======== TIMINGS & TARGETS (tuneables) ========
+    // Timings
     const ZOOM_MS = 1900;
     const HOLD_MS = 1000;
     const ROTATE_MS = 1400;
+    const deg = (d) => (d * Math.PI) / 180;
 
-    const deg = d => (d * Math.PI) / 180;
-
+    // Paso 3 (tus buenos)
     const STEP3 = {
-        scaleFactor: 0.62,     // zoom-out (más pequeño)
-        tiltX: deg(-45),       // pitch mundial
-        yawDelta: deg(-30),     // yaw mundial
-        rollZ: deg(-35),       // NUEVO: roll mundial (sentido horario = negativo)
-        moveLeftK: -0.95,      // desplazar a la izquierda (× radio)
+        scaleFactor: 0.62,
+        tiltX: deg(-45),
+        yawDelta: deg(-30),
+        rollZ: deg(-35),
+        moveLeftK: -0.95,
         duration: 900,
     };
-    // ===============================================
 
+    // Paso 4: “pop” simultáneo (Y global)
+    const POP = { pauseAfterPose: 500, distanceK: 0.03, duration: 140 };
+
+    // Easing
     const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
     const easeInOutCubic = (t) =>
         t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-    // Zoom-in inicial
+    // Helpers anim
     function zoomInOnLoad(object3D, { from = 0.05, to = 1.15, duration = 900 } = {}) {
-        if (!object3D) return;
         object3D.scale.setScalar(from);
         const start = performance.now();
         function tick(now) {
@@ -41,9 +43,7 @@ export default function NFC() {
         requestAnimationFrame(tick);
     }
 
-    // Giro 180° sobre Y global
     function rotateWorldY(object3D, radians, duration, THREE) {
-        if (!object3D || !THREE) return;
         const startQ = object3D.quaternion.clone();
         const worldY = new THREE.Vector3(0, 1, 0);
         const tmpQ = new THREE.Quaternion();
@@ -59,32 +59,23 @@ export default function NFC() {
         requestAnimationFrame(tick);
     }
 
-    // Paso 3 — helpers
     function animateScaleTo(object3D, toScalar, duration = 800) {
-        if (!object3D) return;
         const from = object3D.scale.x;
         const start = performance.now();
         function tick(now) {
             const t = Math.min(1, (now - start) / duration);
-            const s = from + (toScalar - from) * easeInOutCubic(t);
-            object3D.scale.setScalar(s);
+            object3D.scale.setScalar(from + (toScalar - from) * easeInOutCubic(t));
             if (t < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
     }
 
-    // NUEVO: tilt (X) + yaw (Y) + roll (Z) sobre ejes del MUNDO
     function animateWorldTiltYawRoll(object3D, tiltX, yawY, rollZ, duration, THREE) {
-        if (!object3D || !THREE) return;
         const startQ = object3D.quaternion.clone();
-
         const qPitch = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), tiltX);
         const qYaw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yawY);
         const qRoll = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), rollZ);
-
-        // Orden de pose final (mundo): roll • yaw • pitch • start
         const targetQ = qRoll.clone().multiply(qYaw).multiply(qPitch).multiply(startQ);
-
         const start = performance.now();
         function tick(now) {
             const t = Math.min(1, (now - start) / duration);
@@ -96,7 +87,6 @@ export default function NFC() {
     }
 
     function animatePositionTo(object3D, toVec3, duration = 900, THREE) {
-        if (!object3D || !THREE) return;
         const from = object3D.position.clone();
         const start = performance.now();
         function tick(now) {
@@ -107,6 +97,65 @@ export default function NFC() {
                 from.y + (toVec3.y - from.y) * k,
                 from.z + (toVec3.z - from.z) * k
             );
+            if (t < 1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+    }
+
+    // ===== Detectar tapas por ALTURA EN MUNDO y en grupos raíz =====
+    function getCapsByWorldY(model, THREE) {
+        // 1) Preferir hijos directos (grupos raíz)
+        const roots = model.children.filter(Boolean);
+        const items = (roots.length ? roots : []).map((node) => {
+            const box = new THREE.Box3().setFromObject(node);
+            const center = box.getCenter(new THREE.Vector3()); // MUNDO
+            const size = new THREE.Vector3(); box.getSize(size);
+            const areaXZ = Math.abs(size.x * size.z);
+            return { node, yWorld: center.y, areaXZ };
+        });
+
+        // 2) Si no hay grupos, caer a meshes
+        if (!items.length) {
+            model.traverse((o) => {
+                if (o.isMesh) {
+                    const box = new THREE.Box3().setFromObject(o);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = new THREE.Vector3(); box.getSize(size);
+                    items.push({ node: o, yWorld: center.y, areaXZ: Math.abs(size.x * size.z) });
+                }
+            });
+        }
+
+        if (!items.length) return { top: null, bottom: null };
+
+        // Top = mayor yWorld; Bottom = menor yWorld; romper empates con área XZ
+        const top = items.slice().sort((a, b) => (b.yWorld - a.yWorld) || (b.areaXZ - a.areaXZ))[0].node;
+        const bottom = items.slice().sort((a, b) => (a.yWorld - b.yWorld) || (b.areaXZ - a.areaXZ))[0].node;
+
+        // Asegurar que no sean el mismo (si pasa, forzar segundo mejor)
+        if (top === bottom && items.length > 1) {
+            const alt = items.slice().sort((a, b) => (a.yWorld - b.yWorld) || (b.areaXZ - a.areaXZ))[1]?.node || bottom;
+            return { top, bottom: alt };
+        }
+        return { top, bottom };
+    }
+
+    // ===== Mover parte en Y GLOBAL =====
+    function popAlongWorldY(part, THREE, distance, duration) {
+        if (!part || !isFinite(distance)) return;
+        const axisWorld = new THREE.Vector3(0, 1, 0); // arriba de pantalla
+
+        const startW = new THREE.Vector3();
+        part.getWorldPosition(startW);
+
+        const start = performance.now();
+        function tick(now) {
+            const t = Math.min(1, (now - start) / duration);
+            const k = easeOutCubic(t);
+            const targetW = startW.clone().add(axisWorld.clone().multiplyScalar(distance * k));
+            const parent = part.parent || part; // por si es root
+            const targetL = parent.worldToLocal(targetW);
+            part.position.copy(targetL);
             if (t < 1) requestAnimationFrame(tick);
         }
         requestAnimationFrame(tick);
@@ -128,46 +177,11 @@ export default function NFC() {
             renderer.render(scene, camera);
         };
 
-        const safeMat = (THREE, colorHex, rough = 0.45, metal = 0.0) =>
-            new THREE.MeshStandardMaterial({
-                color: new THREE.Color(colorHex),
-                roughness: rough,
-                metalness: metal,
-            });
-
-        const COLORS = { offWhite: 0xf6f6f2, black: 0x111111, brown: 0xc49a6c, coil: 0xdddddd };
-
-        const colorizeByName = (mesh, THREE) => {
-            const name = (mesh.name || "").toLowerCase();
-            if (name.includes("front") || name.includes("back") || name.includes("cap")) { mesh.material = safeMat(THREE, COLORS.offWhite, 0.35, 0.0); return; }
-            if (name.includes("nfc") || name.includes("core") || name.includes("coil")) { mesh.material = safeMat(THREE, COLORS.coil, 0.6, 0.0); return; }
-            if (name.includes("black")) { mesh.material = safeMat(THREE, COLORS.black, 0.3, 0.0); return; }
-            if (name.includes("brown") || name.includes("mono") || name.includes("monkey")) { mesh.material = safeMat(THREE, COLORS.brown, 0.35, 0.0); return; }
-            mesh.material = safeMat(THREE, COLORS.offWhite, 0.45, 0.0);
-        };
-
-        const autoOrientFlatModel = (model, THREE) => {
-            const box = new THREE.Box3().setFromObject(model);
-            const size = new THREE.Vector3(); box.getSize(size);
-            const axes = [
-                { axis: "x", v: size.x }, { axis: "y", v: size.y }, { axis: "z", v: size.z },
-            ].sort((a, b) => a.v - b.v);
-            const thinnest = axes[0].axis;
-            model.rotation.set(0, 0, 0);
-            if (thinnest === "x") model.rotation.y = Math.PI / 2;
-            else if (thinnest === "y") model.rotation.x = -Math.PI / 2;
-            model.rotation.x += 0.08; // tilt leve
-            const box2 = new THREE.Box3().setFromObject(model);
-            const center2 = box2.getCenter(new THREE.Vector3());
-            model.position.sub(center2);
-            const sphere = new THREE.Sphere(); box2.getBoundingSphere(sphere);
-            return sphere;
-        };
-
         const start = async () => {
             try {
-                const threeMod = await import("https://unpkg.com/three@0.160.0/build/three.module.js?module");
-                const loaders = await import("https://unpkg.com/three@0.160.0/examples/jsm/loaders/GLTFLoader.js?module");
+                // three sin nodes
+                const threeMod = await import("https://unpkg.com/three@0.157.0/build/three.module.js?module");
+                const loaders = await import("https://unpkg.com/three@0.157.0/examples/jsm/loaders/GLTFLoader.js?module");
                 THREE = threeMod; GLTFLoader = loaders.GLTFLoader;
 
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
@@ -181,25 +195,45 @@ export default function NFC() {
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(33, window.innerWidth / window.innerHeight, 0.01, 100);
 
-                scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-                const key = new THREE.DirectionalLight(0xffffff, 1.2); key.position.set(1.5, 0.8, 2.5); scene.add(key);
-                const fill = new THREE.DirectionalLight(0xffffff, 0.7); fill.position.set(-1.2, 0.5, 1.2); scene.add(fill);
-                const rim = new THREE.DirectionalLight(0xffffff, 0.35); rim.position.set(-2.0, 1.5, -2.2); scene.add(rim);
-
+                // Carga GLB
                 const loader = new GLTFLoader();
                 const gltf = await loader.loadAsync(glbUrl);
                 const model = gltf.scene || gltf.scenes?.[0];
                 if (!model) throw new Error("GLB sin escena válida");
 
-                model.traverse((o) => { if (o.isMesh) { colorizeByName(o, THREE); o.castShadow = o.receiveShadow = false; } });
+                // Kill-switch `onBuild`: forzar MeshBasic (respeta color/tex, sin luces)
+                model.traverse((o) => {
+                    if (!o.isMesh) return;
+                    const g = o.geometry;
+                    const hasVColor = !!(g && g.attributes && g.attributes.color);
+                    const src = o.material;
+                    const baseColor = (src && src.color) ? src.color.clone() : new THREE.Color(0xffffff);
+                    const mat = new THREE.MeshBasicMaterial({
+                        color: baseColor,
+                        map: src?.map || null,
+                        side: THREE.DoubleSide,
+                        transparent: !!src?.transparent,
+                        opacity: (typeof src?.opacity === "number") ? src.opacity : 1
+                    });
+                    if (hasVColor) mat.vertexColors = true;
+                    o.material = mat;
+                });
 
-                const sphere = autoOrientFlatModel(model, THREE);
-                model.rotation.y += Math.PI; // frontal hacia cámara
+                // Orientar/centrar
+                const box = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3(); box.getSize(size);
+                model.rotation.set(0, 0, 0);
+                if (size.y < size.x && size.y < size.z) model.rotation.x = -Math.PI / 2;
+                model.rotation.x += 0.08;
+                const box2 = new THREE.Box3().setFromObject(model);
+                const center = box2.getCenter(new THREE.Vector3());
+                model.position.sub(center);
+                model.rotation.y += Math.PI; // frontal a cámara
+
+                const sphere = new THREE.Sphere(); box2.getBoundingSphere(sphere);
                 model.position.y -= sphere.radius * 0.18;
-                scene.add(model);
 
-                // Zoom-in inicial
-                zoomInOnLoad(model, { from: 0.05, to: 1.05, duration: ZOOM_MS });
+                scene.add(model);
 
                 // Cámara
                 const radius = Math.max(sphere.radius, 1e-3);
@@ -213,28 +247,31 @@ export default function NFC() {
 
                 setReady(true);
 
-                // Paso 2: pausa + giro 180°
+                // 1) Zoom-in
+                zoomInOnLoad(model, { from: 0.05, to: 1.05, duration: ZOOM_MS });
+
+                // 2) Giro 180°
                 setTimeout(() => {
                     rotateWorldY(model, Math.PI, ROTATE_MS, THREE);
 
-                    // Paso 3: pausa + zoom-out + tilt/yaw/roll mundial + mover a la izquierda
+                    // 3) Zoom-out + pose + mover a la izquierda
                     setTimeout(() => {
                         animateScaleTo(model, model.scale.x * STEP3.scaleFactor, STEP3.duration);
-
-                        animateWorldTiltYawRoll(
-                            model,
-                            STEP3.tiltX,
-                            STEP3.yawDelta,
-                            STEP3.rollZ,
-                            STEP3.duration,
-                            THREE
-                        );
+                        animateWorldTiltYawRoll(model, STEP3.tiltX, STEP3.yawDelta, STEP3.rollZ, STEP3.duration, THREE);
 
                         const leftOffset = sphere.radius * STEP3.moveLeftK;
                         const toPos = new THREE.Vector3(model.position.x + leftOffset, model.position.y, model.position.z);
                         animatePositionTo(model, toPos, STEP3.duration, THREE);
-                    }, ROTATE_MS + 1000); // pausa 1s tras el giro
 
+                        // 4) POP simultáneo: top ↑ y bottom ↓ en Y GLOBAL (detecto por Y mundial)
+                        setTimeout(() => {
+                            const { top, bottom } = getCapsByWorldY(model, THREE);
+                            const dy = radius * POP.distanceK;
+                            if (top) popAlongWorldY(top, THREE, +dy, POP.duration); // arriba
+                            if (bottom) popAlongWorldY(bottom, THREE, -dy, POP.duration); // abajo
+                        }, STEP3.duration + POP.pauseAfterPose);
+
+                    }, ROTATE_MS + 1000);
                 }, ZOOM_MS + HOLD_MS);
 
                 const render = () => { renderer.render(scene, camera); raf = requestAnimationFrame(render); };
@@ -251,9 +288,10 @@ export default function NFC() {
         return () => {
             cancelAnimationFrame(raf);
             window.removeEventListener("resize", onResize);
-            if (renderer?.domElement && mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+            if (renderer?.domElement && mountRef.current?.contains(renderer.domElement)) {
+                mountRef.current.removeChild(renderer.domElement);
+            }
             renderer?.dispose?.();
-            if (scene) scene.traverse((o) => { if (o.isMesh) o.geometry?.dispose?.(); });
         };
     }, [glbUrl]);
 
