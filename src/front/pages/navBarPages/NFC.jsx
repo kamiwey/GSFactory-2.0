@@ -206,7 +206,24 @@ export default function NFC() {
                 camera.lookAt(0, 0, 0);
                 camera.updateProjectionMatrix();
 
-                // *** NO TOCAMOS MATERIALES *** (todo se queda tal cual viene del GLB)
+                // ======= ÚNICO CAMBIO: transparencia para NFC_Core =====================
+                // No tocamos nada más. Si existe un mesh llamado "NFC_Core", clonamos su
+                // material y le activamos transparencia. No alteramos color ni mapas.
+                const core = model.getObjectByName("NFC_Core");
+                if (core && core.isMesh && core.material) {
+                    const mat = core.material.clone();
+                    mat.transparent = true;
+                    // Opacidad moderada; ajústala si quieres
+                    mat.opacity = (typeof mat.opacity === "number") ? Math.min(mat.opacity, 0.65) : 0.55;
+                    // Evita artefactos de z con objetos internos
+                    mat.depthWrite = false;
+                    mat.side = THREE.FrontSide;
+                    core.material = mat;
+                    core.renderOrder = 1; // dibuja detrás/antes de las tapas si hay sorting
+                }
+                // ======================================================================
+
+                // *** No tocamos más materiales ***
                 scene.add(model);
                 setReady(true);
 
