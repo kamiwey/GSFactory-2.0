@@ -1,10 +1,9 @@
 :root {
-  /* color corporativo final (Fase 1 termina aquí) */
   --nfc-bg: #2aa0a0;
-  --nfc-bg-dur: 1800ms; /* igual que el zoom */
+  --nfc-bg-dur: 1900ms; /* igual que ZOOM.duration */
 }
 
-/* Blackout desde el primer paint: adiós flash verde */
+/* Pantalla: empezamos en negro absoluto */
 .nfc {
   position: relative;
   background: #000;
@@ -14,7 +13,7 @@
   overflow: hidden;
 }
 
-/* El canvas no tapa la UI */
+/* Canvas full */
 .nfc__viewer {
   position: absolute;
   inset: 0;
@@ -25,20 +24,10 @@
   background: transparent;
 }
 
-/* Loading / ready */
-.nfc--loading .nfc__viewer {
-  opacity: 0;
-}
-.nfc--ready .nfc__viewer {
-  opacity: 1;
-  transition: opacity 220ms ease-out;
-}
-
-/* Fade del fondo: negro -> corporativo durante el zoom */
+/* Fade del fondo: negro -> verde durante el primer zoom */
 .nfc.nfc--bg-on {
   animation: nfcBgIn var(--nfc-bg-dur) ease-in forwards;
 }
-
 @keyframes nfcBgIn {
   0% {
     background: #000;
@@ -46,4 +35,13 @@
   100% {
     background: var(--nfc-bg);
   }
+}
+
+/* Loading / ready */
+.nfc--loading .nfc__viewer {
+  opacity: 0;
+}
+.nfc--ready .nfc__viewer {
+  opacity: 1;
+  transition: opacity 220ms ease-out;
 }
