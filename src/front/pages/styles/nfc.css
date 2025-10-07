@@ -1,35 +1,49 @@
 :root {
-  /* color de fondo de NFC (tu valor actual) */
+  /* color corporativo final (Fase 1 termina aquí) */
   --nfc-bg: #2aa0a0;
+  --nfc-bg-dur: 1800ms; /* igual que el zoom */
 }
 
-/* Sección NFC ocupa pantalla completa y pinta el color base */
+/* Blackout desde el primer paint: adiós flash verde */
 .nfc {
   position: relative;
-  background: var(--nfc-bg);
-  min-height: 100svh; /* estable en móvil/desktop */
+  background: #000;
+  min-height: 100svh;
   width: 100%;
-  isolation: isolate; /* asegura z-index dentro */
-  overflow: hidden; /* sin scroll fantasma hasta animaciones */
+  isolation: isolate;
+  overflow: hidden;
 }
 
-/* Canvas a pantalla completa dentro de la sección (hereda el fondo) */
+/* El canvas no tapa la UI */
 .nfc__viewer {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   z-index: 0;
-  pointer-events: none; /* no bloquea la UI */
-  background: transparent; /* nada de negro aquí */
+  pointer-events: none;
+  background: transparent;
 }
 
-/* Aparece sólo cuando el modelo está listo */
+/* Loading / ready */
 .nfc--loading .nfc__viewer {
   opacity: 0;
 }
-
 .nfc--ready .nfc__viewer {
   opacity: 1;
   transition: opacity 220ms ease-out;
+}
+
+/* Fade del fondo: negro -> corporativo durante el zoom */
+.nfc.nfc--bg-on {
+  animation: nfcBgIn var(--nfc-bg-dur) ease-in forwards;
+}
+
+@keyframes nfcBgIn {
+  0% {
+    background: #000;
+  }
+  100% {
+    background: var(--nfc-bg);
+  }
 }
