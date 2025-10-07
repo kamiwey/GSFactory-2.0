@@ -1,3 +1,4 @@
+// src/front/pages/navBarPages/NFC.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -7,14 +8,14 @@ export default function NFC() {
     const mountRef = useRef(null);
     const [ready, setReady] = useState(false);
 
-    // === CONFIG (baseline sin inventos) ========================================
+    // === CONFIG (baseline) =====================================================
     const glbUrl = useMemo(() => "/assets/model/llavero-completo.glb", []);
 
     const VIEW_Y_OFFSET_K = -0.08;
     const CAMERA = { fov: 33 };
     const TONE = { exposure: 0.9 };
 
-    // Luces — EXACTAMENTE las de tu baseline
+    // Luces — EXACTAMENTE las del baseline que te gusta
     const LIGHTS = {
         ambient: 0.20,
         hemiSky: 0x9fc7ff, hemiGround: 0x6b5e51, hemiIntensity: 0.35,
@@ -23,7 +24,7 @@ export default function NFC() {
         rim: { intensity: 0.45, pos: [-2.2, 1.4, -2.1] }
     };
 
-    // Coreografía — misma que ya teníamos
+    // Coreografía (igual)
     const ZOOM = { from: 0.05, to: 1.05, duration: 1900 };
     const HOLD_MS = 1000;
     const ROTATE = { radians: Math.PI, duration: 1400 };
@@ -31,19 +32,19 @@ export default function NFC() {
     const POP = { pauseAfterPose: 500, distanceK: 0.03, duration: 100 };
     const OPEN = { pauseAfterPop: 350, distanceK: 0.38, duration: 1050 };
 
-    // === Utils / Easing (sin cambios) =========================================
+    // === Utils =================================================================
     const deg = d => (d * Math.PI) / 180;
     const wait = ms => new Promise(r => setTimeout(r, ms));
-    const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
     const easeInOutCubic = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
-    // === Helpers animación (baseline) =========================================
+    // === Helpers animación (baseline con zoom más suave) =======================
     function zoomToScalar(o, from, to, duration) {
         o.scale.setScalar(from);
         const s = performance.now();
         const f = n => {
             const t = Math.min(1, (n - s) / duration);
-            o.scale.setScalar(from + (to - from) * (1 - Math.pow(1 - t, 3)));
+            const k = easeInOutCubic(t);               // <— más suave en arranque y frenada
+            o.scale.setScalar(from + (to - from) * k);
             if (t < 1) requestAnimationFrame(f);
         };
         requestAnimationFrame(f);
@@ -115,7 +116,7 @@ export default function NFC() {
         requestAnimationFrame(f);
     }
 
-    // === Detección de tapas por altura mundial (baseline) ======================
+    // === Caps helpers ==========================================================
     function getCapsByWorldY(model) {
         const items = [];
         model.traverse(o => {
@@ -132,10 +133,17 @@ export default function NFC() {
         if (top === bottom && items.length > 1) bottom = items[1].node;
         return { top, bottom };
     }
+    function getCapsPreferNames(model) {
+        const topByName = model.getObjectByName("FrontCap") || model.getObjectByName("frontcap");
+        const bottomByName = model.getObjectByName("BackCap") || model.getObjectByName("backcap");
+        if (topByName && bottomByName) {
+            return { top: topByName, bottom: bottomByName };
+        }
+        return getCapsByWorldY(model);
+    }
 
     useEffect(() => {
         let renderer, scene, camera, raf = 0;
-
         const mount = mountRef.current;
         if (!mount) return;
 
@@ -149,14 +157,14 @@ export default function NFC() {
 
         const start = async () => {
             try {
-                // Renderer
+                // Renderer (más nitidez)
                 renderer = new THREE.WebGLRenderer({
                     antialias: true,
                     alpha: true,
                     powerPreference: "high-performance",
-                    failIfMajorPerformanceCaveat: false
+                    failIfMajorPerformanceCaveat: false,
                 });
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5)); // ↑ definición
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.outputColorSpace = THREE.SRGBColorSpace;
                 renderer.physicallyCorrectLights = true;
@@ -165,9 +173,14 @@ export default function NFC() {
                 renderer.setClearColor(0x000000, 0);
                 mount.appendChild(renderer.domElement);
 
-                // Escena y cámara
+                // Escena + cámara
                 scene = new THREE.Scene();
-                camera = new THREE.PerspectiveCamera(CAMERA.fov, window.innerWidth / window.innerHeight, 0.01, 100);
+                camera = new THREE.PerspectiveCamera(
+                    CAMERA.fov,
+                    window.innerWidth / window.innerHeight,
+                    0.01,
+                    100
+                );
 
                 // Luces — SIN CAMBIOS
                 scene.add(new THREE.AmbientLight(0xffffff, LIGHTS.ambient));
@@ -206,30 +219,43 @@ export default function NFC() {
                 camera.lookAt(0, 0, 0);
                 camera.updateProjectionMatrix();
 
-                // ======= ÚNICO CAMBIO: transparencia para NFC_Core =====================
-                // No tocamos nada más. Si existe un mesh llamado "NFC_Core", clonamos su
-                // material y le activamos transparencia. No alteramos color ni mapas.
+                // Materiales: sRGB + anisotropía para más nitidez
+                const maxAniso = renderer.capabilities.getMaxAnisotropy?.() || 1;
+                model.traverse(o => {
+                    if (o.isMesh && o.material) {
+                        const mats = Array.isArray(o.material) ? o.material : [o.material];
+                        mats.forEach(m => {
+                            ["map", "emissiveMap", "metalnessMap", "roughnessMap", "normalMap", "aoMap"].forEach(k => {
+                                if (m[k] && m[k].isTexture) {
+                                    if ("colorSpace" in m[k]) m[k].colorSpace = THREE.SRGBColorSpace;
+                                    if ("anisotropy" in m[k]) m[k].anisotropy = Math.max(m[k].anisotropy || 0, maxAniso);
+                                }
+                            });
+                        });
+                    }
+                });
+
+                // Transparencia de NFC_Core (tal y como lo tenías)
                 const core = model.getObjectByName("NFC_Core");
                 if (core && core.isMesh && core.material) {
                     const mat = core.material.clone();
                     mat.transparent = true;
-                    // Opacidad moderada; ajústala si quieres
                     mat.opacity = (typeof mat.opacity === "number") ? Math.min(mat.opacity, 0.65) : 0.55;
-                    // Evita artefactos de z con objetos internos
                     mat.depthWrite = false;
                     mat.side = THREE.FrontSide;
                     core.material = mat;
-                    core.renderOrder = 1; // dibuja detrás/antes de las tapas si hay sorting
+                    core.renderOrder = 1;
                 }
-                // ======================================================================
 
-                // *** No tocamos más materiales ***
                 scene.add(model);
                 setReady(true);
 
-                // ===== SECUENCIA (baseline) ==========================================
+                // ===== SECUENCIA ======================================================
                 const run = async () => {
-                    // (1) zoom-in
+                    // “Calentamos” un frame para evitar micro-tirón en el primer paso
+                    await new Promise(r => requestAnimationFrame(() => r()));
+
+                    // (1) zoom-in (más suave)
                     zoomToScalar(model, ZOOM.from, ZOOM.to, ZOOM.duration);
                     await wait(ZOOM.duration + HOLD_MS);
 
@@ -253,14 +279,14 @@ export default function NFC() {
                         STEP3.duration
                     );
 
-                    // (4) pop (abre un poco)
+                    // (4) pop — mover SÓLO FrontCap (arriba) y BackCap (abajo)
                     await wait(STEP3.duration + POP.pauseAfterPose);
-                    const caps = getCapsByWorldY(model);
+                    const caps = getCapsPreferNames(model);
                     const dyPop = radius * POP.distanceK;
                     if (caps.top) moveAlongWorldY(caps.top, +dyPop, POP.duration, t => 1 - Math.pow(1 - t, 3));
                     if (caps.bottom) moveAlongWorldY(caps.bottom, -dyPop, POP.duration, t => 1 - Math.pow(1 - t, 3));
 
-                    // (5) apertura completa
+                    // (5) apertura completa — SÓLO tapas (Coil/Chip no se tocan)
                     await wait(POP.duration + OPEN.pauseAfterPop);
                     const dyOpen = radius * OPEN.distanceK;
                     if (caps.top) moveAlongWorldY(caps.top, +dyOpen, OPEN.duration, easeInOutCubic);
