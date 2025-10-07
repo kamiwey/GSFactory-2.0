@@ -37,13 +37,13 @@ export default function NFC() {
         BLACKOUT_MS: 1500,
         FOCUS_FADE_MS: 1200,
         FOCUS_HOLD_MS: 2200,
-        APPEAR_SCALE: 0.50, // ⬅️ Nuevo: tamaño de aparición bajo el foco (antes 0.05)
+        APPEAR_SCALE: 0.50, // tamaño de aparición bajo el foco (tu setting actual)
     };
 
     // === Utils ===================================================================
     const deg = d => (d * Math.PI) / 180;
     const wait = ms => new Promise(r => setTimeout(r, ms));
-    const easeInOutCubic = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const easeInOutCubic = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
     function animateNumber(from, to, dur, onUpdate, onDone) {
         const s = performance.now();
@@ -183,7 +183,7 @@ export default function NFC() {
 
         const start = async () => {
             try {
-                // Renderer transparente: deja ver el negro/verde de CSS
+                // Renderer: dejamos ver el negro/verde de CSS + sombras y dither
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
                 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -192,6 +192,11 @@ export default function NFC() {
                 renderer.toneMapping = THREE.ACESFilmicToneMapping;
                 renderer.toneMappingExposure = TONE.exposure;
                 renderer.setClearColor(0x000000, 0);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                // Dither en gradientes (ya suele estar activo, lo reforzamos)
+                const gl = renderer.getContext?.();
+                if (gl?.enable && gl?.DITHER) gl.enable(gl.DITHER);
                 mount.appendChild(renderer.domElement);
 
                 // Escena + cámara
@@ -205,12 +210,13 @@ export default function NFC() {
                 fill = new THREE.DirectionalLight(0xffffff, 0.0); fill.position.set(...LIGHTS.fill.pos); scene.add(fill);
                 rim = new THREE.DirectionalLight(0xffffff, 0.0); rim.position.set(...LIGHTS.rim.pos); scene.add(rim);
 
-                // Foco + haz para la intro
-                introSpot = new THREE.SpotLight(0xffffff, 0.0, 25, Math.PI / 10, 0.25, 2.0);
+                // Foco + haz (ligeramente más soft)
+                introSpot = new THREE.SpotLight(0xffffff, 0.0, 25, Math.PI / 9.5, 0.3, 2.0);
                 introSpot.position.set(0, 4.0, 0.0);
                 introSpot.target.position.set(0, 0, 0);
                 scene.add(introSpot); scene.add(introSpot.target);
                 beamMesh = createSpotBeam(introSpot); scene.add(beamMesh);
+                const setBeam = (v) => beamMesh?.userData?.setOpacity?.(Math.min(0.55, v / 3.2));
 
                 // GLB
                 const gltf = await new GLTFLoader().loadAsync(glbUrl);
@@ -268,7 +274,7 @@ export default function NFC() {
                     core.material = mat; core.renderOrder = 1;
                 }
 
-                // ⬅️ ARRANQUE MEJORADO: aparece más cerca/grande bajo el foco
+                // Aparición: más cerca/grande bajo el foco
                 model.scale.setScalar(INTRO.APPEAR_SCALE);
 
                 scene.add(model);
@@ -282,16 +288,16 @@ export default function NFC() {
                     // (Intro-1) Negro ya está (CSS). Espera
                     await wait(INTRO.BLACKOUT_MS);
 
-                    // (Intro-2) Foco + haz
+                    // (Intro-2) Foco + haz (cap del haz para no quemar)
                     animateNumber(0.0, 2.8, INTRO.FOCUS_FADE_MS, (v) => {
                         introSpot.intensity = v;
-                        beamMesh?.userData?.setOpacity?.(Math.min(0.6, v / 3.2));
+                        setBeam(v);
                     });
 
                     // (Intro-3) Hold foco
                     await wait(INTRO.FOCUS_HOLD_MS);
 
-                    // Dispara cambio de fondo y sube luces a intensidades baseline durante TU primer zoom
+                    // Cambia fondo y sube luces durante TU primer zoom
                     sectionRef.current?.classList.add("nfc--bg-on");
                     animateNumber(0, LIGHTS.ambient, ZOOM.duration, v => amb.intensity = v);
                     animateNumber(0, LIGHTS.hemiIntensity, ZOOM.duration, v => hemi.intensity = v);
@@ -299,14 +305,17 @@ export default function NFC() {
                     animateNumber(0, LIGHTS.fill.intensity, ZOOM.duration, v => fill.intensity = v);
                     animateNumber(0, LIGHTS.rim.intensity, ZOOM.duration, v => rim.intensity = v);
 
-                    // (1) TU zoom-in del modelo — desde la escala actual (sin saltos)
-                    zoomToScalar(model, model.scale.x, ZOOM.to, ZOOM.duration);
+                    // (1) Zoom-in del modelo — ADAPTATIVO para garantizar punch-in
+                    const zoomFrom = Math.max(model.scale.x, ZOOM.from);
+                    const minPunch = zoomFrom * 1.2; // al menos +20%
+                    const zoomTo = Math.max(ZOOM.to, minPunch);
+                    zoomToScalar(model, zoomFrom, zoomTo, ZOOM.duration);
                     await wait(ZOOM.duration);
 
-                    // Apaga el foco suave
+                    // Apaga el foco suave (deja el look baseline limpio)
                     animateNumber(introSpot.intensity, 0.0, 600, (v) => {
                         introSpot.intensity = v;
-                        beamMesh?.userData?.setOpacity?.(Math.max(0, v / 3.2));
+                        setBeam(v);
                     });
 
                     // (hold original)
@@ -384,7 +393,11 @@ export default function NFC() {
     }, [glbUrl]);
 
     return (
-        <section ref={sectionRef} className={`nfc ${ready ? "nfc--ready" : "nfc--loading"}`} aria-label="Sección NFC">
+        <section
+            ref={sectionRef}
+            className={`nfc ${ready ? "nfc--ready" : "nfc--loading"}`}
+            aria-label="Sección NFC"
+        >
             <div ref={mountRef} className="nfc__viewer" />
         </section>
     );

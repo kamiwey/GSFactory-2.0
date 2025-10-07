@@ -1,9 +1,9 @@
 :root {
   --nfc-bg: #2aa0a0;
-  --nfc-bg-dur: 1900ms; /* igual que ZOOM.duration */
+  --nfc-bg-dur: 1900ms; /* sincronizado con ZOOM.duration */
 }
 
-/* Pantalla: empezamos en negro absoluto */
+/* Pantalla arranca en negro: el renderer es alpha, así que manda este fondo */
 .nfc {
   position: relative;
   background: #000;
@@ -24,7 +24,7 @@
   background: transparent;
 }
 
-/* Fade del fondo: negro -> verde durante el primer zoom */
+/* Transición negro -> verde, disparada al iniciar TU zoom */
 .nfc.nfc--bg-on {
   animation: nfcBgIn var(--nfc-bg-dur) ease-in forwards;
 }
