@@ -4,6 +4,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import "../styles/nfc.css";
 
+/* Imagen temporal para todas las cards (luego cada una tendrá la suya) */
+import astronauta from "../../assets/img/gsf_monkey_transparent.png";
+
 export default function NFC() {
     const sectionRef = useRef(null);
     const mountRef = useRef(null);
@@ -15,16 +18,16 @@ export default function NFC() {
     const CAMERA = { fov: 33 };
     const TONE = { exposure: 0.9 };
 
-    // Luces baseline
+    // Luces — baseline
     const LIGHTS = {
-        ambient: 0.20,
+        ambient: 0.2,
         hemiSky: 0x9fc7ff, hemiGround: 0x6b5e51, hemiIntensity: 0.35,
         key: { intensity: 1.00, pos: [1.8, 1.0, 2.6] },
         fill: { intensity: 0.50, pos: [-1.6, 0.6, 1.0] },
         rim: { intensity: 0.45, pos: [-2.2, 1.4, -2.1] }
     };
 
-    // Coreografía (tu baseline intacto)
+    // Coreografía (intacta)
     const ZOOM = { from: 0.05, to: 1.05, duration: 1900 };
     const HOLD_MS = 1000;
     const ROTATE = { radians: Math.PI, duration: 1400 };
@@ -32,19 +35,11 @@ export default function NFC() {
     const POP = { pauseAfterPose: 500, distanceK: 0.03, duration: 100 };
     const OPEN = { pauseAfterPop: 350, distanceK: 0.38, duration: 1050 };
 
-    // Intro (prefacio)
-    const INTRO = {
-        BLACKOUT_MS: 1500,
-        FOCUS_FADE_MS: 1200,
-        FOCUS_HOLD_MS: 2200,
-        APPEAR_SCALE: 0.50,
-    };
+    // Intro
+    const INTRO = { BLACKOUT_MS: 1500, FOCUS_FADE_MS: 1200, FOCUS_HOLD_MS: 2200, APPEAR_SCALE: 0.50 };
 
-    // Flotación: solo tras finalizar la animación
-    const FLOAT = {
-        ampK: 0.012,
-        periodMs: 3600
-    };
+    // Flotación (solo al final)
+    const FLOAT = { ampK: 0.012, periodMs: 3600 };
 
     // === Utils ===================================================================
     const deg = (d) => (d * Math.PI) / 180;
@@ -142,9 +137,7 @@ export default function NFC() {
         const radius = Math.tan(spot.angle) * beamDistance;
         const geo = new THREE.ConeGeometry(radius, beamDistance, 48, 1, true);
         geo.rotateX(Math.PI / 2);
-        const mat = new THREE.MeshBasicMaterial({
-            color: 0xffffff, transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide
-        });
+        const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide });
         mat.onBeforeCompile = (shader) => {
             shader.transparent = true;
             shader.fragmentShader = shader.fragmentShader
@@ -178,9 +171,8 @@ export default function NFC() {
         let renderer, scene, camera, raf = 0;
         let amb, hemi, key, fill, rim;
         let introSpot, beamMesh;
-        let rootGroup;
-        let floatStart = 0;
-        let canFloat = false; // solo después del OPEN
+        let floatStart = 0, canFloat = false;
+        let sphere, root;
 
         const mount = mountRef.current;
         if (!mount) return;
@@ -246,7 +238,7 @@ export default function NFC() {
                 model.position.sub(center);
                 model.rotation.y += Math.PI;
 
-                const sphere = new THREE.Sphere(); box1.getBoundingSphere(sphere);
+                sphere = new THREE.Sphere(); box1.getBoundingSphere(sphere);
                 model.position.y += sphere.radius * VIEW_Y_OFFSET_K;
 
                 // Cámara
@@ -285,32 +277,28 @@ export default function NFC() {
                     core.material = mat; core.renderOrder = 1;
                 }
 
-                // Grupo padre (para flotación posterior)
-                const root = new THREE.Group();
+                // Grupo padre (para flotación)
+                root = new THREE.Group();
                 model.scale.setScalar(INTRO.APPEAR_SCALE);
                 root.add(model);
                 scene.add(root);
 
                 setReady(true);
 
-                // ================= SECUENCIA ===========================================
+                // ===== SECUENCIA ======================================================
                 const run = async () => {
-                    // Pre-warm
                     await new Promise(r => requestAnimationFrame(() => r()));
 
                     // (Intro-1) Blackout
                     await wait(INTRO.BLACKOUT_MS);
 
                     // (Intro-2) Foco + haz
-                    animateNumber(0.0, 2.8, INTRO.FOCUS_FADE_MS, (v) => {
-                        introSpot.intensity = v;
-                        setBeam(v);
-                    });
+                    animateNumber(0.0, 2.8, INTRO.FOCUS_FADE_MS, (v) => { introSpot.intensity = v; setBeam(v); });
 
                     // (Intro-3) Hold foco
                     await wait(INTRO.FOCUS_HOLD_MS);
 
-                    // Fondo a verde + subir luces (en paralelo con 1er zoom)
+                    // Fondo a verde + subir luces (en paralelo al 1er zoom)
                     sectionRef.current?.classList.add("nfc--bg-on");
                     animateNumber(0, LIGHTS.ambient, ZOOM.duration, v => amb.intensity = v);
                     animateNumber(0, LIGHTS.hemiIntensity, ZOOM.duration, v => hemi.intensity = v);
@@ -318,11 +306,11 @@ export default function NFC() {
                     animateNumber(0, LIGHTS.fill.intensity, ZOOM.duration, v => fill.intensity = v);
                     animateNumber(0, LIGHTS.rim.intensity, ZOOM.duration, v => rim.intensity = v);
 
-                    // (1) Zoom-in adaptativo
-                    const zoomFrom = Math.max(model.scale.x, ZOOM.from);
+                    // (1) zoom-in
+                    const zoomFrom = Math.max(root.children[0].scale.x, ZOOM.from);
                     const minPunch = zoomFrom * 1.2;
                     const zoomTo = Math.max(ZOOM.to, minPunch);
-                    zoomToScalar(model, zoomFrom, zoomTo, ZOOM.duration);
+                    zoomToScalar(root.children[0], zoomFrom, zoomTo, ZOOM.duration);
                     await wait(ZOOM.duration);
 
                     // Apaga foco
@@ -332,14 +320,15 @@ export default function NFC() {
                     await wait(HOLD_MS);
 
                     // (2) giro 180º
-                    rotateWorldY(model, ROTATE.radians, ROTATE.duration);
+                    rotateWorldY(root.children[0], ROTATE.radians, ROTATE.duration);
                     await wait(ROTATE.duration + 1000);
 
                     // (3) pose + izquierda + zoom-out
-                    animateScaleTo(model, model.scale.x * STEP3.scaleFactor, STEP3.duration);
-                    animateWorldTiltYawRoll(model, deg(STEP3.tiltX_deg), deg(STEP3.yaw_deg), deg(STEP3.roll_deg), STEP3.duration);
-                    const leftOffset = radius * STEP3.moveLeftK;
-                    animatePositionTo(model, new THREE.Vector3(model.position.x + leftOffset, model.position.y, model.position.z), STEP3.duration);
+                    const modelRef = root.children[0];
+                    animateScaleTo(modelRef, modelRef.scale.x * STEP3.scaleFactor, STEP3.duration);
+                    animateWorldTiltYawRoll(modelRef, deg(STEP3.tiltX_deg), deg(STEP3.yaw_deg), deg(STEP3.roll_deg), STEP3.duration);
+                    const leftOffset = sphere.radius * STEP3.moveLeftK;
+                    animatePositionTo(modelRef, new THREE.Vector3(modelRef.position.x + leftOffset, modelRef.position.y, modelRef.position.z), STEP3.duration);
 
                     // (4) pop tapas
                     await wait(STEP3.duration + POP.pauseAfterPose);
@@ -361,28 +350,28 @@ export default function NFC() {
                         if (top === bottom && items.length > 1) bottom = items[1].node;
                         return { top, bottom };
                     };
-                    const caps = getCapsPreferNames(model);
-                    const dyPop = radius * POP.distanceK;
+                    const caps = getCapsPreferNames(modelRef);
+                    const dyPop = sphere.radius * POP.distanceK;
                     if (caps.top) moveAlongWorldY(caps.top, +dyPop, POP.duration, t => 1 - Math.pow(1 - t, 3));
                     if (caps.bottom) moveAlongWorldY(caps.bottom, -dyPop, POP.duration, t => 1 - Math.pow(1 - t, 3));
 
                     // (5) apertura completa
                     await wait(POP.duration + OPEN.pauseAfterPop);
-                    const dyOpen = radius * OPEN.distanceK;
+                    const dyOpen = sphere.radius * OPEN.distanceK;
                     if (caps.top) moveAlongWorldY(caps.top, +dyOpen, OPEN.duration, easeInOutCubic);
                     if (caps.bottom) moveAlongWorldY(caps.bottom, -dyOpen, OPEN.duration, easeInOutCubic);
 
-                    // >>> Activa flotación y muestra copy
+                    // Flotación + copy on
                     canFloat = true;
                     sectionRef.current?.classList.add("nfc--copy-on");
                 };
 
-                // Timers render
+                // Render
                 floatStart = performance.now();
                 const render = () => {
-                    if (canFloat) {
+                    if (canFloat && root && sphere) {
                         const t = performance.now() - floatStart;
-                        const amp = (Math.max(sphere.radius, 1e-3)) * FLOAT.ampK;
+                        const amp = sphere.radius * FLOAT.ampK;
                         root.position.y = amp * Math.sin((2 * Math.PI * t) / FLOAT.periodMs);
                     }
                     beamMesh?.userData?.updateBeam?.();
@@ -408,19 +397,36 @@ export default function NFC() {
     }, [glbUrl]);
 
     return (
-        <section ref={sectionRef} className={`nfc ${ready ? "nfc--ready" : "nfc--loading"}`} aria-label="Sección NFC">
-            {/* Canvas full-screen */}
-            <div ref={mountRef} className="nfc__viewer" />
+        <>
+            {/* HERO */}
+            <section ref={sectionRef} className={`nfc ${ready ? "nfc--ready" : "nfc--loading"}`} aria-label="Sección NFC">
+                <div ref={mountRef} className="nfc__viewer" />
+                <header className="nfc__hud" aria-live="polite">
+                    <h1 className="nfc__title">NFC</h1>
+                    <p className="nfc__desc">
+                        Etiqueta inteligente integrada para experiencias de un toque.
+                        Conecta, comparte y desbloquea funciones en tu toy.
+                    </p>
+                </header>
+            </section>
 
-            {/* HUD: aparece al final, no afecta al 3D */}
-            <header className="nfc__hud" aria-live="polite">
-                <h1 className="nfc__title">NFC</h1>
-                <p className="nfc__desc">
-                    Etiqueta inteligente integrada para experiencias de un toque. Conecta, comparte y
-                    desbloquea funciones en tu toy.
-                </p>
-            </header>
-        </section>
+            {/* CARDS — 4 en fila */}
+            <section className="nfc-cards" aria-label="Opciones NFC">
+                {[
+                    { key: "llaveros", label: "LLAVEROS" },
+                    { key: "tarjetas", label: "TARJETAS" },
+                    { key: "personalizado", label: "PERSONALIZADO" },
+                    { key: "usos", label: "USOS" },
+                ].map(({ key, label }) => (
+                    <article className="nfc-card" key={key}>
+                        <div className="nfc-card__imgwrap">
+                            <img className="nfc-card__img" src={astronauta} alt={`${label} - imagen ilustrativa`} loading="lazy" decoding="async" />
+                        </div>
+                        <h3 className="nfc-card__title">{label}</h3>
+                    </article>
+                ))}
+            </section>
+        </>
     );
 }
 
