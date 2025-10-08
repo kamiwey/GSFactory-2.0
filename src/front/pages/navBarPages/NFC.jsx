@@ -9,7 +9,7 @@ export default function NFC() {
     const mountRef = useRef(null);
     const [ready, setReady] = useState(false);
 
-    // === CONFIG (tu baseline) ====================================================
+    // === CONFIG (baseline) =======================================================
     const glbUrl = useMemo(() => "/assets/model/llavero-completo.glb", []);
     const VIEW_Y_OFFSET_K = -0.08;
     const CAMERA = { fov: 33 };
@@ -24,7 +24,7 @@ export default function NFC() {
         rim: { intensity: 0.45, pos: [-2.2, 1.4, -2.1] }
     };
 
-    // Coreografía baseline (NO tocada)
+    // Coreografía (tu baseline intacto)
     const ZOOM = { from: 0.05, to: 1.05, duration: 1900 };
     const HOLD_MS = 1000;
     const ROTATE = { radians: Math.PI, duration: 1400 };
@@ -32,22 +32,28 @@ export default function NFC() {
     const POP = { pauseAfterPose: 500, distanceK: 0.03, duration: 100 };
     const OPEN = { pauseAfterPop: 350, distanceK: 0.38, duration: 1050 };
 
-    // Intro cinematográfica (solo prefacio)
+    // Intro (prefacio)
     const INTRO = {
         BLACKOUT_MS: 1500,
         FOCUS_FADE_MS: 1200,
         FOCUS_HOLD_MS: 2200,
-        APPEAR_SCALE: 0.50, // tamaño de aparición bajo el foco (tu setting actual)
+        APPEAR_SCALE: 0.50,
+    };
+
+    // Flotación: solo tras finalizar la animación
+    const FLOAT = {
+        ampK: 0.012,
+        periodMs: 3600
     };
 
     // === Utils ===================================================================
-    const deg = d => (d * Math.PI) / 180;
-    const wait = ms => new Promise(r => setTimeout(r, ms));
-    const easeInOutCubic = t => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const deg = (d) => (d * Math.PI) / 180;
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
     function animateNumber(from, to, dur, onUpdate, onDone) {
         const s = performance.now();
-        const f = n => {
+        const f = (n) => {
             const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
             onUpdate(from + (to - from) * k);
             if (t < 1) requestAnimationFrame(f); else onDone && onDone();
@@ -57,7 +63,7 @@ export default function NFC() {
     function zoomToScalar(o, from, to, duration) {
         o.scale.setScalar(from);
         const s = performance.now();
-        const f = n => {
+        const f = (n) => {
             const t = Math.min(1, (n - s) / duration), k = easeInOutCubic(t);
             o.scale.setScalar(from + (to - from) * k);
             if (t < 1) requestAnimationFrame(f);
@@ -67,17 +73,20 @@ export default function NFC() {
     function rotateWorldY(o, rad, dur) {
         const q0 = o.quaternion.clone();
         const ay = new THREE.Vector3(0, 1, 0);
-        const q = new THREE.Quaternion(); const s = performance.now();
-        const f = n => {
+        const q = new THREE.Quaternion();
+        const s = performance.now();
+        const f = (n) => {
             const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
-            o.quaternion.copy(q0); q.setFromAxisAngle(ay, rad * k); o.quaternion.premultiply(q);
+            o.quaternion.copy(q0);
+            q.setFromAxisAngle(ay, rad * k);
+            o.quaternion.premultiply(q);
             if (t < 1) requestAnimationFrame(f);
         };
         requestAnimationFrame(f);
     }
     function animateScaleTo(o, to, dur = 800) {
         const from = o.scale.x, s = performance.now();
-        const f = n => {
+        const f = (n) => {
             const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
             o.scale.setScalar(from + (to - from) * k);
             if (t < 1) requestAnimationFrame(f);
@@ -91,7 +100,7 @@ export default function NFC() {
         const qr = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), rz);
         const qT = qr.clone().multiply(qy).multiply(qp).multiply(q0);
         const s = performance.now();
-        const f = n => {
+        const f = (n) => {
             const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
             o.quaternion.slerpQuaternions(q0, qT, k);
             if (t < 1) requestAnimationFrame(f);
@@ -100,7 +109,7 @@ export default function NFC() {
     }
     function animatePositionTo(o, to, dur) {
         const from = o.position.clone(), s = performance.now();
-        const f = n => {
+        const f = (n) => {
             const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
             o.position.set(
                 from.x + (to.x - from.x) * k,
@@ -116,7 +125,7 @@ export default function NFC() {
         const axis = new THREE.Vector3(0, 1, 0);
         const startW = new THREE.Vector3(); part.getWorldPosition(startW);
         const s = performance.now();
-        const f = n => {
+        const f = (n) => {
             const t = Math.min(1, (n - s) / dur), k = easing(t);
             const targetW = startW.clone().add(axis.clone().multiplyScalar(dist * k));
             const parent = part.parent || part;
@@ -169,6 +178,9 @@ export default function NFC() {
         let renderer, scene, camera, raf = 0;
         let amb, hemi, key, fill, rim;
         let introSpot, beamMesh;
+        let rootGroup;
+        let floatStart = 0;
+        let canFloat = false; // solo después del OPEN
 
         const mount = mountRef.current;
         if (!mount) return;
@@ -183,7 +195,7 @@ export default function NFC() {
 
         const start = async () => {
             try {
-                // Renderer: dejamos ver el negro/verde de CSS + sombras y dither
+                // Renderer
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
                 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -194,7 +206,6 @@ export default function NFC() {
                 renderer.setClearColor(0x000000, 0);
                 renderer.shadowMap.enabled = true;
                 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                // Dither en gradientes (ya suele estar activo, lo reforzamos)
                 const gl = renderer.getContext?.();
                 if (gl?.enable && gl?.DITHER) gl.enable(gl.DITHER);
                 mount.appendChild(renderer.domElement);
@@ -203,14 +214,14 @@ export default function NFC() {
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(CAMERA.fov, window.innerWidth / window.innerHeight, 0.01, 100);
 
-                // Luces: arrancan a 0 para el reveal con foco
+                // Luces (arrancan a 0 para el reveal)
                 amb = new THREE.AmbientLight(0xffffff, 0.0); scene.add(amb);
                 hemi = new THREE.HemisphereLight(LIGHTS.hemiSky, LIGHTS.hemiGround, 0.0); scene.add(hemi);
                 key = new THREE.DirectionalLight(0xffffff, 0.0); key.position.set(...LIGHTS.key.pos); scene.add(key);
                 fill = new THREE.DirectionalLight(0xffffff, 0.0); fill.position.set(...LIGHTS.fill.pos); scene.add(fill);
                 rim = new THREE.DirectionalLight(0xffffff, 0.0); rim.position.set(...LIGHTS.rim.pos); scene.add(rim);
 
-                // Foco + haz (ligeramente más soft)
+                // Foco + haz
                 introSpot = new THREE.SpotLight(0xffffff, 0.0, 25, Math.PI / 9.5, 0.3, 2.0);
                 introSpot.position.set(0, 4.0, 0.0);
                 introSpot.target.position.set(0, 0, 0);
@@ -223,7 +234,7 @@ export default function NFC() {
                 const model = gltf.scene || gltf.scenes?.[0];
                 if (!model) throw new Error("GLB sin escena válida");
 
-                // Orientación / centrado (tu baseline)
+                // Orientación / centrado (baseline)
                 const box0 = new THREE.Box3().setFromObject(model);
                 const size0 = new THREE.Vector3(); box0.getSize(size0);
                 model.rotation.set(0, 0, 0);
@@ -238,7 +249,7 @@ export default function NFC() {
                 const sphere = new THREE.Sphere(); box1.getBoundingSphere(sphere);
                 model.position.y += sphere.radius * VIEW_Y_OFFSET_K;
 
-                // Cámara (baseline)
+                // Cámara
                 const radius = Math.max(sphere.radius, 1e-3);
                 const fov = (camera.fov * Math.PI) / 180;
                 const dist = (radius / Math.tan(fov / 2)) * 1.10;
@@ -248,7 +259,7 @@ export default function NFC() {
                 camera.lookAt(0, 0, 0);
                 camera.updateProjectionMatrix();
 
-                // Materiales: sRGB + anisotropía
+                // Materiales
                 const maxAniso = renderer.capabilities.getMaxAnisotropy?.() || 1;
                 model.traverse(o => {
                     if (o.isMesh && o.material) {
@@ -264,7 +275,7 @@ export default function NFC() {
                     }
                 });
 
-                // Transparencia NFC_Core (baseline)
+                // Transparencia NFC_Core
                 const core = model.getObjectByName("NFC_Core");
                 if (core && core.isMesh && core.material) {
                     const mat = core.material.clone();
@@ -274,21 +285,23 @@ export default function NFC() {
                     core.material = mat; core.renderOrder = 1;
                 }
 
-                // Aparición: más cerca/grande bajo el foco
+                // Grupo padre (para flotación posterior)
+                const root = new THREE.Group();
                 model.scale.setScalar(INTRO.APPEAR_SCALE);
+                root.add(model);
+                scene.add(root);
 
-                scene.add(model);
                 setReady(true);
 
                 // ================= SECUENCIA ===========================================
                 const run = async () => {
-                    // 0) Pre-warm
+                    // Pre-warm
                     await new Promise(r => requestAnimationFrame(() => r()));
 
-                    // (Intro-1) Negro ya está (CSS). Espera
+                    // (Intro-1) Blackout
                     await wait(INTRO.BLACKOUT_MS);
 
-                    // (Intro-2) Foco + haz (cap del haz para no quemar)
+                    // (Intro-2) Foco + haz
                     animateNumber(0.0, 2.8, INTRO.FOCUS_FADE_MS, (v) => {
                         introSpot.intensity = v;
                         setBeam(v);
@@ -297,7 +310,7 @@ export default function NFC() {
                     // (Intro-3) Hold foco
                     await wait(INTRO.FOCUS_HOLD_MS);
 
-                    // Cambia fondo y sube luces durante TU primer zoom
+                    // Fondo a verde + subir luces (en paralelo con 1er zoom)
                     sectionRef.current?.classList.add("nfc--bg-on");
                     animateNumber(0, LIGHTS.ambient, ZOOM.duration, v => amb.intensity = v);
                     animateNumber(0, LIGHTS.hemiIntensity, ZOOM.duration, v => hemi.intensity = v);
@@ -305,20 +318,17 @@ export default function NFC() {
                     animateNumber(0, LIGHTS.fill.intensity, ZOOM.duration, v => fill.intensity = v);
                     animateNumber(0, LIGHTS.rim.intensity, ZOOM.duration, v => rim.intensity = v);
 
-                    // (1) Zoom-in del modelo — ADAPTATIVO para garantizar punch-in
+                    // (1) Zoom-in adaptativo
                     const zoomFrom = Math.max(model.scale.x, ZOOM.from);
-                    const minPunch = zoomFrom * 1.2; // al menos +20%
+                    const minPunch = zoomFrom * 1.2;
                     const zoomTo = Math.max(ZOOM.to, minPunch);
                     zoomToScalar(model, zoomFrom, zoomTo, ZOOM.duration);
                     await wait(ZOOM.duration);
 
-                    // Apaga el foco suave (deja el look baseline limpio)
-                    animateNumber(introSpot.intensity, 0.0, 600, (v) => {
-                        introSpot.intensity = v;
-                        setBeam(v);
-                    });
+                    // Apaga foco
+                    animateNumber(introSpot.intensity, 0.0, 600, (v) => { introSpot.intensity = v; setBeam(v); });
 
-                    // (hold original)
+                    // (hold)
                     await wait(HOLD_MS);
 
                     // (2) giro 180º
@@ -327,23 +337,13 @@ export default function NFC() {
 
                     // (3) pose + izquierda + zoom-out
                     animateScaleTo(model, model.scale.x * STEP3.scaleFactor, STEP3.duration);
-                    animateWorldTiltYawRoll(
-                        model,
-                        deg(STEP3.tiltX_deg),
-                        deg(STEP3.yaw_deg),
-                        deg(STEP3.roll_deg),
-                        STEP3.duration
-                    );
+                    animateWorldTiltYawRoll(model, deg(STEP3.tiltX_deg), deg(STEP3.yaw_deg), deg(STEP3.roll_deg), STEP3.duration);
                     const leftOffset = radius * STEP3.moveLeftK;
-                    animatePositionTo(
-                        model,
-                        new THREE.Vector3(model.position.x + leftOffset, model.position.y, model.position.z),
-                        STEP3.duration
-                    );
+                    animatePositionTo(model, new THREE.Vector3(model.position.x + leftOffset, model.position.y, model.position.z), STEP3.duration);
 
                     // (4) pop tapas
                     await wait(STEP3.duration + POP.pauseAfterPose);
-                    const caps = (function getCapsPreferNames(m) {
+                    const getCapsPreferNames = (m) => {
                         const topByName = m.getObjectByName("FrontCap") || m.getObjectByName("frontcap");
                         const bottomByName = m.getObjectByName("BackCap") || m.getObjectByName("backcap");
                         if (topByName && bottomByName) return { top: topByName, bottom: bottomByName };
@@ -360,20 +360,35 @@ export default function NFC() {
                         let bottom = items.slice().sort((a, b) => (a.yWorld - b.yWorld) || (b.areaXZ - a.areaXZ))[0].node;
                         if (top === bottom && items.length > 1) bottom = items[1].node;
                         return { top, bottom };
-                    })(model);
-
+                    };
+                    const caps = getCapsPreferNames(model);
                     const dyPop = radius * POP.distanceK;
                     if (caps.top) moveAlongWorldY(caps.top, +dyPop, POP.duration, t => 1 - Math.pow(1 - t, 3));
                     if (caps.bottom) moveAlongWorldY(caps.bottom, -dyPop, POP.duration, t => 1 - Math.pow(1 - t, 3));
 
-                    // (5) apertura completa tapas
+                    // (5) apertura completa
                     await wait(POP.duration + OPEN.pauseAfterPop);
                     const dyOpen = radius * OPEN.distanceK;
                     if (caps.top) moveAlongWorldY(caps.top, +dyOpen, OPEN.duration, easeInOutCubic);
                     if (caps.bottom) moveAlongWorldY(caps.bottom, -dyOpen, OPEN.duration, easeInOutCubic);
+
+                    // >>> Activa flotación y muestra copy
+                    canFloat = true;
+                    sectionRef.current?.classList.add("nfc--copy-on");
                 };
 
-                const render = () => { beamMesh?.userData?.updateBeam?.(); renderer.render(scene, camera); raf = requestAnimationFrame(render); };
+                // Timers render
+                floatStart = performance.now();
+                const render = () => {
+                    if (canFloat) {
+                        const t = performance.now() - floatStart;
+                        const amp = (Math.max(sphere.radius, 1e-3)) * FLOAT.ampK;
+                        root.position.y = amp * Math.sin((2 * Math.PI * t) / FLOAT.periodMs);
+                    }
+                    beamMesh?.userData?.updateBeam?.();
+                    renderer.render(scene, camera);
+                    raf = requestAnimationFrame(render);
+                };
                 render();
 
                 window.addEventListener("resize", onResize);
@@ -393,12 +408,18 @@ export default function NFC() {
     }, [glbUrl]);
 
     return (
-        <section
-            ref={sectionRef}
-            className={`nfc ${ready ? "nfc--ready" : "nfc--loading"}`}
-            aria-label="Sección NFC"
-        >
+        <section ref={sectionRef} className={`nfc ${ready ? "nfc--ready" : "nfc--loading"}`} aria-label="Sección NFC">
+            {/* Canvas full-screen */}
             <div ref={mountRef} className="nfc__viewer" />
+
+            {/* HUD: aparece al final, no afecta al 3D */}
+            <header className="nfc__hud" aria-live="polite">
+                <h1 className="nfc__title">NFC</h1>
+                <p className="nfc__desc">
+                    Etiqueta inteligente integrada para experiencias de un toque. Conecta, comparte y
+                    desbloquea funciones en tu toy.
+                </p>
+            </header>
         </section>
     );
 }
