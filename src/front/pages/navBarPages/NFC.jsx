@@ -4,8 +4,10 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import "../styles/nfc.css";
 
-/* Imagen temporal para todas las cards (luego cada una tendrá la suya) */
-import astronauta from "../../assets/img/gsf_monkey_transparent.png";
+/* IMÁGENES DE LAS CARDS */
+import imgLlaveros from "../../assets/img/Llaveros-Card.png";
+import imgTarjetas from "../../assets/img/Tarjetas-Card.png";
+import imgPersonalizado from "../../assets/img/Stand-Resto.png";
 
 export default function NFC() {
     const sectionRef = useRef(null);
@@ -278,7 +280,7 @@ export default function NFC() {
                 }
 
                 // Grupo padre (para flotación)
-                root = new THREE.Group();
+                const root = new THREE.Group();
                 model.scale.setScalar(INTRO.APPEAR_SCALE);
                 root.add(model);
                 scene.add(root);
@@ -410,17 +412,16 @@ export default function NFC() {
                 </header>
             </section>
 
-            {/* CARDS — 4 en fila */}
-            <section className="nfc-cards" aria-label="Opciones NFC">
+            {/* CARDS — 3 centradas con separación */}
+            <section className="nfc-cards nfc-cards--three" aria-label="Opciones NFC">
                 {[
-                    { key: "llaveros", label: "LLAVEROS" },
-                    { key: "tarjetas", label: "TARJETAS" },
-                    { key: "personalizado", label: "PERSONALIZADO" },
-                    { key: "usos", label: "USOS" },
-                ].map(({ key, label }) => (
+                    { key: "llaveros", label: "LLAVEROS", img: imgLlaveros },
+                    { key: "tarjetas", label: "TARJETAS", img: imgTarjetas },
+                    { key: "personalizado", label: "PERSONALIZADO", img: imgPersonalizado },
+                ].map(({ key, label, img }) => (
                     <article className="nfc-card" key={key}>
                         <div className="nfc-card__imgwrap">
-                            <img className="nfc-card__img" src={astronauta} alt={`${label} - imagen ilustrativa`} loading="lazy" decoding="async" />
+                            <img className="nfc-card__img" src={img} alt={`${label} - imagen ilustrativa`} loading="lazy" decoding="async" />
                         </div>
                         <h3 className="nfc-card__title">{label}</h3>
                     </article>

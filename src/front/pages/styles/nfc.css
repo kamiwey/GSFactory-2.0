@@ -44,10 +44,10 @@
   }
 }
 
-/* HUD a la derecha; aparece al final */
+/* HUD — traemos el copy un pelín hacia dentro en ultrawide */
 .nfc__hud {
   position: absolute;
-  right: clamp(32px, 6vw, 96px);
+  right: clamp(24px, 5vw, 120px); /* menos pegado al borde en 21:9 */
   top: 50%;
   transform: translateY(-50%);
   width: min(40vw, 720px);
@@ -56,6 +56,13 @@
   color: #fff;
   text-align: left;
 }
+/* afina aún más en monitores muy anchos */
+@media (min-width: 1800px) {
+  .nfc__hud {
+    right: 12vw;
+  }
+}
+
 .nfc__title {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
     sans-serif;
@@ -127,22 +134,28 @@
   }
 }
 
-/* ================= CARDS: 4 EN FILA ================= */
+/* ================= CARDS (3 centradas) ================= */
+/* Sección ocupa todo el ancho con el mismo color de fondo que el hero:
+   adiós “paredes” negras en cualquier resolución */
 .nfc-cards {
   position: relative;
   width: 100%;
-  background: var(--nfc-bg); /* continuidad */
-  padding: clamp(10px, 2vw, 18px);
+  background: var(--nfc-bg);
+  padding: clamp(16px, 3vw, 36px) clamp(18px, 5vw, 72px);
   box-sizing: border-box;
-
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: clamp(12px, 1.8vw, 20px);
-  height: 50svh; /* toda la sección mide media pantalla */
-  align-items: end; /* alinear contenido abajo (estético) */
 }
 
-/* Cada card llena la celda verticalmente */
+/* Tres columnas centradas y con aire entre ellas */
+.nfc-cards--three {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  gap: clamp(16px, 2.4vw, 32px);
+  justify-content: center; /* centra el grid dentro de la sección sin contenedor fijo */
+  align-items: end;
+  min-height: 50svh; /* media pantalla de alto (no se corta) */
+}
+
+/* Card */
 .nfc-card {
   display: grid;
   grid-template-rows: 1fr auto; /* imagen arriba, título abajo */
@@ -153,12 +166,12 @@
   box-sizing: border-box;
 }
 
-/* Imagen centrada y contenida */
+/* Imagen contenida y con flotación suave */
 .nfc-card__imgwrap {
   min-height: 0;
   display: grid;
   place-items: center;
-  padding: clamp(8px, 1.2vw, 16px);
+  padding: clamp(10px, 1.6vw, 18px);
 }
 .nfc-card__img {
   max-height: 85%;
@@ -181,29 +194,29 @@
   }
 }
 
-/* Título debajo de la imagen */
+/* Título */
 .nfc-card__title {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
     sans-serif;
-  font-size: clamp(18px, 1.6vw, 24px);
+  font-size: clamp(18px, 1.8vw, 28px);
   line-height: 1.05;
   color: #fff;
   margin: clamp(6px, 1vw, 10px) clamp(4px, 0.6vw, 8px) 0;
   text-align: left;
 }
 
-/* RESPONSIVE: 2 columnas en tablets, 1 en mobile */
+/* RESPONSIVE */
 @media (max-width: 1200px) {
-  .nfc-cards {
-    grid-template-columns: repeat(2, 1fr);
-    height: auto;
+  .nfc-cards--three {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    min-height: auto;
   }
   .nfc-card {
     min-height: 40svh;
   }
 }
 @media (max-width: 640px) {
-  .nfc-cards {
+  .nfc-cards--three {
     grid-template-columns: 1fr;
   }
   .nfc-card {
