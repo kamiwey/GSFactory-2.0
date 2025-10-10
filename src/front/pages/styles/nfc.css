@@ -1,17 +1,14 @@
 @import url("https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap");
-
-/* Lenis friendly */
 html {
   scroll-behavior: auto;
 }
 
 :root {
   --nfc-bg: #2aa0a0;
-  --nfc-bg-dur: 1900ms; /* = ZOOM.duration */
-  --modal-backdrop: rgba(0, 0, 0, 0.35);
+  --nfc-bg-dur: 1900ms;
 }
 
-/* ================= HERO ================= */
+/* ===== HERO ===== */
 .nfc {
   position: relative;
   background: #000;
@@ -27,17 +24,15 @@ html {
   height: 100%;
   z-index: 0;
   pointer-events: none;
-  background: transparent;
+}
+.nfc--ready .nfc__viewer {
+  transition: opacity 0.22s ease-out;
+  opacity: 1;
 }
 .nfc--loading .nfc__viewer {
   opacity: 0;
 }
-.nfc--ready .nfc__viewer {
-  opacity: 1;
-  transition: opacity 220ms ease-out;
-}
 
-/* Negro -> verde durante el primer zoom */
 .nfc.nfc--bg-on {
   animation: nfcBgIn var(--nfc-bg-dur) ease-in forwards;
 }
@@ -50,7 +45,6 @@ html {
   }
 }
 
-/* HUD — más adentro en ultrawide */
 .nfc__hud {
   position: absolute;
   right: clamp(24px, 5vw, 120px);
@@ -74,7 +68,6 @@ html {
   font-size: clamp(56px, 8vw, 140px);
   line-height: 0.98;
   margin: 0 0 0.1em;
-  letter-spacing: 0.01em;
   text-transform: uppercase;
   opacity: 0;
   transform: translateY(36px);
@@ -139,16 +132,15 @@ html {
   }
 }
 
-/* ================= CARDS (3 centradas) ================= */
+/* ===== CARDS ===== */
 .nfc-cards {
   position: relative;
   width: 100%;
   background: var(--nfc-bg);
   padding: clamp(16px, 3vw, 36px) clamp(18px, 5vw, 72px);
-  padding-bottom: clamp(56px, 10vh, 160px); /* aire abajo */
+  padding-bottom: clamp(56px, 10vh, 160px);
   box-sizing: border-box;
 }
-
 .nfc-cards--three {
   display: grid;
   grid-template-columns: repeat(3, minmax(220px, 1fr));
@@ -158,7 +150,6 @@ html {
   min-height: 50svh;
 }
 
-/* Botón-card */
 .nfc-card {
   -webkit-appearance: none;
   appearance: none;
@@ -176,7 +167,6 @@ html {
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.25, 1), filter 0.26s ease;
-  will-change: transform, filter;
 }
 .nfc-card:hover {
   transform: translateY(-2px) scale(1.03);
@@ -186,7 +176,6 @@ html {
   outline-offset: 4px;
 }
 
-/* Imagen */
 .nfc-card__imgwrap {
   min-height: 0;
   display: grid;
@@ -196,18 +185,13 @@ html {
 .nfc-card__img {
   max-height: 85%;
   max-width: 90%;
-  width: auto;
-  height: auto;
   object-fit: contain;
   animation: nfcCardFloat 3600ms ease-in-out infinite;
-  will-change: transform;
 }
-/* Llaveros algo más grande para igualar presencia */
 .nfc-card[data-key="llaveros"] .nfc-card__img {
   max-width: 96%;
   max-height: 90%;
 }
-
 @keyframes nfcCardFloat {
   0% {
     transform: translateY(0);
@@ -220,7 +204,6 @@ html {
   }
 }
 
-/* Título */
 .nfc-card__title {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
     sans-serif;
@@ -231,7 +214,6 @@ html {
   text-align: center;
 }
 
-/* RESPONSIVE */
 @media (max-width: 1200px) {
   .nfc-cards--three {
     grid-template-columns: repeat(2, minmax(220px, 1fr));
@@ -250,7 +232,7 @@ html {
   }
 }
 
-/* ================= MODAL ================= */
+/* ===== MODAL FULLSCREEN =================================================== */
 .nfc-modal {
   position: fixed;
   inset: 0;
@@ -258,35 +240,33 @@ html {
   display: grid;
   place-items: center;
 }
-.nfc-modal__backdrop {
+.nfc-modal__bg {
   position: absolute;
   inset: 0;
-  background: var(--modal-backdrop);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 0;
-  padding: 0;
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  cursor: zoom-out;
+  background: var(--nfc-bg);
 }
-.nfc-modal__content {
+
+/* Full-screen shell sin sombras ni bordes, se funde con el fondo */
+.nfc-modal__shell {
   position: relative;
-  width: min(92vw, 1200px);
-  max-height: 86vh;
+  width: 100vw;
+  height: 100vh;
   display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 12px;
-  padding: clamp(12px, 1.6vw, 20px);
-  border-radius: 16px;
-  background: rgba(20, 20, 20, 0.55);
-  box-shadow: 0 20px 80px rgba(0, 0, 0, 0.35);
-  transform: scale(0.94);
+  grid-template-columns: 1fr 1.3fr;
+  gap: clamp(24px, 3vw, 56px);
+  padding: clamp(24px, 3vw, 56px);
+  transform: scale(0.96);
   opacity: 0;
-  animation: nfcModalIn 0.28s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  animation: nfcModalZoomIn 0.28s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
 }
-@keyframes nfcModalIn {
+.nfc-modal__shell--full {
+  /* alias semántico */
+}
+
+@keyframes nfcModalZoomIn {
   to {
     transform: scale(1);
     opacity: 1;
@@ -295,50 +275,131 @@ html {
 
 .nfc-modal__close {
   position: absolute;
-  top: 8px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.45);
+  top: clamp(10px, 1.2vw, 18px);
+  right: clamp(12px, 1.4vw, 20px);
+  background: rgba(0, 0, 0, 0.25);
   color: #fff;
   border: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 18px;
-  line-height: 40px;
+  line-height: 44px;
   text-align: center;
   transition: transform 0.2s ease, background 0.2s ease;
+  z-index: 2;
 }
 .nfc-modal__close:hover {
   transform: scale(1.06);
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.45);
 }
-.nfc-modal__figure {
+
+/* Texto izquierda – más grande y con aire */
+.nfc-modal__left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(8px, 1.6vw, 16px);
+}
+.nfc-modal__h {
+  font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
+    sans-serif;
+  color: #fff;
+  font-size: clamp(36px, 4.8vw, 72px);
+  line-height: 1;
+  margin: 0 0 0.25em;
+}
+.nfc-modal__p {
+  color: #fff;
+  opacity: 0.98;
+  font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
+    sans-serif;
+  font-size: clamp(18px, 2.1vw, 28px);
+  line-height: 1.18;
+  margin: 0;
+  max-width: 40ch;
+}
+
+/* Carrusel derecha – sin fondo translúcido, todo limpio */
+.nfc-modal__right {
+  position: relative;
+  display: grid;
+  grid-template-columns: 64px 1fr 64px;
+  align-items: center;
+}
+.nfc-modal__stage {
+  position: relative;
+  height: 100%;
   display: grid;
   place-items: center;
   overflow: hidden;
 }
+.nfc-modal__stage--clean {
+  background: transparent;
+}
 .nfc-modal__img {
   max-width: 100%;
-  max-height: 70vh;
+  max-height: 86vh;
   object-fit: contain;
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.35));
+  transform: translateY(6px) scale(0.985);
+  opacity: 0;
+  animation: nfcSlideIn 0.24s ease-out forwards;
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.28));
 }
-.nfc-modal__title {
-  margin: 0;
-  text-align: center;
-  color: #fff;
-  font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
-    sans-serif;
-  font-size: clamp(22px, 2.4vw, 36px);
+@keyframes nfcSlideIn {
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
 }
 
-/* Motion-safe */
+.nfc-modal__nav {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 30px;
+  line-height: 52px;
+  text-align: center;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.nfc-modal__nav:hover {
+  transform: scale(1.06);
+  background: rgba(0, 0, 0, 0.45);
+}
+.nfc-modal__nav--prev {
+  justify-self: start;
+}
+.nfc-modal__nav--next {
+  justify-self: end;
+}
+
+@media (max-width: 1100px) {
+  .nfc-modal__shell {
+    grid-template-columns: 1fr;
+    align-items: center;
+  }
+  .nfc-modal__left {
+    align-items: center;
+    text-align: center;
+  }
+  .nfc-modal__right {
+    grid-template-columns: 56px 1fr 56px;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .nfc__title,
   .nfc__desc,
   .nfc-card__img,
-  .nfc-modal__content {
+  .nfc-modal__shell,
+  .nfc-modal__img {
     animation: none !important;
     transform: none !important;
   }

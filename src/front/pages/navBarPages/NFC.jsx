@@ -3,34 +3,65 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import "../styles/nfc.css";
-
-/* Smooth scroll (como en ArtToys) */
 import useLenis from "../../hooks/useLenis";
 
-/* IMÁGENES DE LAS CARDS */
+/* IMÁGENES CARDS */
 import imgLlaveros from "../../assets/img/Llaveros-Card.png";
 import imgTarjetas from "../../assets/img/Tarjetas-Card.png";
 import imgPersonalizado from "../../assets/img/Stand-Resto.png";
+
+/* GALLERIES — MODAL */
+import LlaveroEurogas from "../../assets/img/Llavero-Eurogas.png";
+import LlaveroMasMusculo from "../../assets/img/Llavero-MasMusculo.png";
+import LlaveroOzono from "../../assets/img/Llavero-Ozono.png";
+import LlaveroPedro from "../../assets/img/Llavero-Pedro.png";
+import LlaveroRVFV from "../../assets/img/Llavero-RVFV.png";
+
+import TarjetaFREV from "../../assets/img/Tarjeta-FREV.png";
+import TarjetaGS from "../../assets/img/Tarjeta-GS.png";
+import TarjetaLupita from "../../assets/img/Tarjeta-Lupita.png";
+import TarjetaMasmusculo from "../../assets/img/Tarjeta-masmusculo.png";
+import TarjetaNavarrete from "../../assets/img/Tarjeta-Navarrete.png";
+import TarjetaRebelion from "../../assets/img/Tarjeta-Rebelion.png";
+import TarjetaTecnocasa from "../../assets/img/Tarjeta-Tecnocasa.png";
+
+/* === helpers scroll lock ================================================== */
+const lockPageScroll = () => {
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.dataset.scrollY = String(y);
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${y}px`;
+    document.body.style.width = "100%";
+};
+const unlockPageScroll = () => {
+    const y = parseInt(document.body.dataset.scrollY || "0", 10);
+    document.documentElement.style.overflow = "";
+    document.body.style.overflow = "";
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    delete document.body.dataset.scrollY;
+    window.scrollTo(0, y);
+};
 
 export default function NFC() {
     const sectionRef = useRef(null);
     const mountRef = useRef(null);
     const [ready, setReady] = useState(false);
 
-    /* === MODAL STATE ========================================================= */
-    const [modalItem, setModalItem] = useState(null); // {key,label,img} | null
-    const modalOpen = !!modalItem;
+    /* ===== MODAL STATE ======================================================= */
+    const [modal, setModal] = useState(null); // { key, index }
 
-    /* Smooth scroll – inicializamos, bloqueado hasta fin de intro (debajo) */
+    /* Smooth scroll (Lenis) */
     useLenis({ lerp: 0.16, wheelMultiplier: 1.1, enableOnTouch: false });
 
-    // === CONFIG (baseline) =======================================================
+    // === CONFIG 3D ============================================================
     const glbUrl = useMemo(() => "/assets/model/llavero-completo.glb", []);
     const VIEW_Y_OFFSET_K = -0.08;
     const CAMERA = { fov: 33 };
     const TONE = { exposure: 0.9 };
-
-    // Luces — baseline
     const LIGHTS = {
         ambient: 0.2,
         hemiSky: 0x9fc7ff, hemiGround: 0x6b5e51, hemiIntensity: 0.35,
@@ -38,27 +69,20 @@ export default function NFC() {
         fill: { intensity: 0.50, pos: [-1.6, 0.6, 1.0] },
         rim: { intensity: 0.45, pos: [-2.2, 1.4, -2.1] }
     };
-
-    // Coreografía (intacta)
     const ZOOM = { from: 0.05, to: 1.05, duration: 1900 };
     const HOLD_MS = 1000;
     const ROTATE = { radians: Math.PI, duration: 1400 };
     const STEP3 = { scaleFactor: 0.62, tiltX_deg: -45, yaw_deg: -30, roll_deg: -35, moveLeftK: -0.95, duration: 900 };
     const POP = { pauseAfterPose: 500, distanceK: 0.03, duration: 100 };
     const OPEN = { pauseAfterPop: 350, distanceK: 0.38, duration: 1050 };
-
-    // Intro
     const INTRO = { BLACKOUT_MS: 1500, FOCUS_FADE_MS: 1200, FOCUS_HOLD_MS: 2200, APPEAR_SCALE: 0.50 };
-
-    // Flotación (solo al final)
     const FLOAT = { ampK: 0.012, periodMs: 3600 };
 
-    // === Utils ===================================================================
+    // === Utils ================================================================
     const deg = (d) => (d * Math.PI) / 180;
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const easeInOutCubic = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-
-    function animateNumber(from, to, dur, onUpdate, onDone) {
+    const animateNumber = (from, to, dur, onUpdate, onDone) => {
         const s = performance.now();
         const f = (n) => {
             const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
@@ -66,8 +90,8 @@ export default function NFC() {
             if (t < 1) requestAnimationFrame(f); else onDone && onDone();
         };
         requestAnimationFrame(f);
-    }
-    function zoomToScalar(o, from, to, duration) {
+    };
+    const zoomToScalar = (o, from, to, duration) => {
         o.scale.setScalar(from);
         const s = performance.now();
         const f = (n) => {
@@ -76,8 +100,8 @@ export default function NFC() {
             if (t < 1) requestAnimationFrame(f);
         };
         requestAnimationFrame(f);
-    }
-    function rotateWorldY(o, rad, dur) {
+    };
+    const rotateWorldY = (o, rad, dur) => {
         const q0 = o.quaternion.clone();
         const ay = new THREE.Vector3(0, 1, 0);
         const q = new THREE.Quaternion();
@@ -90,8 +114,8 @@ export default function NFC() {
             if (t < 1) requestAnimationFrame(f);
         };
         requestAnimationFrame(f);
-    }
-    function animateScaleTo(o, to, dur = 800) {
+    };
+    const animateScaleTo = (o, to, dur = 800) => {
         const from = o.scale.x, s = performance.now();
         const f = (n) => {
             const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
@@ -99,8 +123,8 @@ export default function NFC() {
             if (t < 1) requestAnimationFrame(f);
         };
         requestAnimationFrame(f);
-    }
-    function animateWorldTiltYawRoll(o, tx, yy, rz, dur) {
+    };
+    const animateWorldTiltYawRoll = (o, tx, yy, rz, dur) => {
         const q0 = o.quaternion.clone();
         const qp = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), tx);
         const qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yy);
@@ -113,8 +137,8 @@ export default function NFC() {
             if (t < 1) requestAnimationFrame(f);
         };
         requestAnimationFrame(f);
-    }
-    function animatePositionTo(o, to, dur) {
+    };
+    const animatePositionTo = (o, to, dur) => {
         const from = o.position.clone(), s = performance.now();
         const f = (n) => {
             const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
@@ -126,8 +150,8 @@ export default function NFC() {
             if (t < 1) requestAnimationFrame(f);
         };
         requestAnimationFrame(f);
-    }
-    function moveAlongWorldY(part, dist, dur, easing = easeInOutCubic) {
+    };
+    const moveAlongWorldY = (part, dist, dur, easing = easeInOutCubic) => {
         if (!part) return;
         const axis = new THREE.Vector3(0, 1, 0);
         const startW = new THREE.Vector3(); part.getWorldPosition(startW);
@@ -141,10 +165,9 @@ export default function NFC() {
             if (t < 1) requestAnimationFrame(f);
         };
         requestAnimationFrame(f);
-    }
+    };
 
-    // === Spot beam helper ========================================================
-    function createSpotBeam(spot) {
+    const createSpotBeam = (spot) => {
         const beamDistance = 6;
         const radius = Math.tan(spot.angle) * beamDistance;
         const geo = new THREE.ConeGeometry(radius, beamDistance, 48, 1, true);
@@ -177,29 +200,17 @@ export default function NFC() {
         mesh.userData.updateBeam = () => { mesh.position.copy(spot.position); mesh.lookAt(spot.target.position); };
         mesh.userData.setOpacity = (v) => { mesh.material.opacity = v; };
         return mesh;
-    }
+    };
 
-    // Bloqueo/desbloqueo de scroll por modal
+    /* ===== SCROLL LOCK DURANTE INTRO ======================================== */
     useEffect(() => {
-        if (modalOpen) {
-            const prevH = document.documentElement.style.overflow;
-            const prevB = document.body.style.overflow;
-            document.documentElement.style.overflow = "hidden";
-            document.body.style.overflow = "hidden";
-            return () => {
-                document.documentElement.style.overflow = prevH;
-                document.body.style.overflow = prevB;
-            };
-        }
-    }, [modalOpen]);
-
-    useEffect(() => {
-        // Arranca siempre arriba y bloquea scroll hasta acabar intro
         window.scrollTo(0, 0);
-        const prevHtmlOverflow = document.documentElement.style.overflow;
-        const prevBodyOverflow = document.body.style.overflow;
-        document.documentElement.style.overflow = "hidden";
-        document.body.style.overflow = "hidden";
+        lockPageScroll(); // bloqueamos al entrar en la escena
+
+        let safetyUnlock = setTimeout(() => {
+            // por si la intro se corta por cualquier motivo
+            try { unlockPageScroll(); } catch { }
+        }, 18000); // 18s de paracaídas
 
         let renderer, scene, camera, raf = 0;
         let amb, hemi, key, fill, rim;
@@ -220,33 +231,29 @@ export default function NFC() {
 
         const start = async () => {
             try {
-                // Renderer
-                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.outputColorSpace = THREE.SRGBColorSpace;
-                renderer.physicallyCorrectLights = true;
-                renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                renderer.toneMappingExposure = TONE.exposure;
-                renderer.setClearColor(0x000000, 0);
-                renderer.shadowMap.enabled = true;
-                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-                const gl = renderer.getContext?.();
-                if (gl?.enable && gl?.DITHER) gl.enable(gl.DITHER);
-                mount.appendChild(renderer.domElement);
+                const rendererLocal = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+                rendererLocal.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
+                rendererLocal.setSize(window.innerWidth, window.innerHeight);
+                rendererLocal.outputColorSpace = THREE.SRGBColorSpace;
+                rendererLocal.physicallyCorrectLights = true;
+                rendererLocal.toneMapping = THREE.ACESFilmicToneMapping;
+                rendererLocal.toneMappingExposure = TONE.exposure;
+                rendererLocal.setClearColor(0x000000, 0);
+                rendererLocal.shadowMap.enabled = true;
+                rendererLocal.shadowMap.type = THREE.PCFSoftShadowMap;
+                const gl = rendererLocal.getContext?.(); if (gl?.enable && gl?.DITHER) gl.enable(gl.DITHER);
+                mount.appendChild(rendererLocal.domElement);
 
-                // Escena + cámara
+                renderer = rendererLocal;
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(CAMERA.fov, window.innerWidth / window.innerHeight, 0.01, 100);
 
-                // Luces (arrancan a 0 para el reveal)
                 amb = new THREE.AmbientLight(0xffffff, 0.0); scene.add(amb);
                 hemi = new THREE.HemisphereLight(LIGHTS.hemiSky, LIGHTS.hemiGround, 0.0); scene.add(hemi);
                 key = new THREE.DirectionalLight(0xffffff, 0.0); key.position.set(...LIGHTS.key.pos); scene.add(key);
                 fill = new THREE.DirectionalLight(0xffffff, 0.0); fill.position.set(...LIGHTS.fill.pos); scene.add(fill);
                 rim = new THREE.DirectionalLight(0xffffff, 0.0); rim.position.set(...LIGHTS.rim.pos); scene.add(rim);
 
-                // Foco + haz
                 introSpot = new THREE.SpotLight(0xffffff, 0.0, 25, Math.PI / 9.5, 0.3, 2.0);
                 introSpot.position.set(0, 4.0, 0.0);
                 introSpot.target.position.set(0, 0, 0);
@@ -254,12 +261,10 @@ export default function NFC() {
                 beamMesh = createSpotBeam(introSpot); scene.add(beamMesh);
                 const setBeam = (v) => beamMesh?.userData?.setOpacity?.(Math.min(0.55, v / 3.2));
 
-                // GLB
                 const gltf = await new GLTFLoader().loadAsync(glbUrl);
                 const model = gltf.scene || gltf.scenes?.[0];
                 if (!model) throw new Error("GLB sin escena válida");
 
-                // Orientación / centrado (baseline)
                 const box0 = new THREE.Box3().setFromObject(model);
                 const size0 = new THREE.Vector3(); box0.getSize(size0);
                 model.rotation.set(0, 0, 0);
@@ -274,7 +279,6 @@ export default function NFC() {
                 sphere = new THREE.Sphere(); box1.getBoundingSphere(sphere);
                 model.position.y += sphere.radius * VIEW_Y_OFFSET_K;
 
-                // Cámara
                 const radius = Math.max(sphere.radius, 1e-3);
                 const fov = (camera.fov * Math.PI) / 180;
                 const dist = (radius / Math.tan(fov / 2)) * 1.10;
@@ -284,7 +288,6 @@ export default function NFC() {
                 camera.lookAt(0, 0, 0);
                 camera.updateProjectionMatrix();
 
-                // Materiales
                 const maxAniso = renderer.capabilities.getMaxAnisotropy?.() || 1;
                 model.traverse(o => {
                     if (o.isMesh && o.material) {
@@ -300,7 +303,6 @@ export default function NFC() {
                     }
                 });
 
-                // Transparencia NFC_Core
                 const core = model.getObjectByName("NFC_Core");
                 if (core && core.isMesh && core.material) {
                     const mat = core.material.clone();
@@ -310,7 +312,6 @@ export default function NFC() {
                     core.material = mat; core.renderOrder = 1;
                 }
 
-                // Grupo padre (para flotación)
                 const rootGroup = new THREE.Group();
                 model.scale.setScalar(INTRO.APPEAR_SCALE);
                 rootGroup.add(model);
@@ -319,20 +320,13 @@ export default function NFC() {
 
                 setReady(true);
 
-                // ===== SECUENCIA ======================================================
                 const run = async () => {
                     await new Promise(r => requestAnimationFrame(() => r()));
-
-                    // (Intro-1) Blackout
                     await wait(INTRO.BLACKOUT_MS);
 
-                    // (Intro-2) Foco + haz
                     animateNumber(0.0, 2.8, INTRO.FOCUS_FADE_MS, (v) => { introSpot.intensity = v; setBeam(v); });
-
-                    // (Intro-3) Hold foco
                     await wait(INTRO.FOCUS_HOLD_MS);
 
-                    // Fondo a verde + subir luces (en paralelo al 1er zoom)
                     sectionRef.current?.classList.add("nfc--bg-on");
                     animateNumber(0, LIGHTS.ambient, ZOOM.duration, v => amb.intensity = v);
                     animateNumber(0, LIGHTS.hemiIntensity, ZOOM.duration, v => hemi.intensity = v);
@@ -340,31 +334,24 @@ export default function NFC() {
                     animateNumber(0, LIGHTS.fill.intensity, ZOOM.duration, v => fill.intensity = v);
                     animateNumber(0, LIGHTS.rim.intensity, ZOOM.duration, v => rim.intensity = v);
 
-                    // (1) zoom-in
                     const zoomFrom = Math.max(root.children[0].scale.x, ZOOM.from);
                     const minPunch = zoomFrom * 1.2;
                     const zoomTo = Math.max(ZOOM.to, minPunch);
                     zoomToScalar(root.children[0], zoomFrom, zoomTo, ZOOM.duration);
                     await wait(ZOOM.duration);
 
-                    // Apaga foco
                     animateNumber(introSpot.intensity, 0.0, 600, (v) => { introSpot.intensity = v; setBeam(v); });
-
-                    // (hold)
                     await wait(HOLD_MS);
 
-                    // (2) giro 180º
                     rotateWorldY(root.children[0], ROTATE.radians, ROTATE.duration);
                     await wait(ROTATE.duration + 1000);
 
-                    // (3) pose + izquierda + zoom-out
                     const modelRef = root.children[0];
                     animateScaleTo(modelRef, modelRef.scale.x * STEP3.scaleFactor, STEP3.duration);
                     animateWorldTiltYawRoll(modelRef, deg(STEP3.tiltX_deg), deg(STEP3.yaw_deg), deg(STEP3.roll_deg), STEP3.duration);
                     const leftOffset = sphere.radius * STEP3.moveLeftK;
                     animatePositionTo(modelRef, new THREE.Vector3(modelRef.position.x + leftOffset, modelRef.position.y, modelRef.position.z), STEP3.duration);
 
-                    // (4) pop tapas
                     await wait(STEP3.duration + POP.pauseAfterPose);
                     const getCapsPreferNames = (m) => {
                         const topByName = m.getObjectByName("FrontCap") || m.getObjectByName("frontcap");
@@ -389,22 +376,19 @@ export default function NFC() {
                     if (caps.top) moveAlongWorldY(caps.top, +dyPop, POP.duration, t => 1 - Math.pow(1 - t, 3));
                     if (caps.bottom) moveAlongWorldY(caps.bottom, -dyPop, POP.duration, t => 1 - Math.pow(1 - t, 3));
 
-                    // (5) apertura completa
                     await wait(POP.duration + OPEN.pauseAfterPop);
                     const dyOpen = sphere.radius * OPEN.distanceK;
                     if (caps.top) moveAlongWorldY(caps.top, +dyOpen, OPEN.duration, easeInOutCubic);
                     if (caps.bottom) moveAlongWorldY(caps.bottom, -dyOpen, OPEN.duration, easeInOutCubic);
 
-                    // Flotación + copy on
                     canFloat = true;
                     sectionRef.current?.classList.add("nfc--copy-on");
 
-                    // ✅ Desbloquea scroll al terminar la intro
-                    document.documentElement.style.overflow = prevHtmlOverflow;
-                    document.body.style.overflow = prevBodyOverflow;
+                    // 🔓 desbloqueo garantizado
+                    clearTimeout(safetyUnlock);
+                    unlockPageScroll();
                 };
 
-                // Render
                 floatStart = performance.now();
                 const render = () => {
                     if (canFloat && root && sphere) {
@@ -422,36 +406,75 @@ export default function NFC() {
                 run();
             } catch (err) {
                 console.error("NFC GLB load error:", err);
-                // fallback: re-habilitar scroll
-                document.documentElement.style.overflow = prevHtmlOverflow;
-                document.body.style.overflow = prevBodyOverflow;
+                clearTimeout(safetyUnlock);
+                unlockPageScroll();
             }
         };
 
         start();
 
         return () => {
+            clearTimeout(safetyUnlock);
+            try { unlockPageScroll(); } catch { }
             cancelAnimationFrame(raf);
             window.removeEventListener("resize", onResize);
             const el = mountRef.current; if (el && el.firstChild) el.removeChild(el.firstChild);
-            document.documentElement.style.overflow = prevHtmlOverflow;
-            document.body.style.overflow = prevBodyOverflow;
         };
     }, [glbUrl]);
 
-    // === Modal helpers ==========================================================
-    useEffect(() => {
-        if (!modalOpen) return;
-        const onKey = (e) => { if (e.key === "Escape") setModalItem(null); };
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, [modalOpen]);
-
+    /* ===== MODAL & GALLERIES ================================================= */
     const cards = [
         { key: "llaveros", label: "LLAVEROS", img: imgLlaveros },
         { key: "tarjetas", label: "TARJETAS", img: imgTarjetas },
         { key: "personalizado", label: "PERSONALIZADO", img: imgPersonalizado },
     ];
+
+    const GALLERIES = {
+        llaveros: [
+            { src: LlaveroEurogas, title: "Eurogas", desc: "Llavero NFC en ABS con logotipo Eurogas y acabado mate." },
+            { src: LlaveroMasMusculo, title: "MasMusculo", desc: "Serie personalizada con branding deportivo y chip NTAG." },
+            { src: LlaveroOzono, title: "Ozono", desc: "Geometría limpia, grabado profundo y contraste nítido." },
+            { src: LlaveroPedro, title: "Pedro", desc: "Diseño minimal, borde redondeado y tacto soft-touch." },
+            { src: LlaveroRVFV, title: "RVFV", desc: "Drop de artista. Tag NFC para experiencias y enlaces." },
+        ],
+        tarjetas: [
+            { src: TarjetaFREV, title: "FREV", desc: "Tarjeta de contacto NFC con relieve y barniz selectivo." },
+            { src: TarjetaGS, title: "GS", desc: "Tarjeta corporativa, lectura rápida y materiales premium." },
+            { src: TarjetaLupita, title: "Lupita", desc: "Ilustración custom + tag NFC para social y portfolio." },
+            { src: TarjetaMasmusculo, title: "MasMusculo", desc: "Versión fitness. Impresión nítida y alta durabilidad." },
+            { src: TarjetaNavarrete, title: "Navarrete", desc: "Brand card con UX de un toque. Configurable al vuelo." },
+            { src: TarjetaRebelion, title: "Rebelión", desc: "Estética urbana, contraste alto y perfil resistente." },
+            { src: TarjetaTecnocasa, title: "Tecnocasa", desc: "Identidad corporativa y tag NFC para leads instantáneos." },
+        ],
+        personalizado: [],
+    };
+
+    const openModal = (key) => { setModal({ key, index: 0 }); lockPageScroll(); };
+    const closeModal = () => { setModal(null); unlockPageScroll(); };
+
+    const gallery = modal ? (GALLERIES[modal.key] || []) : [];
+    const curr = modal ? gallery[modal.index] : null;
+
+    const nextSlide = () => {
+        if (!modal || gallery.length === 0) return;
+        setModal(({ key, index }) => ({ key, index: (index + 1) % gallery.length }));
+    };
+    const prevSlide = () => {
+        if (!modal || gallery.length === 0) return;
+        setModal(({ key, index }) => ({ key, index: (index - 1 + gallery.length) % gallery.length }));
+    };
+
+    useEffect(() => {
+        if (!modal) return;
+        const onKeys = (e) => {
+            if (e.key === "Escape") closeModal();
+            if (e.key === "ArrowRight") nextSlide();
+            if (e.key === "ArrowLeft") prevSlide();
+        };
+        window.addEventListener("keydown", onKeys);
+        return () => window.removeEventListener("keydown", onKeys);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [modal]);
 
     return (
         <>
@@ -460,7 +483,7 @@ export default function NFC() {
                 ref={sectionRef}
                 className={`nfc ${ready ? "nfc--ready" : "nfc--loading"}`}
                 aria-label="Sección NFC"
-                aria-hidden={modalOpen ? "true" : "false"}
+                aria-hidden={modal ? "true" : "false"}
             >
                 <div ref={mountRef} className="nfc__viewer" />
                 <header className="nfc__hud" aria-live="polite">
@@ -473,11 +496,7 @@ export default function NFC() {
             </section>
 
             {/* CARDS */}
-            <section
-                className="nfc-cards nfc-cards--three"
-                aria-label="Opciones NFC"
-                aria-hidden={modalOpen ? "true" : "false"}
-            >
+            <section className="nfc-cards nfc-cards--three" aria-label="Opciones NFC" aria-hidden={modal ? "true" : "false"}>
                 {cards.map((item) => (
                     <button
                         key={item.key}
@@ -485,7 +504,7 @@ export default function NFC() {
                         className="nfc-card"
                         data-key={item.key}
                         aria-label={item.label}
-                        onClick={() => setModalItem(item)}
+                        onClick={() => openModal(item.key)}
                     >
                         <div className="nfc-card__imgwrap">
                             <img className="nfc-card__img" src={item.img} alt="" loading="lazy" decoding="async" />
@@ -495,18 +514,27 @@ export default function NFC() {
                 ))}
             </section>
 
-            {/* MODAL ZOOM-IN */}
-            {modalOpen && (
-                <div className="nfc-modal" role="dialog" aria-modal="true" aria-label={modalItem.label}>
-                    <button className="nfc-modal__backdrop" aria-label="Cerrar" onClick={() => setModalItem(null)} />
-                    <div className="nfc-modal__content" role="document">
-                        <button className="nfc-modal__close" aria-label="Cerrar" onClick={() => setModalItem(null)}>
-                            ✕
-                        </button>
-                        <div className="nfc-modal__figure">
-                            <img src={modalItem.img} alt="" className="nfc-modal__img" />
-                        </div>
-                        <h3 className="nfc-modal__title">{modalItem.label}</h3>
+            {/* MODAL FULLSCREEN */}
+            {modal && (
+                <div className="nfc-modal nfc-modal--open" role="dialog" aria-modal="true" aria-label={modal.key}>
+                    <div className="nfc-modal__bg" />
+                    <div className="nfc-modal__shell nfc-modal__shell--full" role="document">
+                        <button className="nfc-modal__close" aria-label="Cerrar" onClick={closeModal}>✕</button>
+
+                        {/* Texto izquierda */}
+                        <aside className="nfc-modal__left">
+                            <h3 className="nfc-modal__h">{curr?.title || "—"}</h3>
+                            <p className="nfc-modal__p">{curr?.desc || "Contenido próximamente."}</p>
+                        </aside>
+
+                        {/* Carrusel derecha */}
+                        <section className="nfc-modal__right">
+                            <button className="nfc-modal__nav nfc-modal__nav--prev" aria-label="Anterior" onClick={prevSlide}>‹</button>
+                            <div className="nfc-modal__stage nfc-modal__stage--clean">
+                                {curr && <img key={modal.index} src={curr.src} alt="" className="nfc-modal__img" />}
+                            </div>
+                            <button className="nfc-modal__nav nfc-modal__nav--next" aria-label="Siguiente" onClick={nextSlide}>›</button>
+                        </section>
                     </div>
                 </div>
             )}
