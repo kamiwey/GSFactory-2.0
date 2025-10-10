@@ -263,7 +263,6 @@ html {
   background: transparent;
 }
 .nfc-modal__shell--full {
-  /* alias semántico */
 }
 
 @keyframes nfcModalZoomIn {
@@ -295,7 +294,7 @@ html {
   background: rgba(0, 0, 0, 0.45);
 }
 
-/* Texto izquierda – más grande y con aire */
+/* Texto izquierda */
 .nfc-modal__left {
   display: flex;
   flex-direction: column;
@@ -322,7 +321,7 @@ html {
   max-width: 40ch;
 }
 
-/* Carrusel derecha – sin fondo translúcido, todo limpio */
+/* Carrusel derecha – sin fondo y SIN drop-shadow para quitar el borde */
 .nfc-modal__right {
   position: relative;
   display: grid;
@@ -346,7 +345,8 @@ html {
   transform: translateY(6px) scale(0.985);
   opacity: 0;
   animation: nfcSlideIn 0.24s ease-out forwards;
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.28));
+  /* quitamos el drop-shadow para eliminar el borde rectangular */
+  filter: none;
 }
 @keyframes nfcSlideIn {
   to {

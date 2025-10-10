@@ -25,7 +25,7 @@ import TarjetaNavarrete from "../../assets/img/Tarjeta-Navarrete.png";
 import TarjetaRebelion from "../../assets/img/Tarjeta-Rebelion.png";
 import TarjetaTecnocasa from "../../assets/img/Tarjeta-Tecnocasa.png";
 
-/* === helpers scroll lock ================================================== */
+/* === helpers scroll lock PARA LA INTRO (fijo, sin saltos) ================= */
 const lockPageScroll = () => {
     const y = window.scrollY || document.documentElement.scrollTop || 0;
     document.body.dataset.scrollY = String(y);
@@ -53,6 +53,18 @@ export default function NFC() {
 
     /* ===== MODAL STATE ======================================================= */
     const [modal, setModal] = useState(null); // { key, index }
+    // Lock ligero para el MODAL (sin tocar posición => sin saltos)
+    const modalLockRef = useRef({ html: "", body: "" });
+    const lockModal = () => {
+        modalLockRef.current.html = document.documentElement.style.overflow;
+        modalLockRef.current.body = document.body.style.overflow;
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+    };
+    const unlockModal = () => {
+        document.documentElement.style.overflow = modalLockRef.current.html || "";
+        document.body.style.overflow = modalLockRef.current.body || "";
+    };
 
     /* Smooth scroll (Lenis) */
     useLenis({ lerp: 0.16, wheelMultiplier: 1.1, enableOnTouch: false });
@@ -202,15 +214,12 @@ export default function NFC() {
         return mesh;
     };
 
-    /* ===== SCROLL LOCK DURANTE INTRO ======================================== */
+    /* ===== INTRO: lock + animaciones + unlock =============================== */
     useEffect(() => {
         window.scrollTo(0, 0);
-        lockPageScroll(); // bloqueamos al entrar en la escena
+        lockPageScroll(); // bloqueamos durante la intro
 
-        let safetyUnlock = setTimeout(() => {
-            // por si la intro se corta por cualquier motivo
-            try { unlockPageScroll(); } catch { }
-        }, 18000); // 18s de paracaídas
+        let safetyUnlock = setTimeout(() => { try { unlockPageScroll(); } catch { } }, 18000);
 
         let renderer, scene, camera, raf = 0;
         let amb, hemi, key, fill, rim;
@@ -231,20 +240,20 @@ export default function NFC() {
 
         const start = async () => {
             try {
-                const rendererLocal = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-                rendererLocal.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
-                rendererLocal.setSize(window.innerWidth, window.innerHeight);
-                rendererLocal.outputColorSpace = THREE.SRGBColorSpace;
-                rendererLocal.physicallyCorrectLights = true;
-                rendererLocal.toneMapping = THREE.ACESFilmicToneMapping;
-                rendererLocal.toneMappingExposure = TONE.exposure;
-                rendererLocal.setClearColor(0x000000, 0);
-                rendererLocal.shadowMap.enabled = true;
-                rendererLocal.shadowMap.type = THREE.PCFSoftShadowMap;
-                const gl = rendererLocal.getContext?.(); if (gl?.enable && gl?.DITHER) gl.enable(gl.DITHER);
-                mount.appendChild(rendererLocal.domElement);
+                const r = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
+                r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2.5));
+                r.setSize(window.innerWidth, window.innerHeight);
+                r.outputColorSpace = THREE.SRGBColorSpace;
+                r.physicallyCorrectLights = true;
+                r.toneMapping = THREE.ACESFilmicToneMapping;
+                r.toneMappingExposure = TONE.exposure;
+                r.setClearColor(0x000000, 0);
+                r.shadowMap.enabled = true;
+                r.shadowMap.type = THREE.PCFSoftShadowMap;
+                const gl = r.getContext?.(); if (gl?.enable && gl?.DITHER) gl.enable(gl.DITHER);
+                mount.appendChild(r.domElement);
 
-                renderer = rendererLocal;
+                renderer = r;
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(CAMERA.fov, window.innerWidth / window.innerHeight, 0.01, 100);
 
@@ -316,7 +325,7 @@ export default function NFC() {
                 model.scale.setScalar(INTRO.APPEAR_SCALE);
                 rootGroup.add(model);
                 scene.add(rootGroup);
-                root = rootGroup;
+                const root = rootGroup;
 
                 setReady(true);
 
@@ -384,9 +393,8 @@ export default function NFC() {
                     canFloat = true;
                     sectionRef.current?.classList.add("nfc--copy-on");
 
-                    // 🔓 desbloqueo garantizado
                     clearTimeout(safetyUnlock);
-                    unlockPageScroll();
+                    unlockPageScroll(); // 🔓 ahora sí: scroll habilitado
                 };
 
                 floatStart = performance.now();
@@ -449,8 +457,8 @@ export default function NFC() {
         personalizado: [],
     };
 
-    const openModal = (key) => { setModal({ key, index: 0 }); lockPageScroll(); };
-    const closeModal = () => { setModal(null); unlockPageScroll(); };
+    const openModal = (key) => { setModal({ key, index: 0 }); lockModal(); };
+    const closeModal = () => { setModal(null); unlockModal(); };
 
     const gallery = modal ? (GALLERIES[modal.key] || []) : [];
     const curr = modal ? gallery[modal.index] : null;
