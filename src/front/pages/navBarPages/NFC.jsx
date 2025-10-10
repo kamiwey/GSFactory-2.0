@@ -4,6 +4,9 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import "../styles/nfc.css";
 
+/* Smooth scroll (como en ArtToys) */
+import useLenis from "../../hooks/useLenis";
+
 /* IMÁGENES DE LAS CARDS */
 import imgLlaveros from "../../assets/img/Llaveros-Card.png";
 import imgTarjetas from "../../assets/img/Tarjetas-Card.png";
@@ -13,6 +16,13 @@ export default function NFC() {
     const sectionRef = useRef(null);
     const mountRef = useRef(null);
     const [ready, setReady] = useState(false);
+
+    /* === MODAL STATE ========================================================= */
+    const [modalItem, setModalItem] = useState(null); // {key,label,img} | null
+    const modalOpen = !!modalItem;
+
+    /* Smooth scroll – inicializamos, bloqueado hasta fin de intro (debajo) */
+    useLenis({ lerp: 0.16, wheelMultiplier: 1.1, enableOnTouch: false });
 
     // === CONFIG (baseline) =======================================================
     const glbUrl = useMemo(() => "/assets/model/llavero-completo.glb", []);
@@ -169,7 +179,28 @@ export default function NFC() {
         return mesh;
     }
 
+    // Bloqueo/desbloqueo de scroll por modal
     useEffect(() => {
+        if (modalOpen) {
+            const prevH = document.documentElement.style.overflow;
+            const prevB = document.body.style.overflow;
+            document.documentElement.style.overflow = "hidden";
+            document.body.style.overflow = "hidden";
+            return () => {
+                document.documentElement.style.overflow = prevH;
+                document.body.style.overflow = prevB;
+            };
+        }
+    }, [modalOpen]);
+
+    useEffect(() => {
+        // Arranca siempre arriba y bloquea scroll hasta acabar intro
+        window.scrollTo(0, 0);
+        const prevHtmlOverflow = document.documentElement.style.overflow;
+        const prevBodyOverflow = document.body.style.overflow;
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+
         let renderer, scene, camera, raf = 0;
         let amb, hemi, key, fill, rim;
         let introSpot, beamMesh;
@@ -280,10 +311,11 @@ export default function NFC() {
                 }
 
                 // Grupo padre (para flotación)
-                const root = new THREE.Group();
+                const rootGroup = new THREE.Group();
                 model.scale.setScalar(INTRO.APPEAR_SCALE);
-                root.add(model);
-                scene.add(root);
+                rootGroup.add(model);
+                scene.add(rootGroup);
+                root = rootGroup;
 
                 setReady(true);
 
@@ -366,6 +398,10 @@ export default function NFC() {
                     // Flotación + copy on
                     canFloat = true;
                     sectionRef.current?.classList.add("nfc--copy-on");
+
+                    // ✅ Desbloquea scroll al terminar la intro
+                    document.documentElement.style.overflow = prevHtmlOverflow;
+                    document.body.style.overflow = prevBodyOverflow;
                 };
 
                 // Render
@@ -386,6 +422,9 @@ export default function NFC() {
                 run();
             } catch (err) {
                 console.error("NFC GLB load error:", err);
+                // fallback: re-habilitar scroll
+                document.documentElement.style.overflow = prevHtmlOverflow;
+                document.body.style.overflow = prevBodyOverflow;
             }
         };
 
@@ -395,13 +434,34 @@ export default function NFC() {
             cancelAnimationFrame(raf);
             window.removeEventListener("resize", onResize);
             const el = mountRef.current; if (el && el.firstChild) el.removeChild(el.firstChild);
+            document.documentElement.style.overflow = prevHtmlOverflow;
+            document.body.style.overflow = prevBodyOverflow;
         };
     }, [glbUrl]);
+
+    // === Modal helpers ==========================================================
+    useEffect(() => {
+        if (!modalOpen) return;
+        const onKey = (e) => { if (e.key === "Escape") setModalItem(null); };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [modalOpen]);
+
+    const cards = [
+        { key: "llaveros", label: "LLAVEROS", img: imgLlaveros },
+        { key: "tarjetas", label: "TARJETAS", img: imgTarjetas },
+        { key: "personalizado", label: "PERSONALIZADO", img: imgPersonalizado },
+    ];
 
     return (
         <>
             {/* HERO */}
-            <section ref={sectionRef} className={`nfc ${ready ? "nfc--ready" : "nfc--loading"}`} aria-label="Sección NFC">
+            <section
+                ref={sectionRef}
+                className={`nfc ${ready ? "nfc--ready" : "nfc--loading"}`}
+                aria-label="Sección NFC"
+                aria-hidden={modalOpen ? "true" : "false"}
+            >
                 <div ref={mountRef} className="nfc__viewer" />
                 <header className="nfc__hud" aria-live="polite">
                     <h1 className="nfc__title">NFC</h1>
@@ -412,21 +472,44 @@ export default function NFC() {
                 </header>
             </section>
 
-            {/* CARDS — 3 centradas con separación */}
-            <section className="nfc-cards nfc-cards--three" aria-label="Opciones NFC">
-                {[
-                    { key: "llaveros", label: "LLAVEROS", img: imgLlaveros },
-                    { key: "tarjetas", label: "TARJETAS", img: imgTarjetas },
-                    { key: "personalizado", label: "PERSONALIZADO", img: imgPersonalizado },
-                ].map(({ key, label, img }) => (
-                    <article className="nfc-card" key={key}>
+            {/* CARDS */}
+            <section
+                className="nfc-cards nfc-cards--three"
+                aria-label="Opciones NFC"
+                aria-hidden={modalOpen ? "true" : "false"}
+            >
+                {cards.map((item) => (
+                    <button
+                        key={item.key}
+                        type="button"
+                        className="nfc-card"
+                        data-key={item.key}
+                        aria-label={item.label}
+                        onClick={() => setModalItem(item)}
+                    >
                         <div className="nfc-card__imgwrap">
-                            <img className="nfc-card__img" src={img} alt={`${label} - imagen ilustrativa`} loading="lazy" decoding="async" />
+                            <img className="nfc-card__img" src={item.img} alt="" loading="lazy" decoding="async" />
                         </div>
-                        <h3 className="nfc-card__title">{label}</h3>
-                    </article>
+                        <h3 className="nfc-card__title">{item.label}</h3>
+                    </button>
                 ))}
             </section>
+
+            {/* MODAL ZOOM-IN */}
+            {modalOpen && (
+                <div className="nfc-modal" role="dialog" aria-modal="true" aria-label={modalItem.label}>
+                    <button className="nfc-modal__backdrop" aria-label="Cerrar" onClick={() => setModalItem(null)} />
+                    <div className="nfc-modal__content" role="document">
+                        <button className="nfc-modal__close" aria-label="Cerrar" onClick={() => setModalItem(null)}>
+                            ✕
+                        </button>
+                        <div className="nfc-modal__figure">
+                            <img src={modalItem.img} alt="" className="nfc-modal__img" />
+                        </div>
+                        <h3 className="nfc-modal__title">{modalItem.label}</h3>
+                    </div>
+                </div>
+            )}
         </>
     );
 }
