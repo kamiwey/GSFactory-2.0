@@ -53,6 +53,8 @@ export default function NFC() {
 
     /* ===== MODAL STATE ======================================================= */
     const [modal, setModal] = useState(null); // { key, index }
+    const [isClosing, setIsClosing] = useState(false); // <- para animación de cierre
+
     // Lock ligero para el MODAL (sin tocar posición => sin saltos)
     const modalLockRef = useRef({ html: "", body: "" });
     const lockModal = () => {
@@ -325,7 +327,7 @@ export default function NFC() {
                 model.scale.setScalar(INTRO.APPEAR_SCALE);
                 rootGroup.add(model);
                 scene.add(rootGroup);
-                const root = rootGroup;
+                root = rootGroup;
 
                 setReady(true);
 
@@ -457,8 +459,13 @@ export default function NFC() {
         personalizado: [],
     };
 
-    const openModal = (key) => { setModal({ key, index: 0 }); lockModal(); };
-    const closeModal = () => { setModal(null); unlockModal(); };
+    const openModal = (key) => { setIsClosing(false); setModal({ key, index: 0 }); lockModal(); };
+    const closeModal = () => {
+        // Animación de salida: mantenemos el modal montado mientras hace el zoom-out
+        setIsClosing(true);
+        const EXIT_MS = 260; // debe coincidir con CSS (nfcModalZoomOut)
+        setTimeout(() => { setModal(null); setIsClosing(false); unlockModal(); }, EXIT_MS + 20);
+    };
 
     const gallery = modal ? (GALLERIES[modal.key] || []) : [];
     const curr = modal ? gallery[modal.index] : null;
@@ -523,8 +530,13 @@ export default function NFC() {
             </section>
 
             {/* MODAL FULLSCREEN */}
-            {modal && (
-                <div className="nfc-modal nfc-modal--open" role="dialog" aria-modal="true" aria-label={modal.key}>
+            {(modal || isClosing) && (
+                <div
+                    className={`nfc-modal ${isClosing ? "nfc-modal--closing" : "nfc-modal--open"}`}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={modal?.key || "modal"}
+                >
                     <div className="nfc-modal__bg" />
                     <div className="nfc-modal__shell nfc-modal__shell--full" role="document">
                         <button className="nfc-modal__close" aria-label="Cerrar" onClick={closeModal}>✕</button>

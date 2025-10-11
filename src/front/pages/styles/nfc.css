@@ -8,7 +8,7 @@ html {
   --nfc-bg-dur: 1900ms;
 }
 
-/* ===== HERO ===== */
+/* ===== HERO (sin cambios funcionales) ===== */
 .nfc {
   position: relative;
   background: #000;
@@ -32,7 +32,6 @@ html {
 .nfc--loading .nfc__viewer {
   opacity: 0;
 }
-
 .nfc.nfc--bg-on {
   animation: nfcBgIn var(--nfc-bg-dur) ease-in forwards;
 }
@@ -61,7 +60,6 @@ html {
     right: 12vw;
   }
 }
-
 .nfc__title {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
     sans-serif;
@@ -116,7 +114,6 @@ html {
 .nfc.nfc--copy-on .nfc__desc {
   animation: nfcDescFade 560ms ease-out 120ms both;
 }
-
 @media (max-width: 980px) {
   .nfc__hud {
     right: 50%;
@@ -132,7 +129,7 @@ html {
   }
 }
 
-/* ===== CARDS ===== */
+/* ===== CARDS (igual) ===== */
 .nfc-cards {
   position: relative;
   width: 100%;
@@ -149,7 +146,6 @@ html {
   align-items: end;
   min-height: 50svh;
 }
-
 .nfc-card {
   -webkit-appearance: none;
   appearance: none;
@@ -175,7 +171,6 @@ html {
   outline: 2px dashed rgba(255, 255, 255, 0.85);
   outline-offset: 4px;
 }
-
 .nfc-card__imgwrap {
   min-height: 0;
   display: grid;
@@ -203,17 +198,15 @@ html {
     transform: translateY(0);
   }
 }
-
 .nfc-card__title {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
     sans-serif;
-  font-size: clamp(20px, 2.2vw, 32px);
+  font-size: clamp(20px, 2.2vw, 62px);
   line-height: 1.05;
   color: #fff;
   margin: clamp(8px, 1.4vw, 14px) 0 0;
   text-align: center;
 }
-
 @media (max-width: 1200px) {
   .nfc-cards--three {
     grid-template-columns: repeat(2, minmax(220px, 1fr));
@@ -232,7 +225,7 @@ html {
   }
 }
 
-/* ===== MODAL FULLSCREEN =================================================== */
+/* ===== MODAL FULLSCREEN (apertura/cierre suave) ========================== */
 .nfc-modal {
   position: fixed;
   inset: 0;
@@ -244,9 +237,26 @@ html {
   position: absolute;
   inset: 0;
   background: var(--nfc-bg);
+  opacity: 0;
+}
+.nfc-modal--open .nfc-modal__bg {
+  animation: nfcBgFadeIn 0.28s ease-out forwards;
+}
+.nfc-modal--closing .nfc-modal__bg {
+  animation: nfcBgFadeOut 0.22s ease-in forwards;
+}
+@keyframes nfcBgFadeIn {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes nfcBgFadeOut {
+  to {
+    opacity: 0;
+  }
 }
 
-/* Full-screen shell sin sombras ni bordes, se funde con el fondo */
+/* Shell sin sombras ni bordes. Animamos entrada/salida */
 .nfc-modal__shell {
   position: relative;
   width: 100vw;
@@ -255,20 +265,30 @@ html {
   grid-template-columns: 1fr 1.3fr;
   gap: clamp(24px, 3vw, 56px);
   padding: clamp(24px, 3vw, 56px);
-  transform: scale(0.96);
-  opacity: 0;
-  animation: nfcModalZoomIn 0.28s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
   box-shadow: none;
   border-radius: 0;
   background: transparent;
+  transform: scale(0.96);
+  opacity: 0;
 }
-.nfc-modal__shell--full {
+.nfc-modal--open .nfc-modal__shell {
+  animation: nfcModalZoomIn 280ms cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+}
+.nfc-modal--closing .nfc-modal__shell {
+  animation: nfcModalZoomOut 240ms ease forwards;
+  pointer-events: none;
 }
 
 @keyframes nfcModalZoomIn {
   to {
     transform: scale(1);
     opacity: 1;
+  }
+}
+@keyframes nfcModalZoomOut {
+  to {
+    transform: scale(0.96);
+    opacity: 0;
   }
 }
 
@@ -294,19 +314,19 @@ html {
   background: rgba(0, 0, 0, 0.45);
 }
 
-/* Texto izquierda */
+/* Texto izquierda / carrusel derecha (sin cambios visuales) */
 .nfc-modal__left {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-  padding: clamp(8px, 1.6vw, 16px);
+  padding: clamp(8px, 15vw, 156px);
 }
 .nfc-modal__h {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
     sans-serif;
   color: #fff;
-  font-size: clamp(36px, 4.8vw, 72px);
+  font-size: clamp(46px, 4.8vw, 102px);
   line-height: 1;
   margin: 0 0 0.25em;
 }
@@ -321,7 +341,6 @@ html {
   max-width: 40ch;
 }
 
-/* Carrusel derecha – sin fondo y SIN drop-shadow para quitar el borde */
 .nfc-modal__right {
   position: relative;
   display: grid;
@@ -345,8 +364,7 @@ html {
   transform: translateY(6px) scale(0.985);
   opacity: 0;
   animation: nfcSlideIn 0.24s ease-out forwards;
-  /* quitamos el drop-shadow para eliminar el borde rectangular */
-  filter: none;
+  filter: none; /* sin borde rectangular */
 }
 @keyframes nfcSlideIn {
   to {
