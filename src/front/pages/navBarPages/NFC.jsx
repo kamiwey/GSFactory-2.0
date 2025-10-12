@@ -624,8 +624,8 @@ export default function NFC() {
                                     };
                                     return (
                                         <span className="fh-wrap" key={modal.index} onMouseMove={onMove} onMouseLeave={onLeave}>
-                                            <img src={src} alt="" className="nfc-modal__img fh-front" draggable="false" style={{ opacity: 1 }} />
-                                            <img src={backUrl} alt="" className="nfc-modal__img fh-back" aria-hidden="true" draggable="false" style={{ opacity: 0 }} />
+                                            <img src={src} alt="" className="nfc-modal__img fh-front" draggable="false" style={{ opacity: 1, animation: 'none' }} />
+                                            <img src={backUrl} alt="" className="nfc-modal__img fh-back" aria-hidden="true" draggable="false" style={{ opacity: 0, animation: 'none' }} />
                                         </span>
                                     );
                                 })()}

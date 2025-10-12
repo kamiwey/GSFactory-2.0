@@ -422,3 +422,11 @@ html {
     transform: none !important;
   }
 }
+
+/* === Hover front/back en imágenes del modal (aislado) === */
+.fh-wrap{ position:relative; display:inline-block; line-height:0; }
+.fh-front{ position:relative; z-index:1; transition:opacity .22s ease; }
+.fh-back{ position:absolute; inset:0; opacity:0; pointer-events:none; transition:opacity .22s ease; }
+.fh-wrap:hover .fh-front{ opacity:0; }
+.fh-wrap:hover .fh-back{ opacity:1; }
+@media (hover:none){ .fh-wrap:hover .fh-front{opacity:1;} .fh-wrap:hover .fh-back{opacity:0;} }
