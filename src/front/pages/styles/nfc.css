@@ -322,9 +322,6 @@ html {
   align-items: flex-start;
   padding: clamp(8px, 15vw, 156px);
 }
-.nfc-modal__copy {
-  /* sin animación aquí; la disparan los hijos, como en el HUD */
-}
 
 .nfc-modal__h {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
