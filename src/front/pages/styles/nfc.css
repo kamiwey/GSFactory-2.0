@@ -8,7 +8,7 @@ html {
   --nfc-bg-dur: 1900ms;
 }
 
-/* ===== HERO (sin cambios funcionales) ===== */
+/* ===== HERO ===== */
 .nfc {
   position: relative;
   background: #000;
@@ -60,6 +60,7 @@ html {
     right: 12vw;
   }
 }
+
 .nfc__title {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
     sans-serif;
@@ -114,6 +115,7 @@ html {
 .nfc.nfc--copy-on .nfc__desc {
   animation: nfcDescFade 560ms ease-out 120ms both;
 }
+
 @media (max-width: 980px) {
   .nfc__hud {
     right: 50%;
@@ -129,7 +131,7 @@ html {
   }
 }
 
-/* ===== CARDS (igual) ===== */
+/* ===== CARDS ===== */
 .nfc-cards {
   position: relative;
   width: 100%;
@@ -225,7 +227,7 @@ html {
   }
 }
 
-/* ===== MODAL FULLSCREEN (apertura/cierre suave) ========================== */
+/* ===== MODAL FULLSCREEN ===== */
 .nfc-modal {
   position: fixed;
   inset: 0;
@@ -240,10 +242,10 @@ html {
   opacity: 0;
 }
 .nfc-modal--open .nfc-modal__bg {
-  animation: nfcBgFadeIn 0.28s ease-out forwards;
+  animation: nfcBgFadeIn 0.38s ease-out forwards;
 }
 .nfc-modal--closing .nfc-modal__bg {
-  animation: nfcBgFadeOut 0.22s ease-in forwards;
+  animation: nfcBgFadeOut 0.34s ease-in forwards;
 }
 @keyframes nfcBgFadeIn {
   to {
@@ -256,7 +258,6 @@ html {
   }
 }
 
-/* Shell sin sombras ni bordes. Animamos entrada/salida */
 .nfc-modal__shell {
   position: relative;
   width: 100vw;
@@ -268,17 +269,16 @@ html {
   box-shadow: none;
   border-radius: 0;
   background: transparent;
-  transform: scale(0.96);
+  transform: scale(0.965);
   opacity: 0;
 }
 .nfc-modal--open .nfc-modal__shell {
-  animation: nfcModalZoomIn 280ms cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  animation: nfcModalZoomIn 380ms cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
 }
 .nfc-modal--closing .nfc-modal__shell {
-  animation: nfcModalZoomOut 240ms ease forwards;
+  animation: nfcModalZoomOut 340ms cubic-bezier(0.33, 0, 0.2, 1) forwards;
   pointer-events: none;
 }
-
 @keyframes nfcModalZoomIn {
   to {
     transform: scale(1);
@@ -287,7 +287,7 @@ html {
 }
 @keyframes nfcModalZoomOut {
   to {
-    transform: scale(0.96);
+    transform: scale(0.965);
     opacity: 0;
   }
 }
@@ -314,7 +314,7 @@ html {
   background: rgba(0, 0, 0, 0.45);
 }
 
-/* Texto izquierda / carrusel derecha (sin cambios visuales) */
+/* — Izquierda: COPY con MISMO efecto que HUD — */
 .nfc-modal__left {
   display: flex;
   flex-direction: column;
@@ -322,6 +322,10 @@ html {
   align-items: flex-start;
   padding: clamp(8px, 15vw, 156px);
 }
+.nfc-modal__copy {
+  /* sin animación aquí; la disparan los hijos, como en el HUD */
+}
+
 .nfc-modal__h {
   font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
     sans-serif;
@@ -329,6 +333,10 @@ html {
   font-size: clamp(46px, 4.8vw, 102px);
   line-height: 1;
   margin: 0 0 0.25em;
+  /* Estado inicial como el HUD */
+  opacity: 0;
+  transform: translateY(36px);
+  filter: blur(0.5px);
 }
 .nfc-modal__p {
   color: #fff;
@@ -339,6 +347,17 @@ html {
   line-height: 1.18;
   margin: 0;
   max-width: 40ch;
+  /* Estado inicial como el HUD */
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+/* Dispara las MISMAS animaciones cuando cambia el slide (key en .nfc-modal__copy) */
+.nfc-modal__copy--animate .nfc-modal__h {
+  animation: nfcTitleRise 660ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+.nfc-modal__copy--animate .nfc-modal__p {
+  animation: nfcDescFade 560ms ease-out 120ms both;
 }
 
 .nfc-modal__right {
@@ -363,8 +382,8 @@ html {
   object-fit: contain;
   transform: translateY(6px) scale(0.985);
   opacity: 0;
-  animation: nfcSlideIn 0.24s ease-out forwards;
-  filter: none; /* sin borde rectangular */
+  animation: nfcSlideIn 0.32s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  filter: none;
 }
 @keyframes nfcSlideIn {
   to {
@@ -412,21 +431,51 @@ html {
     grid-template-columns: 56px 1fr 56px;
   }
 }
+
 @media (prefers-reduced-motion: reduce) {
   .nfc__title,
   .nfc__desc,
   .nfc-card__img,
   .nfc-modal__shell,
-  .nfc-modal__img {
+  .nfc-modal__img,
+  .nfc-modal__h,
+  .nfc-modal__p {
     animation: none !important;
     transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
   }
 }
 
 /* === Hover front/back en imágenes del modal (aislado) === */
-.fh-wrap{ position:relative; display:inline-block; line-height:0; }
-.fh-front{ position:relative; z-index:1; transition:opacity .22s ease; }
-.fh-back{ position:absolute; inset:0; opacity:0; pointer-events:none; transition:opacity .22s ease; }
-.fh-wrap:hover .fh-front{ opacity:0; }
-.fh-wrap:hover .fh-back{ opacity:1; }
-@media (hover:none){ .fh-wrap:hover .fh-front{opacity:1;} .fh-wrap:hover .fh-back{opacity:0;} }
+.fh-wrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+.fh-front {
+  position: relative;
+  z-index: 1;
+  transition: opacity 0.28s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+.fh-back {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.28s cubic-bezier(0.2, 0.8, 0.25, 1);
+}
+.fh-wrap:hover .fh-front {
+  opacity: 0;
+}
+.fh-wrap:hover .fh-back {
+  opacity: 1;
+}
+@media (hover: none) {
+  .fh-wrap:hover .fh-front {
+    opacity: 1;
+  }
+  .fh-wrap:hover .fh-back {
+    opacity: 0;
+  }
+}

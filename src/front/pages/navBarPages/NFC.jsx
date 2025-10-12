@@ -10,7 +10,7 @@ import imgLlaveros from "../../assets/img/Llaveros-Card.png";
 import imgTarjetas from "../../assets/img/Tarjetas-Card.png";
 import imgPersonalizado from "../../assets/img/Stand-Resto.png";
 
-/* GALLERIES — MODAL */
+/* GALLERIES — MODAL (caras front) */
 import LlaveroEurogas from "../../assets/img/Llavero-Eurogas.png";
 import LlaveroMasMusculo from "../../assets/img/Llavero-MasMusculo.png";
 import LlaveroOzono from "../../assets/img/Llavero-Ozono.png";
@@ -461,9 +461,8 @@ export default function NFC() {
 
     const openModal = (key) => { setIsClosing(false); setModal({ key, index: 0 }); lockModal(); };
     const closeModal = () => {
-        // Animación de salida: mantenemos el modal montado mientras hace el zoom-out
         setIsClosing(true);
-        const EXIT_MS = 260; // debe coincidir con CSS (nfcModalZoomOut)
+        const EXIT_MS = 340; // sincronizado con CSS
         setTimeout(() => { setModal(null); setIsClosing(false); unlockModal(); }, EXIT_MS + 20);
     };
 
@@ -488,7 +487,6 @@ export default function NFC() {
         };
         window.addEventListener("keydown", onKeys);
         return () => window.removeEventListener("keydown", onKeys);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [modal]);
 
     return (
@@ -541,18 +539,22 @@ export default function NFC() {
                     <div className="nfc-modal__shell nfc-modal__shell--full" role="document">
                         <button className="nfc-modal__close" aria-label="Cerrar" onClick={closeModal}>✕</button>
 
-                        {/* Texto izquierda */}
+                        {/* Texto izquierda — ahora con el MISMO efecto que el HUD */}
                         <aside className="nfc-modal__left">
-                            <h3 className="nfc-modal__h">{curr?.title || "—"}</h3>
-                            <p className="nfc-modal__p">{curr?.desc || "Contenido próximamente."}</p>
+                            <div
+                                className="nfc-modal__copy nfc-modal__copy--animate"
+                                key={`copy-${modal?.index ?? 0}`}
+                            >
+                                <h3 className="nfc-modal__h">{curr?.title || "—"}</h3>
+                                <p className="nfc-modal__p">{curr?.desc || "Contenido próximamente."}</p>
+                            </div>
                         </aside>
 
-                        {/* Carrusel derecha */}
+                        {/* Carrusel derecha (hover pixel-perfect ya existente) */}
                         <section className="nfc-modal__right">
                             <button className="nfc-modal__nav nfc-modal__nav--prev" aria-label="Anterior" onClick={prevSlide}>‹</button>
                             <div className="nfc-modal__stage nfc-modal__stage--clean">
                                 {curr && (() => {
-                                    // Buscar cara trasera: usar curr.back si existe; si no, localizar *-Back.* en assets (case-insensitive)
                                     const backs = import.meta.glob('../../assets/img/*-Back.{png,jpg,jpeg,webp}', { eager: true, as: 'url' });
                                     const src = curr.src;
                                     let backUrl = curr.back || null;
@@ -569,6 +571,7 @@ export default function NFC() {
                                             <img key={modal.index} src={src} alt="" className="nfc-modal__img" draggable="false" />
                                         );
                                     }
+
                                     const onMove = (e) => {
                                         const wrap = e.currentTarget;
                                         if (wrap._raf) return;
@@ -598,13 +601,13 @@ export default function NFC() {
                                             }
                                             if (wrap._drawnSrc !== front.currentSrc) {
                                                 canvas.width = nw; canvas.height = nh;
-                                                try { ctx.clearRect(0, 0, nw, nh); ctx.drawImage(front, 0, 0, nw, nh); } catch {}
+                                                try { ctx.clearRect(0, 0, nw, nh); ctx.drawImage(front, 0, 0, nw, nh); } catch { }
                                                 wrap._drawnSrc = front.currentSrc;
                                             }
                                             const sx = Math.floor((cx / rect.width) * nw);
                                             const sy = Math.floor((cy / rect.height) * nh);
                                             let a = 0;
-                                            try { a = ctx.getImageData(sx, sy, 1, 1).data[3] || 0; } catch {}
+                                            try { a = ctx.getImageData(sx, sy, 1, 1).data[3] || 0; } catch { }
                                             if (a > 16) {
                                                 front.style.opacity = '0';
                                                 back.style.opacity = '1';
@@ -622,6 +625,7 @@ export default function NFC() {
                                         if (front) front.style.opacity = '1';
                                         if (back) back.style.opacity = '0';
                                     };
+
                                     return (
                                         <span className="fh-wrap" key={modal.index} onMouseMove={onMove} onMouseLeave={onLeave}>
                                             <img src={src} alt="" className="nfc-modal__img fh-front" draggable="false" style={{ opacity: 1, animation: 'none' }} />
