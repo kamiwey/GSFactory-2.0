@@ -551,7 +551,84 @@ export default function NFC() {
                         <section className="nfc-modal__right">
                             <button className="nfc-modal__nav nfc-modal__nav--prev" aria-label="Anterior" onClick={prevSlide}>‹</button>
                             <div className="nfc-modal__stage nfc-modal__stage--clean">
-                                {curr && <img key={modal.index} src={curr.src} alt="" className="nfc-modal__img" />}
+                                {curr && (() => {
+                                    // Buscar cara trasera: usar curr.back si existe; si no, localizar *-Back.* en assets (case-insensitive)
+                                    const backs = import.meta.glob('../../assets/img/*-Back.{png,jpg,jpeg,webp}', { eager: true, as: 'url' });
+                                    const src = curr.src;
+                                    let backUrl = curr.back || null;
+                                    if (!backUrl && typeof src === 'string') {
+                                        const srcLc = src.toLowerCase();
+                                        for (const [p, url] of Object.entries(backs)) {
+                                            const fileLc = (p.split('/').pop() || '').toLowerCase();
+                                            const base = fileLc.replace(/-back\.[^/.]+$/i, '');
+                                            if (srcLc.includes(base)) { backUrl = url; break; }
+                                        }
+                                    }
+                                    if (!backUrl) {
+                                        return (
+                                            <img key={modal.index} src={src} alt="" className="nfc-modal__img" draggable="false" />
+                                        );
+                                    }
+                                    const onMove = (e) => {
+                                        const wrap = e.currentTarget;
+                                        if (wrap._raf) return;
+                                        wrap._raf = requestAnimationFrame(() => {
+                                            wrap._raf = null;
+                                            const front = wrap.querySelector('.fh-front');
+                                            const back = wrap.querySelector('.fh-back');
+                                            if (!front || !back) return;
+                                            const rect = front.getBoundingClientRect();
+                                            const cx = e.clientX - rect.left;
+                                            const cy = e.clientY - rect.top;
+                                            if (cx < 0 || cy < 0 || cx > rect.width || cy > rect.height) {
+                                                front.style.opacity = '1';
+                                                back.style.opacity = '0';
+                                                return;
+                                            }
+                                            const nw = front.naturalWidth || 0;
+                                            const nh = front.naturalHeight || 0;
+                                            if (!nw || !nh) return;
+                                            let canvas = wrap._canvas;
+                                            let ctx = wrap._ctx;
+                                            if (!canvas) {
+                                                canvas = document.createElement('canvas');
+                                                canvas.width = nw; canvas.height = nh;
+                                                ctx = canvas.getContext('2d', { willReadFrequently: true });
+                                                wrap._canvas = canvas; wrap._ctx = ctx; wrap._drawnSrc = '';
+                                            }
+                                            if (wrap._drawnSrc !== front.currentSrc) {
+                                                canvas.width = nw; canvas.height = nh;
+                                                try { ctx.clearRect(0, 0, nw, nh); ctx.drawImage(front, 0, 0, nw, nh); } catch {}
+                                                wrap._drawnSrc = front.currentSrc;
+                                            }
+                                            const sx = Math.floor((cx / rect.width) * nw);
+                                            const sy = Math.floor((cy / rect.height) * nh);
+                                            let a = 0;
+                                            try { a = ctx.getImageData(sx, sy, 1, 1).data[3] || 0; } catch {}
+                                            if (a > 16) {
+                                                front.style.opacity = '0';
+                                                back.style.opacity = '1';
+                                            } else {
+                                                front.style.opacity = '1';
+                                                back.style.opacity = '0';
+                                            }
+                                        });
+                                    };
+                                    const onLeave = (e) => {
+                                        const wrap = e.currentTarget;
+                                        if (wrap._raf) { cancelAnimationFrame(wrap._raf); wrap._raf = null; }
+                                        const front = wrap.querySelector('.fh-front');
+                                        const back = wrap.querySelector('.fh-back');
+                                        if (front) front.style.opacity = '1';
+                                        if (back) back.style.opacity = '0';
+                                    };
+                                    return (
+                                        <span className="fh-wrap" key={modal.index} onMouseMove={onMove} onMouseLeave={onLeave}>
+                                            <img src={src} alt="" className="nfc-modal__img fh-front" draggable="false" style={{ opacity: 1 }} />
+                                            <img src={backUrl} alt="" className="nfc-modal__img fh-back" aria-hidden="true" draggable="false" style={{ opacity: 0 }} />
+                                        </span>
+                                    );
+                                })()}
                             </div>
                             <button className="nfc-modal__nav nfc-modal__nav--next" aria-label="Siguiente" onClick={nextSlide}>›</button>
                         </section>
