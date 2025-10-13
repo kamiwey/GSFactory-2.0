@@ -2,17 +2,18 @@
 .gf-colabs-wrapper {
   --bg: #bb8d43;
   --text: #ffffff;
+
+  /* Geometría carrusel (NO cambiada) */
   --radius: 420px;
   --ringZ: -120px;
   --itemW: clamp(180px, 22vw, 320px);
   --itemH: clamp(180px, 22vw, 320px);
   --transition: 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  --cardSize: clamp(
-    120px,
-    12vw,
-    160px
-  ); /* altura anterior aproximada, ahora cuadrada */
+  /* Nuevo: misma anchura que el ring para posicionar flechas */
+  --ringW: min(86%, 1080px);
+
+  --cardSize: clamp(120px, 12vw, 160px);
 
   box-sizing: border-box;
   min-height: 100vh;
@@ -67,10 +68,10 @@
   opacity: 0.95;
 }
 
-/* Rueda 3D */
+/* Rueda 3D (NO tocada) */
 .gf-ring {
   position: relative;
-  width: min(86%, 1080px);
+  width: var(--ringW);
   height: 100%;
   transform-style: preserve-3d;
   transition: transform var(--transition);
@@ -105,7 +106,7 @@
   pointer-events: none;
 }
 
-/* Flechas centradas verticalmente */
+/* Flechas: pegadas a los bordes del carrusel (sin tocar carrusel) */
 .gf-arrow {
   position: absolute;
   top: 50%;
@@ -128,20 +129,22 @@
   transform: scale(1.06);
   background: rgba(0, 0, 0, 0.18);
 }
+
+/* cálculo: centro del viewport ± mitad del ancho del ring, más un offset */
 .gf-left {
-  left: 6px;
+  left: calc(50% - (var(--ringW) / 2) - 28px);
 }
 .gf-right {
-  right: 6px;
+  left: calc(50% + (var(--ringW) / 2) + 28px);
 }
 
 /* Cards: cuadradas y centradas */
 .gf-colabs-cards {
   display: grid;
   grid-template-columns: repeat(6, var(--cardSize));
-  grid-auto-rows: var(--cardSize); /* asegura el cuadrado */
+  grid-auto-rows: var(--cardSize);
   gap: clamp(10px, 1.2vw, 14px);
-  justify-content: center; /* centrado horizontal */
+  justify-content: center;
   align-items: center;
 }
 
@@ -149,7 +152,7 @@
   position: relative;
   width: 100%;
   height: 100%;
-  aspect-ratio: 1 / 1; /* cuadrado real */
+  aspect-ratio: 1 / 1;
   border-radius: 14px;
   border: 2px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.06);
@@ -204,7 +207,7 @@
   pointer-events: none;
 }
 
-/* Responsivo */
+/* Responsivo (solo ajusto el offset para que no invadan el carrusel en móviles) */
 @media (max-width: 1280px) {
   .gf-colabs-stage {
     min-height: clamp(360px, 52vh, 640px);
@@ -218,6 +221,12 @@
   .gf-colabs-cards {
     grid-template-columns: repeat(3, var(--cardSize));
   }
+  .gf-left {
+    left: calc(50% - (var(--ringW) / 2) - 22px);
+  }
+  .gf-right {
+    left: calc(50% + (var(--ringW) / 2) + 22px);
+  }
 }
 @media (max-width: 560px) {
   .gf-colabs-cards {
@@ -227,5 +236,11 @@
     width: 40px;
     height: 40px;
     font-size: 24px;
+  }
+  .gf-left {
+    left: calc(50% - (var(--ringW) / 2) - 18px);
+  }
+  .gf-right {
+    left: calc(50% + (var(--ringW) / 2) + 18px);
   }
 }

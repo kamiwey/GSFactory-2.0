@@ -14,24 +14,23 @@ const proyectosSeed = [
 const Colaboraciones = () => {
     const [index, setIndex] = useState(0);
     const step = useMemo(() => 360 / proyectosSeed.length, []);
-    // Rotación acumulada para giro infinito sin retrocesos
+    // rotación acumulada: giro infinito sin retrocesos
     const [theta, setTheta] = useState(0);
 
     const onNext = () => {
         setIndex(i => (i + 1) % proyectosSeed.length);
-        setTheta(t => t - step); // sentido horario
+        setTheta(t => t - step);
     };
-
     const onPrev = () => {
         setIndex(i => (i - 1 + proyectosSeed.length) % proyectosSeed.length);
-        setTheta(t => t + step); // sentido antihorario
+        setTheta(t => t + step);
     };
 
     const seleccionado = proyectosSeed[index];
 
     return (
         <section className="gf-colabs-wrapper" aria-label="Colaboraciones G’s Factory">
-            {/* STAGE: protagonista centrado */}
+            {/* Stage protagonista centrado */}
             <div className="gf-colabs-stage">
                 {/* Copy overlay (izquierda) */}
                 <aside className="gf-colabs-side">
@@ -39,8 +38,10 @@ const Colaboraciones = () => {
                     <p className="gf-colabs-desc">{seleccionado.descripcion}</p>
                 </aside>
 
+                {/* Flechas (su posición se calcula en CSS para pegarlas al carrusel) */}
                 <button className="gf-arrow gf-left" onClick={onPrev} aria-label="Anterior">‹</button>
 
+                {/* Carrusel 3D (NO tocado tamaño ni posición) */}
                 <div
                     className="gf-ring"
                     style={{ transform: `translateZ(var(--ringZ)) rotateY(${theta}deg)` }}
@@ -59,14 +60,13 @@ const Colaboraciones = () => {
                 <button className="gf-arrow gf-right" onClick={onNext} aria-label="Siguiente">›</button>
             </div>
 
-            {/* GRID de cards: cuadradas, centradas */}
+            {/* Cards cuadradas y centradas (sin cambios funcionales) */}
             <div className="gf-colabs-cards" role="list">
                 {proyectosSeed.map((p, i) => (
                     <button
                         key={p.id}
                         className={`gf-card ${i === index ? "is-selected" : ""}`}
                         onClick={() => {
-                            // Ajustamos también la rotación acumulada para saltar al seleccionado
                             const delta = ((i - index + proyectosSeed.length) % proyectosSeed.length);
                             setTheta(t => t - delta * step);
                             setIndex(i);
@@ -84,5 +84,6 @@ const Colaboraciones = () => {
         </section>
     );
 };
+
 
 export { Colaboraciones };
