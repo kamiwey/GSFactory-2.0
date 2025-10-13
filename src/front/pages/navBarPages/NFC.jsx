@@ -1,4 +1,3 @@
-// src/front/pages/navBarPages/NFC.jsx
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -47,7 +46,7 @@ const lockPageScroll = () => {
   html.overflow = "hidden";
   body.overflow = "hidden";
   body.position = "fixed";
-  body.inset = "0";
+  body.inset = "0";     // top/right/bottom/left = 0 => sin saltos
   body.width = "100%";
 };
 const unlockPageScroll = () => {
@@ -63,18 +62,16 @@ const unlockPageScroll = () => {
 export default function NFC() {
   const sectionRef = useRef(null);
   const mountRef = useRef(null);
+  const cardsRef = useRef(null);
   const [ready, setReady] = useState(false);
 
   /* ===== MODAL STATE ======================================================= */
   const [modal, setModal] = useState(null); // { key, index }
   const [isClosing, setIsClosing] = useState(false);
 
-  // Hover SOLO sobre la imagen (no el contenedor)
+  // Hover SOLO sobre la imagen
   const [isImgHover, setIsImgHover] = useState(false);
-  useEffect(() => {
-    // reset al cambiar slide o colección
-    setIsImgHover(false);
-  }, [modal?.index, modal?.key]);
+  useEffect(() => { setIsImgHover(false); }, [modal?.index, modal?.key]);
 
   // Lock ligero para el MODAL (no movemos layout)
   const modalLockRef = useRef({ html: "", body: "" });
@@ -84,7 +81,7 @@ export default function NFC() {
     document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
   };
-  const unlockModalScroll = () => {
+  const unlockModal = () => {
     document.documentElement.style.overflow = modalLockRef.current.html || "";
     document.body.style.overflow = modalLockRef.current.body || "";
   };
@@ -100,9 +97,9 @@ export default function NFC() {
   const LIGHTS = {
     ambient: 0.2,
     hemiSky: 0x9fc7ff, hemiGround: 0x6b5e51, hemiIntensity: 0.35,
-    key: { intensity: 1.0, pos: [1.8, 1.0, 2.6] },
-    fill: { intensity: 0.5, pos: [-1.6, 0.6, 1.0] },
-    rim: { intensity: 0.45, pos: [-2.2, 1.4, -2.1] },
+    key: { intensity: 1.00, pos: [1.8, 1.0, 2.6] },
+    fill: { intensity: 0.50, pos: [-1.6, 0.6, 1.0] },
+    rim: { intensity: 0.45, pos: [-2.2, 1.4, -2.1] }
   };
   const ZOOM = { from: 0.05, to: 1.05, duration: 1900 };
   const HOLD_MS = 1000;
@@ -133,8 +130,7 @@ export default function NFC() {
     o.scale.setScalar(from);
     const s = performance.now();
     const f = (n) => {
-      const t = Math.min(1, (n - s) / duration),
-        k = easeInOutCubic(t);
+      const t = Math.min(1, (n - s) / duration), k = easeInOutCubic(t);
       o.scale.setScalar(from + (to - from) * k);
       if (t < 1) requestAnimationFrame(f);
     };
@@ -146,8 +142,7 @@ export default function NFC() {
     const q = new THREE.Quaternion();
     const s = performance.now();
     const f = (n) => {
-      const t = Math.min(1, (n - s) / dur),
-        k = easeInOutCubic(t);
+      const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
       o.quaternion.copy(q0);
       q.setFromAxisAngle(ay, rad * k);
       o.quaternion.premultiply(q);
@@ -156,11 +151,9 @@ export default function NFC() {
     requestAnimationFrame(f);
   };
   const animateScaleTo = (o, to, dur = 800) => {
-    const from = o.scale.x,
-      s = performance.now();
+    const from = o.scale.x, s = performance.now();
     const f = (n) => {
-      const t = Math.min(1, (n - s) / dur),
-        k = easeInOutCubic(t);
+      const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
       o.scale.setScalar(from + (to - from) * k);
       if (t < 1) requestAnimationFrame(f);
     };
@@ -174,20 +167,21 @@ export default function NFC() {
     const qT = qr.clone().multiply(qy).multiply(qp).multiply(q0);
     const s = performance.now();
     const f = (n) => {
-      const t = Math.min(1, (n - s) / dur),
-        k = easeInOutCubic(t);
+      const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
       o.quaternion.slerpQuaternions(q0, qT, k);
       if (t < 1) requestAnimationFrame(f);
     };
     requestAnimationFrame(f);
   };
   const animatePositionTo = (o, to, dur) => {
-    const from = o.position.clone(),
-      s = performance.now();
+    const from = o.position.clone(), s = performance.now();
     const f = (n) => {
-      const t = Math.min(1, (n - s) / dur),
-        k = easeInOutCubic(t);
-      o.position.set(from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k, from.z + (to.z - from.z) * k);
+      const t = Math.min(1, (n - s) / dur), k = easeInOutCubic(t);
+      o.position.set(
+        from.x + (to.x - from.x) * k,
+        from.y + (to.y - from.y) * k,
+        from.z + (to.z - from.z) * k
+      );
       if (t < 1) requestAnimationFrame(f);
     };
     requestAnimationFrame(f);
@@ -195,12 +189,10 @@ export default function NFC() {
   const moveAlongWorldY = (part, dist, dur, easing = easeInOutCubic) => {
     if (!part) return;
     const axis = new THREE.Vector3(0, 1, 0);
-    const startW = new THREE.Vector3();
-    part.getWorldPosition(startW);
+    const startW = new THREE.Vector3(); part.getWorldPosition(startW);
     const s = performance.now();
     const f = (n) => {
-      const t = Math.min(1, (n - s) / dur),
-        k = easing(t);
+      const t = Math.min(1, (n - s) / dur), k = easing(t);
       const targetW = startW.clone().add(axis.clone().multiplyScalar(dist * k));
       const parent = part.parent || part;
       const targetL = parent.worldToLocal(targetW);
@@ -216,11 +208,7 @@ export default function NFC() {
     const geo = new THREE.ConeGeometry(radius, beamDistance, 48, 1, true);
     geo.rotateX(Math.PI / 2);
     const mat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.0,
-      depthWrite: false,
-      side: THREE.DoubleSide,
+      color: 0xffffff, transparent: true, opacity: 0.0, depthWrite: false, side: THREE.DoubleSide
     });
     mat.onBeforeCompile = (shader) => {
       shader.transparent = true;
@@ -228,25 +216,17 @@ export default function NFC() {
         .replace("#include <common>", `#include <common>\nvarying vec2 vUv2;`)
         .replace("#include <uv_pars_fragment>", `#include <uv_pars_fragment>\nvarying vec2 vUv2;`)
         .replace("#include <uv_vertex>", `#include <uv_vertex>\nvUv2 = uv;`)
-        .replace(
-          "#include <output_fragment>",
-          `
+        .replace("#include <output_fragment>", `
           float grad = smoothstep(1.0, 0.0, vUv2.y);
           float rim  = smoothstep(0.9, 0.2, vUv2.x) * smoothstep(0.9, 0.2, 1.0 - vUv2.x);
           float a = grad * rim * opacity;
           gl_FragColor = vec4(outgoingLight, a);
-        `
-        );
+        `);
     };
     const mesh = new THREE.Mesh(geo, mat);
     mesh.renderOrder = 2;
-    mesh.userData.updateBeam = () => {
-      mesh.position.copy(spot.position);
-      mesh.lookAt(spot.target.position);
-    };
-    mesh.userData.setOpacity = (v) => {
-      mesh.material.opacity = v;
-    };
+    mesh.userData.updateBeam = () => { mesh.position.copy(spot.position); mesh.lookAt(spot.target.position); };
+    mesh.userData.setOpacity = (v) => { mesh.material.opacity = v; };
     return mesh;
   };
 
@@ -257,9 +237,9 @@ export default function NFC() {
         window.history.scrollRestoration = "manual";
       }
     } catch { }
-    window.scrollTo(0, 0);
-    document.documentElement.classList.add("nfc-intro");
-    lockPageScroll();
+    window.scrollTo(0, 0);                   // top de la página
+    document.documentElement.classList.add("nfc-intro"); // ocultar cards en el primer frame
+    lockPageScroll();                        // bloqueo sin desplazar layout
     return () => {
       unlockPageScroll();
       document.documentElement.classList.remove("nfc-intro");
@@ -417,7 +397,6 @@ export default function NFC() {
           );
 
           await wait(STEP3.duration + POP.pauseAfterPose);
-
           // detectar tapas
           const getCapsPreferNames = (m) => {
             const topByName = m.getObjectByName("FrontCap") || m.getObjectByName("frontcap");
@@ -517,7 +496,7 @@ export default function NFC() {
   const closeModal = () => {
     setIsClosing(true);
     const EXIT_MS = 340;
-    setTimeout(() => { setModal(null); setIsClosing(false); unlockModalScroll(); }, EXIT_MS + 20);
+    setTimeout(() => { setModal(null); setIsClosing(false); unlockModal(); }, EXIT_MS + 20);
   };
 
   const gallery = modal ? (GALLERIES[modal.key] || []) : [];
@@ -543,6 +522,17 @@ export default function NFC() {
     return () => window.removeEventListener("keydown", onKeys);
   }, [modal]);
 
+  const scrollToCards = () => {
+    const el = cardsRef.current || document.getElementById("nfc-cards");
+    if (!el) return;
+    try {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } catch {
+      const top = el.getBoundingClientRect().top + window.pageYOffset;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+  };
+
   return (
     <>
       {/* HERO */}
@@ -559,11 +549,30 @@ export default function NFC() {
             Etiqueta inteligente integrada para experiencias de un toque.
             Conecta, comparte y desbloquea funciones en tu toy.
           </p>
+
+          {/* Botón flecha hacia abajo */}
+          <button
+            type="button"
+            className="nfc__down"
+            aria-label="Ver opciones NFC"
+            title="Ver opciones NFC"
+            onClick={scrollToCards}
+          >
+            <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+              <path d="M12 16.5c-.32 0-.64-.12-.88-.36l-6-6a1.25 1.25 0 1 1 1.76-1.76L12 13.44l5.12-5.06a1.25 1.25 0 1 1 1.76 1.76l-6 6c-.24.24-.56.36-.88.36z" fill="currentColor" />
+            </svg>
+          </button>
         </header>
       </section>
 
       {/* CARDS */}
-      <section className="nfc-cards nfc-cards--three" aria-label="Opciones NFC" aria-hidden={modal ? "true" : "false"}>
+      <section
+        ref={cardsRef}
+        id="nfc-cards"
+        className="nfc-cards nfc-cards--three"
+        aria-label="Opciones NFC"
+        aria-hidden={modal ? "true" : "false"}
+      >
         {cards.map((item) => (
           <button
             key={item.key}
@@ -593,7 +602,7 @@ export default function NFC() {
           <div className="nfc-modal__shell nfc-modal__shell--full" role="document">
             <button className="nfc-modal__close" aria-label="Cerrar" onClick={closeModal}>✕</button>
 
-            {/* Copy izquierda (mismo efecto HUD) */}
+            {/* Copy izquierda con el mismo efecto que el HUD */}
             <aside className="nfc-modal__left">
               <div className="nfc-modal__copy nfc-modal__copy--animate" key={`copy-${modal?.index ?? 0}`}>
                 <h3 className="nfc-modal__h">{curr?.title || "—"}</h3>
@@ -601,7 +610,7 @@ export default function NFC() {
               </div>
             </aside>
 
-            {/* Stage derecha */}
+            {/* Stage derecha (hover y transiciones ya existentes) */}
             <section className="nfc-modal__right">
               <button className="nfc-modal__nav nfc-modal__nav--prev" aria-label="Anterior" onClick={prevSlide}>‹</button>
               <div className="nfc-modal__stage nfc-modal__stage--clean">
