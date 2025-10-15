@@ -6,11 +6,14 @@
   /* Geometría carrusel (NO cambiada) */
   --radius: 420px;
   --ringZ: -120px;
-  --itemW: clamp(180px, 22vw, 320px);
-  --itemH: clamp(180px, 22vw, 320px);
+
+  /* ⬇️ Solo reducimos tamaño de cada figura para que no se corten */
+  --itemW: clamp(150px, 18vw, 280px);
+  --itemH: clamp(150px, 18vw, 280px);
+
   --transition: 500ms cubic-bezier(0.22, 0.61, 0.36, 1);
 
-  /* Nuevo: misma anchura que el ring para posicionar flechas */
+  /* Misma anchura que el ring para posicionar flechas */
   --ringW: min(86%, 1080px);
 
   --cardSize: clamp(120px, 12vw, 160px);
@@ -44,7 +47,7 @@
 .gf-colabs-side {
   position: absolute;
   left: clamp(12px, 3vw, 40px);
-  top: clamp(8px, 6vh, 64px);
+
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -207,7 +210,14 @@
   pointer-events: none;
 }
 
-/* Responsivo (solo ajusto el offset para que no invadan el carrusel en móviles) */
+/* Responsivo (ajuste leve de tamaño de figura por altura/pantallas pequeñas) */
+@media (max-height: 800px) {
+  .gf-colabs-wrapper {
+    --itemW: clamp(140px, 16vw, 240px);
+    --itemH: clamp(140px, 16vw, 240px);
+  }
+}
+
 @media (max-width: 1280px) {
   .gf-colabs-stage {
     min-height: clamp(360px, 52vh, 640px);

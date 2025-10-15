@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react";
 import "../styles/colaboraciones.css";
 import astronauta from "../../assets/img/gsf_monkey_transparent.png";
+import pedroLogo from "../../assets/img/Pedro-Logo2.png";
 
 const proyectosSeed = [
-    { id: "drop-machine", nombre: "THE DROP MACHINE™", descripcion: "Vending de coleccionables sorpresa con NFC. Serie limitada, alto hype y ROI emocional.", img: astronauta },
+    { id: "drop-machine", nombre: "PEDRO GOMEZ", descripcion: "Vending de coleccionables sorpresa con NFC. Serie limitada, alto hype y ROI emocional.", img: pedroLogo },
     { id: "primate-planet", nombre: "PRIMATE PLANET™", descripcion: "Nuestra línea de Art Toys. Personajes con outfits y dioramas. Coleccionable premium.", img: astronauta },
     { id: "nfc-keys", nombre: "Llaveros NFC 3D", descripcion: "Acceso a experiencias digitales y verificación de autenticidad.", img: astronauta },
     { id: "smoke-filter", nombre: "Filtro patentado", descripcion: "Parafernalia con ingeniería propia. Diseño limpio, valor real.", img: astronauta },
@@ -41,7 +42,7 @@ const Colaboraciones = () => {
                 {/* Flechas (su posición se calcula en CSS para pegarlas al carrusel) */}
                 <button className="gf-arrow gf-left" onClick={onPrev} aria-label="Anterior">‹</button>
 
-                {/* Carrusel 3D (NO tocado tamaño ni posición) */}
+                {/* Carrusel 3D (NO tocado tamaño ni posición del ring; solo el tamaño de cada figura via CSS) */}
                 <div
                     className="gf-ring"
                     style={{ transform: `translateZ(var(--ringZ)) rotateY(${theta}deg)` }}
@@ -84,6 +85,5 @@ const Colaboraciones = () => {
         </section>
     );
 };
-
 
 export { Colaboraciones };
