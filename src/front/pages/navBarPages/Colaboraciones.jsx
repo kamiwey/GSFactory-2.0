@@ -2,10 +2,11 @@ import React, { useMemo, useState } from "react";
 import "../styles/colaboraciones.css";
 import astronauta from "../../assets/img/gsf_monkey_transparent.png";
 import pedroLogo from "../../assets/img/Pedro-Logo2.png";
+import trofeoMadrid from "../../assets/img/Trofeo-Madrid.png";
 
 const proyectosSeed = [
     { id: "drop-machine", nombre: "PEDRO GOMEZ", descripcion: "Vending de coleccionables sorpresa con NFC. Serie limitada, alto hype y ROI emocional.", img: pedroLogo },
-    { id: "primate-planet", nombre: "PRIMATE PLANET™", descripcion: "Nuestra línea de Art Toys. Personajes con outfits y dioramas. Coleccionable premium.", img: astronauta },
+    { id: "primate-planet", nombre: "ADIDAS/SNIPES", descripcion: "Nuestra línea de Art Toys. Personajes con outfits y dioramas. Coleccionable premium.", img: trofeoMadrid },
     { id: "nfc-keys", nombre: "Llaveros NFC 3D", descripcion: "Acceso a experiencias digitales y verificación de autenticidad.", img: astronauta },
     { id: "smoke-filter", nombre: "Filtro patentado", descripcion: "Parafernalia con ingeniería propia. Diseño limpio, valor real.", img: astronauta },
     { id: "tufting", nombre: "Alfombras Tufting", descripcion: "Textil con estética urbana. Ediciones limitadas.", img: astronauta },
