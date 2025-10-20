@@ -1,0 +1,145 @@
+@import url("https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap");
+
+/* -------- A11y utils -------- */
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Range “fantasma” para teclado/lectores (la UI real es drag) */
+.compare__range--sr {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none; /* visualmente no estorba el drag */
+}
+
+/* -------- Layout sección -------- */
+.tufting--section {
+  min-height: 100dvh;
+  display: grid;
+  grid-auto-rows: min-content;
+  justify-items: center;
+  gap: clamp(12px, 2.4vh, 28px);
+  background: #39a84e;
+  color: #fff;
+  padding: clamp(16px, 2.8vh, 32px) clamp(12px, 3vw, 28px)
+    clamp(36px, 6vh, 72px); /* aire extra abajo */
+}
+
+.tufting--header {
+  width: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.tufting--title {
+  font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto, Arial,
+    sans-serif;
+  font-size: clamp(2.6rem, 8.5vw, 5.5rem);
+  line-height: 1;
+  color: #fff;
+  margin: 0;
+  text-align: center;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* -------- Comparador -------- */
+.tufting--compare {
+  position: relative;
+  width: min(980px, 88vw);
+  height: clamp(300px, 60vh, 700px); /* altura real para que siempre se vea */
+  border-radius: 16px;
+  overflow: hidden;
+  background: transparent;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  display: grid;
+  place-items: center;
+  cursor: ew-resize; /* señal clara de que se puede arrastrar */
+}
+
+/* Ambas imágenes rellenan sin desbordar; siempre caben con el título */
+.compare__img {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.compare__img--base {
+  z-index: 0;
+}
+
+/* Overlay recortado por clip-path: revelamos la base al mover --pos */
+.compare__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  clip-path: inset(0 calc(100% - var(--pos, 50%)) 0 0);
+}
+
+.compare__img--top {
+  object-fit: contain;
+}
+
+/* Divider + handle elegante */
+.compare__divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #ffffffd6;
+  transform: translateX(-1px);
+  z-index: 2;
+  pointer-events: none; /* el drag lo captura el contenedor */
+}
+
+.compare__handle {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translate(-50%, 50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  outline: 2px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Hover/active feedback en desktop */
+@media (hover: hover) {
+  .tufting--compare {
+    transition: box-shadow 0.2s ease, transform 0.06s ease;
+  }
+  .tufting--compare:hover {
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.22);
+  }
+}
+
+/* Touch targets más cómodos en móvil */
+@media (hover: none) and (pointer: coarse) {
+  .compare__handle {
+    width: 34px;
+    height: 34px;
+    bottom: 10px;
+  }
+}
+
+/* Ajustes finos pantallas muy pequeñas */
+@media (max-width: 480px) {
+  .tufting--section {
+    gap: 14px;
+  }
+}
