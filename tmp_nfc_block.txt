@@ -1,0 +1,21 @@
+                            <div className="nfc-modal__stage nfc-modal__stage--clean">
+                                {curr && (() => {
+                                    const backs = import.meta.glob('../../assets/img/*-Back.{png,jpg,jpeg,webp}', { eager: true, as: 'url' });
+                                    const src = curr.src;
+                                    let backUrl = null;
+                                    for (const [p, url] of Object.entries(backs)) {
+                                        const file = (p.split('/').pop() || '');
+                                        const base = file.replace(/-Back\.[^/.]+$/i, '');
+                                        if (typeof src === 'string' && src.includes(base)) { backUrl = url; break; }
+                                    }
+                                    if (!backUrl) {
+                                        return <img key={modal.index} src={src} alt="" className="nfc-modal__img" />;
+                                    }
+                                    return (
+                                        <span className="fh-wrap" key={modal.index}>
+                                            <img src={src} alt="" className="nfc-modal__img fh-front" />
+                                            <img src={backUrl} alt="" className="nfc-modal__img fh-back" aria-hidden="true" />
+                                        </span>
+                                    );
+                                })()}
+                            </div>

@@ -1,143 +1,209 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import "./../stylesGlobal/navbar.css";
 import LogoGS from "../assets/img/logo-color.svg";
 
+/**
+ * Paleta interna para el overlay de la hamburguesa.
+ * (Independiente del resto de paletas del proyecto)
+ */
+const NAV_COLORS = [
+  "#4a86d9", // azul
+  "#2aa0a0", // verde
+  "#39a84e", // violeta
+  "#5240c9", // ocre
+  "#bb8d43", // rojo
+  "#cf4e50", // oliva
+  "#111111" // casi negro
+];
+
 export default function Navbar() {
-	const [open, setOpen] = useState(false);
-	const [closing, setClosing] = useState(false);
-	const [armed, setArmed] = useState(false); // activa la clase de entrada en el siguiente frame
-	const navigate = useNavigate();
+  const { t, i18n } = useTranslation("common");
+  const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [armed, setArmed] = useState(false);
+  const navigate = useNavigate();
 
-	const CLOSE_MS = 800;      // debe coincidir con .overlay-slide-up (0.8s en CSS)
-	const CLOSE_BUFFER = 20;   // pequeño colchón para evitar solapes
+  const CLOSE_MS = 800;
+  const CLOSE_BUFFER = 20;
 
-	// Cerrar con ESC
-	useEffect(() => {
-		const onEsc = (e) => e.key === "Escape" && startClose();
-		document.addEventListener("keydown", onEsc);
-		return () => document.removeEventListener("keydown", onEsc);
-	}, []);
+  // Orden y rutas exactamente como en Home
+  const navItems = useMemo(
+    () => [
+      { key: "artToys", to: "/art-toys" },
+      { key: "nfc", to: "/nfc" },
+      { key: "tufting", to: "/tufting" },
+      { key: "merchandising", to: "/merchandising" },
+      { key: "collaborations", to: "/colaboraciones" },
+      { key: "home", to: "/gs-home" },
+      { key: "about", to: "/about-us" }
+    ],
+    []
+  );
 
-	// Armar la clase de entrada un frame después de montar el overlay
-	useEffect(() => {
-		if (open) {
-			setArmed(false);
-			const id = requestAnimationFrame(() => setArmed(true));
-			return () => cancelAnimationFrame(id);
-		} else {
-			setArmed(false);
-		}
-	}, [open]);
+  useEffect(() => {
+    const onEsc = (e) => e.key === "Escape" && startClose();
+    document.addEventListener("keydown", onEsc);
+    return () => document.removeEventListener("keydown", onEsc);
+  }, []);
 
-	const startClose = () => {
-		if (!open) return;
-		setClosing(true);
-		setTimeout(() => {
-			setClosing(false);
-			setOpen(false);
-			setArmed(false);
-		}, CLOSE_MS);
-	};
+  useEffect(() => {
+    if (open) {
+      setArmed(false);
+      const id = requestAnimationFrame(() => setArmed(true));
+      return () => cancelAnimationFrame(id);
+    } else {
+      setArmed(false);
+    }
+  }, [open]);
 
-	const toggle = () => {
-		if (open) startClose();
-		else setOpen(true);
-	};
+  // ===== Lock de scroll mientras el overlay está visible (open o closing) =====
+  useEffect(() => {
+    const body = document.body;
+    const html = document.documentElement;
+    const isVisible = open || closing;
 
-	// Navegar SOLO tras cerrar el overlay (evita “salto” con la cortina)
-	const navAfterClose = (e, to) => {
-		e.preventDefault();                 // cancela la navegación inmediata del Link
-		if (closing) return;                // ya estamos cerrando; ignora toques repetidos
-		startClose();                       // dispara animación de cierre
-		setTimeout(() => {
-			navigate(to);                     // ahora sí, cambia de ruta → gate lanza la cortina
-		}, CLOSE_MS + CLOSE_BUFFER);
-	};
+    if (isVisible) {
+      const y = window.scrollY || html.scrollTop || body.scrollTop || 0;
+      const sbw = window.innerWidth - html.clientWidth; // ancho scrollbar
 
-	// Clases del overlay: montado + entrada armada en el frame siguiente
-	const overlayClass =
-		"overlay-navigation" +
-		(armed ? " overlay-slide-down" : "") +
-		(closing ? " overlay-slide-up" : "");
+      body.dataset.oldTop = String(y);
+      body.classList.add("u-lock-scroll");
+      if (sbw > 0) body.style.paddingRight = `${sbw}px`; // evita “salto” de layout
+      body.style.top = `-${y}px`; // iOS fix cuando usamos position: fixed en CSS
+    } else {
+      // cleanup
+      const oldTop = parseInt(body.dataset.oldTop || "0", 10);
+      body.classList.remove("u-lock-scroll");
+      body.style.paddingRight = "";
+      body.style.top = "";
+      delete body.dataset.oldTop;
+      // devuelve al scroll original
+      window.scrollTo(0, oldTop);
+    }
+  }, [open, closing]);
 
-	return (
-		<>
-			{/* NAV fija, transparente */}
-			<nav className="gsNav" role="navigation" aria-label="GS navbar">
-				<Link className="brand" to="/">
-					<img className="brand__logo" src={LogoGS} alt="GS" />
-					<span className="brand__txt">GS FACTORY</span>
-				</Link>
+  const startClose = () => {
+    if (!open) return;
+    setClosing(true);
+    setTimeout(() => {
+      setClosing(false);
+      setOpen(false);
+      setArmed(false);
+    }, CLOSE_MS);
+  };
 
-				{/* Botón burger (3 barras) */}
-				<div
-					className={`open-overlay ${open ? "is-open" : ""} ${closing ? "is-closing" : ""}`}
-					onClick={toggle}
-					role="button"
-					aria-label="Abrir menú"
-					tabIndex={0}
-				>
-					<span className="bar-top"></span>
-					<span className="bar-middle"></span>
-					<span className="bar-bottom"></span>
-				</div>
-			</nav>
+  const toggle = () => {
+    if (open) startClose();
+    else setOpen(true);
+  };
 
-			{/* OVERLAY FULLSCREEN (4 columnas) */}
-			{(open || closing) && (
-				<div
-					className={overlayClass}
-					onClick={(e) => {
-						// cerrar si clicas en el fondo oscuro
-						if (e.target.classList.contains("overlay-navigation")) startClose();
-					}}
-				>
-					<nav role="navigation">
-						<ul>
-							<li>
-								<Link
-									to="/projects"
-									className="overlayLink"
-									onClick={(e) => navAfterClose(e, "/projects")}
-								>
-									Proyectos
-								</Link>
-							</li>
-							<li>
-								<Link
-									to="/colaboraciones"
-									className="overlayLink"
-									onClick={(e) => navAfterClose(e, "/colaboraciones")}
-								>
-									Colaboraciones
-								</Link>
-							</li>
-							<li>
-								<Link
-									to="/nfc"
-									className="overlayLink"
-									onClick={(e) => navAfterClose(e, "/nfc")}
-								>
-									NFC
-								</Link>
-							</li>
-							<li>
-								<Link
-									to="/about-us"
-									className="overlayLink"
-									onClick={(e) => navAfterClose(e, "/about-us")}
-								>
-									About us
-								</Link>
-							</li>
-						</ul>
-					</nav>
-				</div>
-			)}
-		</>
-	);
+  const navAfterClose = (e, to) => {
+    e.preventDefault();
+    if (closing) return;
+    startClose();
+    setTimeout(() => {
+      navigate(to);
+    }, CLOSE_MS + CLOSE_BUFFER);
+  };
+
+  const overlayClass =
+    "overlay-navigation" +
+    (armed ? " overlay-slide-down" : "") +
+    (closing ? " overlay-slide-up" : "");
+
+  return (
+    <>
+      <nav className="gsNav" role="navigation" aria-label={t("aria.navbar")}>
+        <Link className="brand" to="/">
+          <img
+            className="brand__logo"
+            src={LogoGS}
+            alt="GS"
+            loading="lazy"
+            decoding="async"
+          />
+          {/* Texto de marca visible: GS FACTORY */}
+          <span className="brand__text">GS <br />FACTORY</span>
+        </Link>
+
+        <div className="navRight">
+          {/* Idiomas */}
+          <div
+            role="group"
+            className="langSwitch"
+            aria-label={t("aria.changeLanguage")}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                i18n.changeLanguage("es");
+                localStorage.setItem("lang", "es");
+              }}
+              aria-pressed={i18n.resolvedLanguage === "es"}
+            >
+              ES
+            </button>
+            <span aria-hidden="true">/</span>
+            <button
+              type="button"
+              onClick={() => {
+                i18n.changeLanguage("en");
+                localStorage.setItem("lang", "en");
+              }}
+              aria-pressed={i18n.resolvedLanguage === "en"}
+            >
+              EN
+            </button>
+          </div>
+
+          {/* Burger */}
+          <div
+            className={`open-overlay menuToggle navbar__toggle ${open ? "is-open" : ""} ${closing ? "is-closing" : ""}`}
+            onClick={toggle}
+            role="button"
+            aria-label={t("aria.openMenu")}
+            aria-expanded={open}
+            tabIndex={0}
+          >
+            <span className="bar-top"></span>
+            <span className="bar-middle"></span>
+            <span className="bar-bottom"></span>
+          </div>
+        </div>
+      </nav>
+
+      {/* OVERLAY FULLSCREEN — 7 bloques coloreados */}
+      {(open || closing) && (
+        <div
+          className={overlayClass}
+          onClick={(e) => {
+            if (e.target.classList.contains("overlay-navigation")) startClose();
+          }}
+        >
+          <nav role="navigation">
+            <ul style={{ ["--cols"]: 7 }}>
+              {navItems.map((item, i) => (
+                <li
+                  key={item.key}
+                  style={{ background: NAV_COLORS[i % NAV_COLORS.length] }}
+                >
+                  <Link
+                    to={item.to}
+                    className="overlayLink"
+                    onClick={(e) => navAfterClose(e, item.to)}
+                  >
+                    {t(`nav.${item.key}`)}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      )}
+    </>
+  );
 }
 
-// Export nombrado opcional si tu Layout lo importa como { Navbar }
 export { Navbar };

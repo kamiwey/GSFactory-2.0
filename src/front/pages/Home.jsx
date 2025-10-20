@@ -1,27 +1,59 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import "./styles/home.css";
 import heroVideo from "../assets/video/hero-video.mp4";
 
+/* IMÁGENES PANELS */
+import artToysImg from "../assets/img/gsf_monkey_transparent.png";
+import nfcImg from "../assets/img/nfc.png";
+import tuftingImg from "../assets/img/tufting.png";
+import merchandisingImg from "../assets/img/merchandising.png";
+import colaboracionesImg from "../assets/img/colaboraciones.png";
+import homeDecorImg from "../assets/img/home.png";
+
 import HorizontalStrip from "../components/HorizontalStrip";
 import ColorStage from "../components/ColorStage";
-
-// Paleta (6 secciones; top/bottom para un degradado sutil)
-const PALETTE = [
-  { top: "#4a86d9", bottom: "#0f3f86" }, // 1 Azul
-  { top: "#2aa0a0", bottom: "#1f7073" }, // 2 Verde azulado
-  { top: "#39a84e", bottom: "#2b6f39" }, // 3 Verde
-  { top: "#5240c9", bottom: "#2d1f90" }, // 4 Morado
-  { top: "#bb8d43", bottom: "#9c702f" }, // 5 Ocre
-  { top: "#cf4e50", bottom: "#a43a3c" }, // 6 Rojo
-];
+import { PALETTE_HOME } from "../theme/paletteHome";
 
 export const Home = () => {
+  const { t } = useTranslation("common");
   const { dispatch } = useGlobalReducer();
   const videoRef = useRef(null);
   const heroRef = useRef(null);
   const homeRef = useRef(null);
 
+  // === Altura del rótulo ===
+  const DESKTOP_Y = "clamp(-16rem, -24vh, -30rem)";
+  const MOBILE_Y = "clamp(-10rem, -17vh, -23rem)";
+  const [heroWordY, setHeroWordY] = useState(DESKTOP_Y);
+
+  /* === FORZAR TOP AL RECARGAR ===
+     - Desactiva la restauración de scroll del navegador.
+     - Fuerza scrollTop:0 al montar y tras 'load' (por si el browser insiste).
+  */
+  useEffect(() => {
+    const hasSR = "scrollRestoration" in window.history;
+    const prevSR = hasSR ? window.history.scrollRestoration : undefined;
+    if (hasSR) window.history.scrollRestoration = "manual";
+
+    const toTop = () =>
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+
+    // disparos redundantes para ganar a la restauración nativa
+    toTop();
+    window.addEventListener("load", toTop, { once: true });
+    const t = setTimeout(toTop, 0);
+
+    return () => {
+      window.removeEventListener("load", toTop);
+      clearTimeout(t);
+      if (hasSR) window.history.scrollRestoration = prevSR ?? "auto";
+    };
+  }, []);
+
+  // Ping opcional backend (silencioso)
   useEffect(() => {
     const f = async () => {
       try {
@@ -30,19 +62,19 @@ export const Home = () => {
         const r = await fetch(url + "/api/hello");
         const d = await r.json();
         if (r.ok) dispatch({ type: "set_hello", payload: d.message });
-      } catch {}
+      } catch { }
     };
     f();
   }, [dispatch]);
 
-  // Autoplay robusto
+  // Autoplay robusto del vídeo
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
     const tryPlay = () => {
       vid.muted = true;
       const p = vid.play();
-      if (p && typeof p.then === "function") p.catch(() => {});
+      if (p && typeof p.then === "function") p.catch(() => { });
     };
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const apply = () => {
@@ -91,16 +123,60 @@ export const Home = () => {
     };
   }, []);
 
+  // Responsivo: Y del título
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 900px)");
+    const apply = () => setHeroWordY(mq.matches ? MOBILE_Y : DESKTOP_Y);
+    apply();
+    mq.addEventListener?.("change", apply);
+    return () => mq.removeEventListener?.("change", apply);
+  }, []); // eslint-disable-line
+
+  // Aparición / desaparición del rótulo (IO con histeresis) — “solo en el centro”
+  useEffect(() => {
+    const panels = Array.from(document.querySelectorAll(".panelHero"));
+    if (!panels.length) return;
+
+    const thresholds = Array.from({ length: 21 }, (_, i) => i / 20);
+    const lastRatio = new WeakMap();
+
+    const ENTER_R0 = 0.55, ENTER_R1 = 0.90;
+    const LEAVE_R0 = 0.75, LEAVE_R1 = 0.95;
+    const clamp01 = (x) => Math.max(0, Math.min(1, x));
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          const r = e.intersectionRatio;
+          const prev = lastRatio.get(e.target) ?? r;
+          const leaving = r < prev - 0.0005;
+          const r0 = leaving ? LEAVE_R0 : ENTER_R0;
+          const r1 = leaving ? LEAVE_R1 : ENTER_R1;
+          const vis = clamp01((r - r0) / (r1 - r0));
+          e.target.style.setProperty("--wordVis", vis.toFixed(3));
+          e.target.style.setProperty("--wordOut", (1 - vis).toFixed(3));
+          lastRatio.set(e.target, r);
+        });
+      },
+      { threshold: thresholds }
+    );
+
+    panels.forEach((el) => {
+      lastRatio.set(el, 0);
+      io.observe(el);
+    });
+    return () => io.disconnect();
+  }, []);
+
   // Flecha: bajar desde el hero
   const scrollDown = (e) => {
     e.preventDefault();
     const heroEl = heroRef.current;
     if (!heroEl) return;
-
-    const navH = parseFloat(
-      getComputedStyle(document.documentElement).getPropertyValue("--nav-h")
-    ) || 72;
-
+    const navH =
+      parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue("--nav-h")
+      ) || 72;
     const target =
       heroEl.getBoundingClientRect().bottom + window.scrollY - (navH + 8);
     window.scrollTo({
@@ -124,7 +200,7 @@ export const Home = () => {
 
   return (
     <main ref={homeRef} className="home">
-      {/* ================= HERO ================= */}
+      {/* HERO */}
       <section ref={heroRef} className="hero" aria-label="GS Factory hero">
         <div className="hero__bg" aria-hidden="true">
           <video
@@ -147,7 +223,7 @@ export const Home = () => {
           <a
             className="hero__arrow"
             href="#next"
-            aria-label="Bajar"
+            aria-label={t("hero.scrollDown")}
             onClick={scrollDown}
           >
             <svg viewBox="0 0 24 24" className="hero__arrowIcon" aria-hidden="true">
@@ -157,28 +233,92 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* ======= FONDO DE COLOR + TRAMO HORIZONTAL + VERTICAL ======= */}
-      <ColorStage colors={PALETTE}>
-        <HorizontalStrip panels={6} navbarHeight={72} />
-        {/* Paneles 7 y 8 dentro del mismo fondo para continuidad */}
+      <ColorStage colors={PALETTE_HOME}>
+        <HorizontalStrip panels={6} navbarHeight={72}>
+          {/* 1 — ART TOYS */}
+          <div className="hstrip__panel" key="p1">
+            <section className="panel panel--hero" aria-label="ART TOYS">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                <h2 className="panelHero__word" aria-hidden="true">
+                  {t("hero.artToys")}
+                </h2>
+                <Link to="/art-toys" className="panelHero__cta" aria-label="Ir a ART TOYS">
+                  <img className="panelHero__img" src={artToysImg} alt="Art toy mono — GS Factory" loading="eager" decoding="async" />
+                </Link>
+              </div>
+            </section>
+          </div>
+
+          {/* 2 — NFC */}
+          <div className="hstrip__panel" key="p2">
+            <section className="panel panel--hero" aria-label="NFC">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                <h2 className="panelHero__word" aria-hidden="true">NFC</h2>
+                <Link to="/nfc" className="panelHero__cta" aria-label="Ir a NFC">
+                  <img className="panelHero__img" src={nfcImg} alt="Token NFC — GS Factory" loading="lazy" decoding="async" />
+                </Link>
+              </div>
+            </section>
+          </div>
+
+          {/* 3 — TUFTING */}
+          <div className="hstrip__panel" key="p3">
+            <section className="panel panel--hero" aria-label="TUFTING">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                <h2 className="panelHero__word" aria-hidden="true">TUFTING</h2>
+                <Link to="/tufting" className="panelHero__cta" aria-label="Ir a TUFTING">
+                  <img className="panelHero__img" src={tuftingImg} alt="Alfombra tufting — GS Factory" loading="lazy" decoding="async" />
+                </Link>
+              </div>
+            </section>
+          </div>
+
+          {/* 4 — MERCHANDISING */}
+          <div className="hstrip__panel" key="p4">
+            <section className="panel panel--hero" aria-label="MERCHANDISING">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                <h2 className="panelHero__word" aria-hidden="true">MERCHANDISING</h2>
+                <Link to="/merchandising" className="panelHero__cta" aria-label="Ir a MERCHANDISING">
+                  <img className="panelHero__img" src={merchandisingImg} alt="Caja GS Merch + objetos — GS Factory" loading="lazy" decoding="async" />
+                </Link>
+              </div>
+            </section>
+          </div>
+
+          {/* 5 — COLABORACIONES */}
+          <div className="hstrip__panel" key="p5">
+            <section className="panel panel--hero" aria-label="COLABORACIONES">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                <h2 className="panelHero__word" aria-hidden="true">COLABORACIONES</h2>
+                <Link to="/colaboraciones" className="panelHero__cta" aria-label="Ir a COLABORACIONES">
+                  <img className="panelHero__img" src={colaboracionesImg} alt="Pack colaboraciones — GS Factory" loading="lazy" decoding="async" />
+                </Link>
+              </div>
+            </section>
+          </div>
+
+          {/* 6 — HOME */}
+          <div className="hstrip__panel" key="p6">
+            <section className="panel panel--hero" aria-label="HOME">
+              <div className="panelHero" style={{ "--heroWordY": heroWordY }}>
+                <h2 className="panelHero__word" aria-hidden="true">HOME</h2>
+                <Link to="/gs-home" className="panelHero__cta" aria-label="Ir a GS HOME">
+                  <img className="panelHero__img" src={homeDecorImg} alt="Decoración hogar GS — GS Factory" loading="lazy" decoding="async" />
+                </Link>
+              </div>
+            </section>
+          </div>
+        </HorizontalStrip>
+
+        {/* Vertical 7–8 demo */}
         <section className="vstack" aria-label="Bloque vertical tras horizontal">
-          <div className="vpanel">
-            <div className="vpanel__inner">
-              <h2 className="vpanel__title">Panel 7</h2>
-              <p className="vpanel__text">Contenido de muestra vertical.</p>
-            </div>
-          </div>
-          <div className="vpanel vpanel--last">
-            <div className="vpanel__inner">
-              <h2 className="vpanel__title">Panel 8</h2>
-              <p className="vpanel__text">Contenido de muestra vertical.</p>
-            </div>
-          </div>
+          <div className="vpanel"><div className="vpanel__inner"><h2 className="vpanel__title">Panel 7</h2><p className="vpanel__text">Contenido de muestra vertical.</p></div></div>
+          <div className="vpanel vpanel--last"><div className="vpanel__inner"><h2 className="vpanel__title">Panel 8</h2><p className="vpanel__text">Contenido de muestra vertical.</p></div></div>
         </section>
       </ColorStage>
 
       {/* Botón subir */}
-      <button className="homeTopBtn" onClick={scrollToTop} aria-label="Volver arriba">
+      <button className="homeTopBtn" onClick={scrollToTop} aria-label={t("hero.backToTop")}>
         <svg viewBox="0 0 24 24" className="homeTopBtn__icon" aria-hidden="true">
           <path d="M6 15l6-6 6 6" />
         </svg>
@@ -186,4 +326,3 @@ export const Home = () => {
     </main>
   );
 };
-

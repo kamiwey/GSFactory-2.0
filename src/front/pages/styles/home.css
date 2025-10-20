@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Saira:wght@700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap");
 @import "./tokens.css";
 
 /* ======= LAYOUT GLOBAL DEL HOME ======= */
@@ -6,8 +7,6 @@
   min-height: 100dvh;
   background: #000;
   scroll-behavior: smooth;
-
-  /* distancia de salto con la flecha */
   --arrow-jump: 670px;
 }
 
@@ -15,13 +14,11 @@
 .hero {
   min-height: calc(100dvh - var(--nav-h, 52px));
   position: relative;
-  isolation: isolate; /* crea nuevo stacking context */
-  z-index: 5; /* SIEMPRE por delante del fondo de ColorStage */
-
+  isolation: isolate;
+  z-index: 5;
   --parY: 0px;
   --p: 0;
 }
-
 .hero__bg {
   position: absolute;
   inset: 0;
@@ -29,7 +26,6 @@
   overflow: hidden;
   background: #000;
 }
-
 .hero__video {
   position: absolute;
   inset: 0;
@@ -40,27 +36,15 @@
   will-change: transform;
   transform: translate3d(0, calc(var(--parY) * -0.15), 0);
 }
-
-/* Fade inferior del vídeo con mask-image (cuando hay soporte) */
 @supports (mask-image: linear-gradient(#fff, #fff)) {
   .hero__video {
-    -webkit-mask-image: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 1) 82%,
-      rgba(255, 255, 255, 0) 96%
-    );
-    mask-image: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 1) 82%,
-      rgba(255, 255, 255, 0) 96%
-    );
+    -webkit-mask-image: linear-gradient(180deg, #fff 82%, transparent 96%);
+    mask-image: linear-gradient(180deg, #fff 82%, transparent 96%);
   }
   .hero__fadeBottom {
     display: none;
   }
 }
-
-/* Fallback breve del fade si no hay mask-image (sin “velos” largos) */
 @supports not (mask-image: linear-gradient(#fff, #fff)) {
   .hero__fadeBottom {
     position: absolute;
@@ -73,15 +57,14 @@
       180deg,
       rgba(0, 0, 0, 0) 0%,
       rgba(0, 0, 0, 0.75) 90%,
-      rgba(0, 0, 0, 1) 100%
+      #000 100%
     );
     pointer-events: none;
   }
 }
-
 .hero__content {
   position: relative;
-  z-index: 6; /* por encima del fade y del fondo */
+  z-index: 6;
   display: grid;
   place-items: center;
   text-align: center;
@@ -89,7 +72,6 @@
   padding-left: var(--gap);
   padding-right: var(--gap);
 }
-
 .hero__title {
   font-family: "Saira", sans-serif;
   text-transform: uppercase;
@@ -100,7 +82,6 @@
   transform: translate3d(0, calc(var(--parY) * 0.42), 0);
   will-change: transform;
 }
-
 .hero__subtitle {
   font-family: "Saira", sans-serif;
   text-transform: uppercase;
@@ -113,7 +94,6 @@
   transition: opacity 120ms linear;
   will-change: transform, opacity;
 }
-
 .hero__arrow {
   display: inline-grid;
   place-items: center;
@@ -137,7 +117,6 @@
 .section {
   padding: 12vh var(--gap);
 }
-
 .section--spacer {
   --pinBottom: 10vh;
   --pinHeight: 0px;
@@ -151,8 +130,6 @@
   width: min(1200px, 100% - calc(var(--gap) * 2));
   margin-inline: auto;
 }
-
-/* estados del pin */
 .section--spacer.pinning .section__pin {
   position: fixed;
   left: 0;
@@ -165,7 +142,6 @@
   margin-top: calc(100vh - var(--pinBottom) - var(--pinHeight));
 }
 
-/* Accesibilidad */
 @media (prefers-reduced-motion: reduce) {
   .hero__video,
   .hero__title,
@@ -183,7 +159,7 @@
   }
 }
 
-/* ---------- PANEL VERTICAL (después del tramo horizontal) ---------- */
+/* ---------- VERTICAL 7–8 ---------- */
 .vstack {
   padding: 0;
 }
@@ -196,17 +172,17 @@
 .vpanel--last {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
-.vpanel__inner {
+.vstack .vpanel__inner {
   text-align: center;
   padding: 0 2rem;
   max-width: 64rem;
 }
-.vpanel__title {
+.vstack .vpanel__title {
   font-size: clamp(2rem, 5vw, 3.5rem);
   font-weight: 800;
   margin-bottom: 0.4em;
 }
-.vpanel__text {
+.vstack .vpanel__text {
   opacity: 0.8;
 }
 
@@ -239,7 +215,6 @@
   stroke-width: 3.2;
   fill: none;
 }
-
 @media (max-width: 900px) {
   .homeTopBtn {
     width: 52px;
@@ -260,13 +235,12 @@
 .colorStage {
   position: relative;
   z-index: 0;
-} /* detrás del hero */
-
-/* El fondo que pintamos desde JS con --bgStart / --bgEnd */
+}
 .colorStage__bg {
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100svh;
+  min-height: 100vh;
   z-index: 0;
   pointer-events: none;
   background: radial-gradient(
@@ -274,17 +248,128 @@
       rgba(255, 255, 255, 0.06),
       transparent 70%
     ),
-    linear-gradient(180deg, var(--bgStart, #000000), var(--bgEnd, #000000));
+    linear-gradient(180deg, var(--bgStart, #000), var(--bgEnd, #000));
   transition: background 120ms linear;
 }
-
-/* contenido del tramo horizontal por encima del fondo sticky */
+@supports (height: 100dvh) {
+  .colorStage__bg {
+    height: 100dvh;
+  }
+}
+@media (max-width: 900px) {
+  .colorStage__bg {
+    position: sticky;
+    top: 0;
+  }
+}
 .colorStage__content {
   position: relative;
   z-index: 1;
 }
-
-/* Quita el halo/blanco cuando ColorStage marca .no-glow (negro) */
 .colorStage__bg.no-glow {
   background: linear-gradient(180deg, var(--bgStart), var(--bgEnd)) !important;
+}
+
+/* ========== PANEL HERO (genérico para todos) ========== */
+.panel--hero {
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.panelHero {
+  position: relative;
+  width: min(92vw, 1600px);
+  height: min(78vh, 900px);
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  overflow: visible;
+  --wordVis: 1;
+  --wordOut: 0;
+}
+.panelHero__word {
+  font-family: "Luckiest Guy", system-ui, -apple-system, Segoe UI, Roboto,
+    sans-serif;
+  font-weight: 400;
+  line-height: 0.92;
+  margin: 0;
+  color: #fff;
+  text-align: center;
+  font-size: clamp(72px, 11vw, 240px);
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+  pointer-events: none;
+  opacity: var(--wordVis);
+  transform: translateY(
+      calc(
+        var(--heroWordY, clamp(-12rem, -19vh, -26rem)) - (var(--wordOut) * 10vh)
+      )
+    )
+    scale(calc(1 + var(--wordOut) * 0.16));
+  transition: transform 120ms linear, opacity 120ms linear;
+  will-change: transform, opacity;
+}
+
+/* CTA (aplica igual a <a> o <button>) */
+.panelHero__cta {
+  -webkit-tap-highlight-color: transparent;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  transform-origin: bottom center;
+  transition: transform 220ms ease;
+  text-decoration: none;
+  /* --- Blindaje contra reglas globales tipo a:hover { opacity:.7 } --- */
+  opacity: 1 !important;
+  filter: none !important;
+}
+.panelHero__cta:hover,
+.panelHero__cta:focus-visible {
+  transform: scale(1.1);
+  outline: none;
+  opacity: 1 !important; /* mantiene opacidad total */
+  filter: none !important; /* evita filtros heredados en el CTA */
+}
+.panelHero__img {
+  width: auto;
+  max-height: clamp(360px, 58vh, 700px);
+  max-width: clamp(260px, 24vw, 520px);
+  height: auto;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+  opacity: 1;
+  filter: none;
+}
+/* redundancia intencional por si hay estilos muy agresivos */
+.panelHero__cta:hover .panelHero__img,
+.panelHero__cta:focus-visible .panelHero__img {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* Mobile tweaks */
+@media (max-width: 900px) {
+  .panelHero__word {
+    font-size: clamp(56px, 15vw, 180px);
+    transform: translateY(
+        calc(
+          var(--heroWordY, clamp(-8rem, -14vh, -20rem)) - (var(--wordOut) * 8vh)
+        )
+      )
+      scale(calc(1 + var(--wordOut) * 0.14));
+  }
+  .panelHero__img {
+    max-height: clamp(320px, 54vh, 620px);
+    max-width: clamp(220px, 36vw, 460px);
+  }
 }

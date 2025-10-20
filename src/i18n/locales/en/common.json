@@ -1,0 +1,28 @@
+{
+  "nav": {
+    "home": "GS Home",
+    "projects": "Projects",
+    "collaborations": "Collaborations",
+    "nfc": "NFC",
+    "about": "About us",
+    "catalogue": "Catalogue",
+    "artToys": "Art Toys",
+    "tufting": "Tufting",
+    "merchandising": "Merchandising"
+  },
+  "hero": {
+    "artToys": "ART TOYS",
+    "nfc": "NFC",
+    "tufting": "TUFTING",
+    "merchandising": "MERCHANDISING",
+    "colaboraciones": "COLLABORATIONS",
+    "velasYLed": "CANDLES & LED",
+    "scrollDown": "Scroll down",
+    "backToTop": "Back to top"
+  },
+  "aria": {
+    "navbar": "GS navbar",
+    "openMenu": "Open menu",
+    "changeLanguage": "Change language"
+  }
+}

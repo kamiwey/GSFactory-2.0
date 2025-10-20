@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-export const Catalogo = () => {
+export const Merchandising = () => {
     useEffect(() => {
         document.documentElement.style.setProperty("--nav-fg", "#ffffff"); // navbar blanca
     }, []);
@@ -10,11 +10,11 @@ export const Catalogo = () => {
                 minHeight: "100dvh",
                 display: "grid",
                 placeItems: "center",
-                backgroundColor: "#ffffffff", // Sky
-                color: "#000000ff"
+                backgroundColor: "#5240c9", // Sky
+                color: "#ffffffff"
             }}
         >
-            <h1 className="display-3 m-0">Catalogo</h1>
+            <h1 className="display-3 m-0">MERCHANDISING</h1>
         </section>
     );
 };
